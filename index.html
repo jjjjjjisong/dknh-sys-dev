@@ -2402,6 +2402,11 @@
           try { history  = JSON.parse(localStorage.getItem('dkh_history')  || '[]'); } catch(_){}
         }
         populateClientSelect();
+        populateProductClientFilter();
+        renderClients();
+        renderProducts();
+        renderHistory();
+        renderOrderBook();
         refreshDashboard();
       }
 
@@ -3658,7 +3663,10 @@
 
       function clearHistory() {
         if (!confirm('발행 이력 전체를 삭제하시겠습니까?')) return;
-        history = []; save('history', []); renderHistory(); refreshDashboard();
+        db.from('documents').delete().neq('id', 0).then(() => {
+          db.from('document_items').delete().neq('id', 0);
+          history = []; renderHistory(); refreshDashboard();
+        });
       }
 
       // ═══════════════════════════════════════════════════
@@ -3702,10 +3710,10 @@
         openModal('client-modal');
       }
 
-      function saveClient() {
+      async function saveClient() {
         const name = document.getElementById('cf-name').value.trim();
         if (!name) { alert('납품처명을 입력하세요.'); return; }
-        const obj = {
+        const row = {
           name, manager: document.getElementById('cf-manager').value.trim(),
           tel: document.getElementById('cf-tel').value.trim(),
           addr: document.getElementById('cf-addr').value.trim(),
@@ -3714,21 +3722,30 @@
           note: document.getElementById('cf-note').value.trim(),
           active: true,
         };
-        const idx = document.getElementById('client-edit-idx').value;
-        if (idx === '') clients.push(obj);
-        else clients[parseInt(idx)] = obj;
-        save('clients', clients);
-        populateClientSelect();
-        renderClients();
-        closeModal('client-modal');
+        const idxStr = document.getElementById('client-edit-idx').value;
+        try {
+          if (idxStr === '') {
+            const { data } = await db.from('clients').insert(row).select().single();
+            clients.push({ ...data, _id: String(data.id) });
+          } else {
+            const c = clients[parseInt(idxStr)];
+            await db.from('clients').update(row).eq('id', c.id);
+            clients[parseInt(idxStr)] = { ...c, ...row };
+          }
+          populateClientSelect();
+          renderClients();
+          closeModal('client-modal');
+        } catch(e) { alert('저장 실패: ' + (e.message||e)); }
       }
 
-      function deleteClient(idx) {
+      async function deleteClient(idx) {
         if (!confirm(`"${clients[idx].name}" 납품처를 삭제하시겠습니까?`)) return;
-        clients.splice(idx, 1);
-        save('clients', clients);
-        populateClientSelect();
-        renderClients();
+        try {
+          await db.from('clients').delete().eq('id', clients[idx].id);
+          clients.splice(idx, 1);
+          populateClientSelect();
+          renderClients();
+        } catch(e) { alert('삭제 실패: ' + (e.message||e)); }
       }
 
       function exportClientsExcel() {
@@ -3848,12 +3865,14 @@
         closeModal('product-modal');
       }
 
-      function deleteProduct(idx) {
+      async function deleteProduct(idx) {
         if (!confirm(`"${products[idx].name1}" 품목을 삭제하시겠습니까?`)) return;
-        products.splice(idx, 1);
-        save('products', products);
-        populateProductClientFilter();
-        renderProducts();
+        try {
+          await db.from('products').delete().eq('id', products[idx].id);
+          products.splice(idx, 1);
+          populateProductClientFilter();
+          renderProducts();
+        } catch(e) { alert('삭제 실패: ' + (e.message||e)); }
       }
 
       function exportProductsExcel() {
