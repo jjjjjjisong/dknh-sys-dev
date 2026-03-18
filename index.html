@@ -2472,9 +2472,21 @@
       let currentDocType = '';
 
       // ═══════════════════════════════════════════════════
-      //  NAVIGATION
+      //  NAVIGATION & ROUTING (Hash Based)
       // ═══════════════════════════════════════════════════
       function go(page) {
+        // 기존 직접 DOM 처리를 대신해 Hash를 변경 (브라우저 히스토리에 쌓임)
+        window.location.hash = page;
+      }
+
+      window.addEventListener('hashchange', handleHashChange);
+
+      function handleHashChange() {
+        const hash = window.location.hash.replace('#', '') || 'dashboard';
+        renderPage(hash);
+      }
+
+      function renderPage(page) {
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
         const pageEl = document.getElementById('page-' + page);
@@ -2492,7 +2504,7 @@
         if (page === 'order-book') initOrderBook();
         if (page === 'master-client') renderClients();
         if (page === 'master-product') { populateProductClientFilter(); renderProducts(); }
-        if (page === 'account') { accountList = loadAccounts(); renderAccounts(); }
+        if (page === 'account') { renderAccounts(); }
       }
       function initHistSearch() {
         const fromEl = document.getElementById('hist-date-from');
@@ -2585,8 +2597,14 @@
         } else {
           document.body.classList.remove('is-admin');
         }
-        // Supabase에서 전체 데이터 로드
-        loadAllData();
+        // Supabase에서 전체 데이터 로드 후 해시 기반 첫 렌더링 처리
+        loadAllData().then(() => {
+          if (!window.location.hash) {
+            window.location.hash = 'dashboard';
+          } else {
+            handleHashChange();
+          }
+        });
       }
 
       function doLogout() {
