@@ -3360,23 +3360,23 @@
           return;
         }
         el.innerHTML = '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
-          '<th style="width:60px;text-align:center;">발급번호</th>' +
-          '<th style="width:90px;text-align:center;">발주일자</th>' +
-          '<th style="width:140px;">납품처</th>' +
+          '<th style="width:80px;text-align:center;">발급번호</th>' +
+          '<th style="width:100px;text-align:center;">발주일자</th>' +
+          '<th style="width:160px;">납품처</th>' +
           '<th>품목정보</th>' +
-          '<th style="width:70px;text-align:center;">작성자</th>' +
-          '<th style="width:120px;text-align:center;">수정/저장일시</th>' +
+          '<th style="width:80px;text-align:center;">작성자</th>' +
+          '<th style="width:140px;text-align:center;">수정/저장일시</th>' +
           '<th style="width:60px;text-align:center;">상태</th>' +
           '</tr></thead><tbody>' +
           list.map(h => {
             const tdStyle = h.cancelled ? 'text-decoration:line-through;color:var(--text-3);' : '';
             return `<tr ondblclick="window.location.hash='doc-detail-${h.id}'" title="더블클릭: 상세/수정" style="cursor:pointer; transition:background-color 0.1s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor=''">
-              <td style="text-align:center;font-size:11px;font-family:Geist Mono,monospace;${tdStyle}">${h.issueNo}</td>
-              <td style="text-align:center;font-size:12px;${tdStyle}">${h.orderDate || ''}</td>
-              <td style="font-weight:600;font-size:12px;${tdStyle}">${h.client}</td>
-              <td style="font-size:12px;${tdStyle}">${h.items.map(i => i.name1).join(' · ')}</td>
-              <td style="text-align:center;font-size:12px;${tdStyle}">${h.author || ''}</td>
-              <td style="text-align:center;font-size:10px;color:var(--text-3);">${h.updatedAt || h.savedAt || ''}</td>
+              <td style="text-align:center;font-size:12px;color:var(--text-muted);font-family:Geist Mono,monospace;${tdStyle}">${h.issueNo}</td>
+              <td style="text-align:center;font-size:12px;font-family:Geist Mono,monospace;${tdStyle}">${h.orderDate || '-'}</td>
+              <td style="font-weight:600;font-size:13px;${tdStyle}">${h.client}</td>
+              <td style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;${tdStyle}">${h.items.map(i => i.name1).join(', ')}</td>
+              <td style="text-align:center;font-size:12px;${tdStyle}">${h.author || '-'}</td>
+              <td style="text-align:center;font-size:12px;color:var(--text-3);font-family:Geist Mono,monospace;">${h.updatedAt || h.savedAt || ''}</td>
               <td style="text-align:center;">
                 <span class="badge ${h.cancelled ? 'b-inactive' : 'b-active'}">${h.cancelled ? '취소' : '정상'}</span>
               </td>
