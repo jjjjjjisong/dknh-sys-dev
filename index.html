@@ -1319,9 +1319,31 @@
         font-size: 6pt !important;
       }
 
-      #print-area.invoice-mode .approval-grid {
-        margin-bottom: 2px !important;
+      #print-area .approval-grid {
+        display: flex !important;
         min-width: 0 !important;
+        margin-bottom: 2px !important;
+      }
+
+      #print-area .approval-group {
+        display: flex !important;
+        flex: 1 !important;
+        border: 1px solid #999 !important;
+      }
+
+      #print-area .approval-group + .approval-group {
+        margin-left: -1px !important;
+        border-left: 2px solid #333 !important;
+      }
+
+      #print-area .approval-cell {
+        flex: 1 !important;
+        text-align: center !important;
+        border-right: 1px solid #999 !important;
+      }
+
+      #print-area .approval-cell:last-child {
+        border-right: none !important;
       }
 
       #print-area.invoice-mode .approval-body {
@@ -1348,10 +1370,11 @@
       }
 
       #print-area.release-mode .doc-title {
-        font-size: 26pt !important;
-        margin-bottom: 4px !important;
-        letter-spacing: .1em !important;
-        text-align: left !important;
+        font-size: 36pt !important;
+        margin-bottom: 12px !important;
+        letter-spacing: .2em !important;
+        text-align: center !important;
+        font-weight: 900 !important;
       }
 
       #print-area.release-mode .doc-subtitle {
