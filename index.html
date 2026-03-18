@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -86,7 +86,7 @@
     }
 
     body {
-      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text-1);
       font-size: 13.5px;
@@ -464,7 +464,7 @@
       font-weight: 500;
       cursor: pointer;
       border: 1px solid transparent;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       transition: all .12s;
       white-space: nowrap;
       line-height: 1.2;
@@ -575,7 +575,7 @@
       border-radius: var(--r);
       padding: 8px 11px;
       font-size: 13px;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       background: var(--surface);
       color: var(--text-1);
       transition: border-color .12s, box-shadow .12s;
@@ -646,7 +646,7 @@
       border-radius: var(--r-sm);
       padding: 5px 8px;
       font-size: 13px;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       background: var(--surface);
       width: 100%;
     }
@@ -943,7 +943,7 @@
       border-radius: var(--r);
       padding: 8px 12px;
       font-size: 13px;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       background: var(--surface);
       outline: none;
       transition: border-color .12s, box-shadow .12s;
@@ -959,7 +959,7 @@
       border-radius: var(--r);
       padding: 7px 10px;
       font-size: 13px;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       background: var(--surface);
       color: var(--text-1);
       outline: none;
@@ -1060,7 +1060,7 @@
 
     /* ── DOC STYLES (print) ── */
     .doc {
-      font-family: '맑은 고딕', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', '맑은 고딕', 'Malgun Gothic', sans-serif;
       font-size: 10pt;
     }
 
@@ -1439,7 +1439,7 @@
       border-radius: var(--r);
       padding: 10px 13px;
       font-size: 14px;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       background: var(--surface);
       color: var(--text-1);
       outline: none;
@@ -1466,7 +1466,7 @@
       border-radius: var(--r);
       font-size: 14px;
       font-weight: 600;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       cursor: pointer;
       transition: background .12s, transform .08s;
       letter-spacing: .01em;
@@ -1565,7 +1565,7 @@
       border: 1px solid #FDE68A;
       border-radius: var(--r-sm);
       cursor: pointer;
-      font-family: 'Noto Sans KR', sans-serif;
+      font-family: 'Pretendard Variable', sans-serif;
       transition: all .12s;
     }
 
@@ -1786,7 +1786,7 @@
                 <div class="field col-span-3"><label>요청사항 <span
                       style="font-size:11px;color:var(--text-3);font-weight:400;">(거래명세서 하단 인수자 위에 표시)</span></label>
                   <textarea id="request-note" rows="3" placeholder="요청사항을 입력하세요. 줄바꿈 그대로 반영됩니다."
-                    style="border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:var(--surface);color:var(--text-1);resize:vertical;outline:none;transition:border-color .12s,box-shadow .12s;width:100%;"></textarea>
+                    style="border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:'Pretendard Variable',sans-serif;background:var(--surface);color:var(--text-1);resize:vertical;outline:none;transition:border-color .12s,box-shadow .12s;width:100%;"></textarea>
                 </div>
               </div>
             </div>
@@ -2813,7 +2813,7 @@
       </td>
       <td><textarea rows="2" placeholder="비고"
         oninput="onDocItemNote(${idx},this.value)"
-        style="font-size:11px;border:1px solid var(--border);border-radius:4px;padding:3px 6px;width:100%;resize:none;font-family:'Noto Sans KR',sans-serif;background:var(--surface);">${item.itemNote || ''}</textarea></td>
+        style="font-size:11px;border:1px solid var(--border);border-radius:4px;padding:3px 6px;width:100%;resize:none;font-family:'Pretendard Variable',sans-serif;background:var(--surface);">${item.itemNote || ''}</textarea></td>
       <td><button class="btn btn-danger btn-sm" style="padding:4px 7px;" onclick="removeDocItem(${idx})">✕</button></td>
     </tr>`;
         }).join('');
@@ -3436,7 +3436,7 @@
           onchange="histEditItem('${id}',${i},'vat',this.checked)"><span class="sw-track"></span></label>
       </td>
       <td><textarea rows="2" onchange="histEditItem('${id}',${i},'itemNote',this.value)"
-        style="font-size:11px;border:1px solid var(--border);border-radius:4px;padding:3px 6px;width:100%;resize:none;font-family:'Noto Sans KR',sans-serif;background:var(--surface);">${it.itemNote || ''}</textarea></td>
+        style="font-size:11px;border:1px solid var(--border);border-radius:4px;padding:3px 6px;width:100%;resize:none;font-family:'Pretendard Variable',sans-serif;background:var(--surface);">${it.itemNote || ''}</textarea></td>
     </tr>`;
         }).join('');
 
@@ -3473,7 +3473,7 @@
             <input type="text" value="${(h.remark || '').replace(/"/g, '&quot;')}" onchange="histEdit('${id}','remark',this.value)" style="${fStyle}"></div>
           <div class="field col-span-2"><label>요청사항</label>
             <textarea rows="2" onchange="histEdit('${id}','requestNote',this.value)"
-              style="border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:'Noto Sans KR',sans-serif;background:var(--surface);width:100%;resize:vertical;">${(h.requestNote || '').replace(/</g, '&lt;')}</textarea></div>
+              style="border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:'Pretendard Variable',sans-serif;background:var(--surface);width:100%;resize:vertical;">${(h.requestNote || '').replace(/</g, '&lt;')}</textarea></div>
         </div>
       </div>
       <div style="background:var(--bg);border-radius:var(--r);padding:12px 14px;">
