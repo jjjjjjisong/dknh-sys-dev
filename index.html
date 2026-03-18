@@ -1179,7 +1179,8 @@
     }
 
     .approval-grid {
-      display: flex; /* grid 대신 flex로 변경하여 그룹간 선 추가 */
+      display: flex;
+      /* grid 대신 flex로 변경하여 그룹간 선 추가 */
       min-width: 340px;
     }
 
@@ -1189,9 +1190,11 @@
       border: 1px solid #999;
     }
 
-    .approval-group + .approval-group {
-      margin-left: -1px; /* 겹치기 */
-      border-left: 2px solid #333; /* 그룹 사이에 더 진한/굵은 선 */
+    .approval-group+.approval-group {
+      margin-left: -1px;
+      /* 겹치기 */
+      border-left: 2px solid #333;
+      /* 그룹 사이에 더 진한/굵은 선 */
     }
 
     .approval-cell {
@@ -1256,10 +1259,11 @@
         font-size: 6pt !important;
       }
 
-      #print-area.invoice-mode .doc-title {
+      #print-area.invoice-mode .doc div.doc-title {
         font-size: 10pt !important;
         margin-bottom: 1px !important;
         letter-spacing: .05em !important;
+        text-align: center !important;
       }
 
       #print-area.invoice-mode .doc-subtitle {
@@ -1331,7 +1335,7 @@
         border: 1px solid #999 !important;
       }
 
-      #print-area .approval-group + .approval-group {
+      #print-area .approval-group+.approval-group {
         margin-left: -1px !important;
         border-left: 2px solid #333 !important;
       }
@@ -1369,8 +1373,8 @@
         font-size: 13pt !important;
       }
 
-      #print-area.release-mode .doc-title {
-        font-size: 26pt !important;
+      #print-area.release-mode .doc div.doc-title {
+        font-size: 22pt !important;
         margin-bottom: 12px !important;
         letter-spacing: .2em !important;
         text-align: center !important;
@@ -2418,20 +2422,20 @@
             db.from('documents').select('*, document_items(*)').order('created_at', { ascending: false }),
             db.from('order_book').select('*').order('created_at', { ascending: false }),
           ]);
-          clients  = (cRes.data  || []).map(c => ({ ...c, name: c.name, _id: String(c.id) }));
-          products = (pRes.data  || []).map(p => ({ ...p, _id: String(p.id) }));
-          history  = (hRes.data  || []).map(d => dbDocToLocal(d));
+          clients = (cRes.data || []).map(c => ({ ...c, name: c.name, _id: String(c.id) }));
+          products = (pRes.data || []).map(p => ({ ...p, _id: String(p.id) }));
+          history = (hRes.data || []).map(d => dbDocToLocal(d));
           orderBook = (oRes.data || []).map(o => dbObToLocal(o));
 
           // Supabase가 비어있으면 SEED 데이터 삽입
-          if (!clients.length)  await seedClients();
+          if (!clients.length) await seedClients();
           if (!products.length) await seedProducts();
-        } catch(e) {
+        } catch (e) {
           console.error('[Supabase] 데이터 로드 실패, localStorage 폴백:', e);
           // 폴백: localStorage
-          try { clients  = JSON.parse(localStorage.getItem('dkh_clients')  || '[]') || SEED_CLIENTS; } catch(_){}
-          try { products = JSON.parse(localStorage.getItem('dkh_products') || '[]') || SEED_PRODUCTS; } catch(_){}
-          try { history  = JSON.parse(localStorage.getItem('dkh_history')  || '[]'); } catch(_){}
+          try { clients = JSON.parse(localStorage.getItem('dkh_clients') || '[]') || SEED_CLIENTS; } catch (_) { }
+          try { products = JSON.parse(localStorage.getItem('dkh_products') || '[]') || SEED_PRODUCTS; } catch (_) { }
+          try { history = JSON.parse(localStorage.getItem('dkh_history') || '[]'); } catch (_) { }
         }
         populateClientSelect();
         populateProductClientFilter();
@@ -2444,7 +2448,7 @@
 
       // DB 문서 레코드 → 로컬 history 형식 변환
       function dbDocToLocal(d) {
-        const items = (d.document_items || []).sort((a,b)=>a.seq-b.seq).map(i => ({
+        const items = (d.document_items || []).sort((a, b) => a.seq - b.seq).map(i => ({
           name1: i.name1, name2: i.name2, gubun: i.gubun,
           qty: i.qty, unitPrice: i.unit_price, supply: i.supply,
           vat: i.vat, orderDate: i.order_date, arriveDate: i.arrive_date,
@@ -2476,26 +2480,26 @@
       // SEED 데이터 삽입 (Supabase가 비어있을 때)
       async function seedClients() {
         const rows = SEED_CLIENTS.map(c => ({
-          name: c.name, manager: c.manager||'', tel: c.tel||'',
-          addr: c.addr||'', time: c.time||'', lunch: c.lunch||'',
-          note: c.note||'', active: c.active !== false,
+          name: c.name, manager: c.manager || '', tel: c.tel || '',
+          addr: c.addr || '', time: c.time || '', lunch: c.lunch || '',
+          note: c.note || '', active: c.active !== false,
         }));
         const { data } = await db.from('clients').insert(rows).select();
-        clients = (data||[]).map(c => ({ ...c, _id: String(c.id) }));
+        clients = (data || []).map(c => ({ ...c, _id: String(c.id) }));
       }
 
       async function seedProducts() {
         const rows = SEED_PRODUCTS.map(p => ({
           no: p.no, gubun: p.gubun, client: p.client,
-          name1: p.name1, name2: p.name2||'', supplier: p.supplier||'',
-          cost_price: p.cost_price||null, sell_price: p.sell_price||null,
-          ea_per_b: p.ea_per_b||null, box_per_p: p.box_per_p||null,
-          ea_per_p: p.ea_per_p||null, pallets_per_truck: p.pallets_per_truck||null,
+          name1: p.name1, name2: p.name2 || '', supplier: p.supplier || '',
+          cost_price: p.cost_price || null, sell_price: p.sell_price || null,
+          ea_per_b: p.ea_per_b || null, box_per_p: p.box_per_p || null,
+          ea_per_p: p.ea_per_p || null, pallets_per_truck: p.pallets_per_truck || null,
         }));
         // 배치 삽입 (100개씩)
         for (let i = 0; i < rows.length; i += 100) {
-          const { data } = await db.from('products').insert(rows.slice(i, i+100)).select();
-          products.push(...(data||[]).map(p => ({ ...p, _id: String(p.id) })));
+          const { data } = await db.from('products').insert(rows.slice(i, i + 100)).select();
+          products.push(...(data || []).map(p => ({ ...p, _id: String(p.id) })));
         }
       }
 
@@ -2794,7 +2798,7 @@
           ).join('');
           const eaB = p ? p.ea_per_b : item.manualEaB;
           const boxP = p ? p.box_per_p : item.manualBoxP;
-          
+
           const pAuto = item.qty && eaB && boxP
             ? Math.ceil(item.qty / (eaB * boxP)) : '';
           const bAuto = item.qty && eaB
@@ -2825,8 +2829,8 @@
           oninput="onDocManualName(${idx},this.value)"
           style="margin-top:4px;font-size:12px;border:1px solid var(--accent);border-radius:4px;padding:5px 8px;width:100%;background:#F8FAFF;outline:none;">
         <div style="display:flex; gap:4px; margin-top:4px;">
-          <input type="number" value="${item.manualEaB||''}" placeholder="1BOX=ea" oninput="onDocManualEaB(${idx},this.value)" style="flex:1;font-size:10px;border:1px solid var(--border);border-radius:4px;padding:3px;text-align:right;">
-          <input type="number" value="${item.manualBoxP||''}" placeholder="1P=BOX" oninput="onDocManualBoxP(${idx},this.value)" style="flex:1;font-size:10px;border:1px solid var(--border);border-radius:4px;padding:3px;text-align:right;">
+          <input type="number" value="${item.manualEaB || ''}" placeholder="1BOX=ea" oninput="onDocManualEaB(${idx},this.value)" style="flex:1;font-size:10px;border:1px solid var(--border);border-radius:4px;padding:3px;text-align:right;">
+          <input type="number" value="${item.manualBoxP || ''}" placeholder="1P=BOX" oninput="onDocManualBoxP(${idx},this.value)" style="flex:1;font-size:10px;border:1px solid var(--border);border-radius:4px;padding:3px;text-align:right;">
         </div>
         ` : ''}
       </td>
@@ -2904,7 +2908,7 @@
           // 파렛트·BOX 갱신 (직접입력도 지원)
           const eaB = p ? p.ea_per_b : docItems[idx].manualEaB;
           const boxP = p ? p.box_per_p : docItems[idx].manualBoxP;
-          
+
           const pVal = docItems[idx].qty && eaB && boxP
             ? Math.ceil(docItems[idx].qty / (eaB * boxP)) : null;
           const bVal = docItems[idx].qty && eaB
@@ -3292,11 +3296,11 @@
           document.getElementById('issue-no').value = issueNo;
 
           // 로컬 history 업데이트
-          history.unshift(dbDocToLocal({ ...docRow, id: doc.id, document_items: itemRows.map((it,i)=>({...it,seq:i+1})) }));
+          history.unshift(dbDocToLocal({ ...docRow, id: doc.id, document_items: itemRows.map((it, i) => ({ ...it, seq: i + 1 })) }));
           refreshDashboard();
           alert(`저장 완료 (발급번호: ${data.issueNo})`);
           return true;
-        } catch(e) {
+        } catch (e) {
           console.error('[Supabase] 문서 저장 실패:', e);
           alert('저장 실패: ' + (e.message || e));
           return false;
@@ -3530,24 +3534,24 @@
         if (currentUser) h.author = currentUser.name;
         try {
           const updateRow = {
-            issue_no: h.issueNo, client: h.client, manager: h.manager||'',
-            manager_tel: h.managerTel||'', receiver: h.receiver||'',
-            order_date: h.orderDate||null, arrive_date: h.arriveDate||null,
-            delivery_addr: h.deliveryAddr||'', remark: h.remark||'',
-            request_note: h.requestNote||'',
-            total_supply: h.totalSupply||0, total_vat: h.totalVat||0, total_amount: h.totalAmount||0,
+            issue_no: h.issueNo, client: h.client, manager: h.manager || '',
+            manager_tel: h.managerTel || '', receiver: h.receiver || '',
+            order_date: h.orderDate || null, arrive_date: h.arriveDate || null,
+            delivery_addr: h.deliveryAddr || '', remark: h.remark || '',
+            request_note: h.requestNote || '',
+            total_supply: h.totalSupply || 0, total_vat: h.totalVat || 0, total_amount: h.totalAmount || 0,
             author: h.author,
           };
           await db.from('documents').update(updateRow).eq('id', id);
           // 아이템 업데이트: 삭제 후 재삽입
           await db.from('document_items').delete().eq('document_id', id);
           if (h.items && h.items.length) {
-            await db.from('document_items').insert(h.items.map((it,idx) => ({
-              document_id: id, seq: idx+1,
-              name1: it.name1||'', name2: it.name2||'', gubun: it.gubun||'기타',
-              qty: it.qty||0, unit_price: it.unitPrice||0, supply: it.supply||0,
-              vat: it.vat||false, order_date: it.orderDate||null, arrive_date: it.arriveDate||null,
-              item_note: it.itemNote||'', ea_per_b: it.ea_per_b||null, box_per_p: it.box_per_p||null,
+            await db.from('document_items').insert(h.items.map((it, idx) => ({
+              document_id: id, seq: idx + 1,
+              name1: it.name1 || '', name2: it.name2 || '', gubun: it.gubun || '기타',
+              qty: it.qty || 0, unit_price: it.unitPrice || 0, supply: it.supply || 0,
+              vat: it.vat || false, order_date: it.orderDate || null, arrive_date: it.arriveDate || null,
+              item_note: it.itemNote || '', ea_per_b: it.ea_per_b || null, box_per_p: it.box_per_p || null,
             })));
           }
           const now = new Date();
@@ -3556,7 +3560,7 @@
           if (el) el.textContent = h.updatedAt;
           refreshDashboard(); renderHistory();
           alert('수정이 저장되었습니다.');
-        } catch(e) { alert('저장 실패: ' + (e.message||e)); }
+        } catch (e) { alert('저장 실패: ' + (e.message || e)); }
       }
       async function toggleCancel(id) {
         const h = history.find(x => String(x.id) === String(id));
@@ -3570,7 +3574,7 @@
           // 로컬 orderBook도 동기화
           orderBook.forEach(ob => { if (ob.docId === String(id)) ob.cancelled = h.cancelled; });
           refreshDashboard(); renderHistory(); closeHistPanel();
-        } catch(e) { h.cancelled = !h.cancelled; alert('처리 실패: ' + (e.message||e)); }
+        } catch (e) { h.cancelled = !h.cancelled; alert('처리 실패: ' + (e.message || e)); }
       }
 
       function rePreviewFromHist(id, type) {
@@ -3687,14 +3691,14 @@
           if (id) {
             await db.from('order_book').update(row).eq('id', id);
             const idx = orderBook.findIndex(x => String(x.id) === String(id));
-            if (idx > -1) orderBook[idx] = { ...orderBook[idx], ...dbObToLocal({...row, id}) };
+            if (idx > -1) orderBook[idx] = { ...orderBook[idx], ...dbObToLocal({ ...row, id }) };
           } else {
             const { data } = await db.from('order_book').insert(row).select().single();
             orderBook.unshift(dbObToLocal(data));
           }
           renderOrderBook();
           closeModal('order-modal');
-        } catch(e) { alert('저장 실패: ' + (e.message||e)); }
+        } catch (e) { alert('저장 실패: ' + (e.message || e)); }
       }
 
       async function deleteOrderEntry(id) {
@@ -3703,7 +3707,7 @@
           await db.from('order_book').delete().eq('id', id);
           orderBook = orderBook.filter(x => String(x.id) !== String(id));
           renderOrderBook();
-        } catch(e) { alert('삭제 실패: ' + (e.message||e)); }
+        } catch (e) { alert('삭제 실패: ' + (e.message || e)); }
       }
 
       // 문서 저장 → 수주대장 자동 추가 (Supabase)
@@ -3820,7 +3824,7 @@
           populateClientSelect();
           renderClients();
           closeModal('client-modal');
-        } catch(e) { alert('저장 실패: ' + (e.message||e)); }
+        } catch (e) { alert('저장 실패: ' + (e.message || e)); }
       }
 
       async function deleteClient(idx) {
@@ -3830,7 +3834,7 @@
           clients.splice(idx, 1);
           populateClientSelect();
           renderClients();
-        } catch(e) { alert('삭제 실패: ' + (e.message||e)); }
+        } catch (e) { alert('삭제 실패: ' + (e.message || e)); }
       }
 
       function exportClientsExcel() {
@@ -3956,7 +3960,7 @@
           products.splice(idx, 1);
           populateProductClientFilter();
           renderProducts();
-        } catch(e) { alert('삭제 실패: ' + (e.message||e)); }
+        } catch (e) { alert('삭제 실패: ' + (e.message || e)); }
       }
 
       function exportProductsExcel() {
