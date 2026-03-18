@@ -2446,6 +2446,17 @@
         refreshDashboard();
       }
 
+      // KST(한국시간) YYYY-MM-DD HH:mm 포맷 변환
+      function formatKst(isoStr) {
+        if (!isoStr) return '';
+        try {
+          const d = new Date(isoStr);
+          if (isNaN(d.getTime())) return isoStr;
+          const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+          return kst.toISOString().replace('T', ' ').substring(0, 16);
+        } catch(e) { return isoStr; }
+      }
+
       // DB 문서 레코드 → 로컬 history 형식 변환
       function dbDocToLocal(d) {
         const items = (d.document_items || []).sort((a, b) => a.seq - b.seq).map(i => ({
@@ -2461,7 +2472,7 @@
           deliveryAddr: d.delivery_addr, remark: d.remark,
           requestNote: d.request_note,
           totalSupply: d.total_supply, totalVat: d.total_vat, totalAmount: d.total_amount,
-          author: d.author, savedAt: d.created_at, updatedAt: d.updated_at,
+          author: d.author, savedAt: formatKst(d.created_at), updatedAt: formatKst(d.updated_at),
           cancelled: d.cancelled, items,
         };
       }
@@ -3296,7 +3307,7 @@
           document.getElementById('issue-no').value = issueNo;
 
           // 로컬 history 업데이트
-          history.unshift(dbDocToLocal({ ...docRow, id: doc.id, document_items: itemRows.map((it, i) => ({ ...it, seq: i + 1 })) }));
+          history.unshift(dbDocToLocal({ ...doc, document_items: itemRows.map((it, i) => ({ ...it, seq: i + 1 })) }));
           refreshDashboard();
           alert(`저장 완료 (발급번호: ${data.issueNo})`);
           return true;
@@ -3555,7 +3566,7 @@
             })));
           }
           const now = new Date();
-          h.updatedAt = now.toLocaleDateString('ko-KR') + ' ' + now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+          h.updatedAt = formatKst(now.toISOString());
           const el = document.getElementById('hd-updated-' + id);
           if (el) el.textContent = h.updatedAt;
           refreshDashboard(); renderHistory();
