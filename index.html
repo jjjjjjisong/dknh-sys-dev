@@ -3035,13 +3035,13 @@
           const ad = (it.arriveDate || data.arriveDate || data.orderDate || '').slice(5).replace('-', ' / ');
           totQ += (it.qty || 0);
           rowsArray.push(`<tr>
-            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:4px;height:24px;text-align:center;font-size:9pt;">${ad}</td>
-            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:4px;text-align:left;font-size:9pt;">${it.name2 || it.name1}</td>
-            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:4px;text-align:right;font-size:9pt;">${fmtN(it.qty)}</td>
-            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:4px;text-align:right;font-size:9pt;">${it.unitPrice ? fmtN(it.unitPrice) : ''}</td>
-            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:4px;text-align:right;font-size:9pt;">${s === 0 ? '' : fmtN(s)}</td>
-            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:4px;text-align:right;font-size:9pt;">${it.vat ? fmtN(v) : ''}</td>
-            <td style="border-bottom:1px solid #000;padding:4px;text-align:left;font-size:9pt;">${it.itemNote || ''}</td>
+            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px 3px;height:18px;text-align:center;font-size:7pt;">${ad}</td>
+            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px 3px;text-align:left;font-size:7pt;">${it.name2 || it.name1}</td>
+            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px 3px;text-align:right;font-size:7pt;">${fmtN(it.qty)}</td>
+            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px 3px;text-align:right;font-size:7pt;">${it.unitPrice ? fmtN(it.unitPrice) : ''}</td>
+            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px 3px;text-align:right;font-size:7pt;">${s === 0 ? '' : fmtN(s)}</td>
+            <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px 3px;text-align:right;font-size:7pt;">${it.vat ? fmtN(v) : ''}</td>
+            <td style="border-bottom:1px solid #000;padding:2px 3px;text-align:left;font-size:7pt;">${it.itemNote || ''}</td>
           </tr>`);
         }
         const rows = rowsArray.join('');
@@ -3054,45 +3054,45 @@
         const issueDateFmt = issueDate ? `${issueDate.slice(0,4)} 년 ${parseInt(issueDate.slice(5,7))} 월 ${parseInt(issueDate.slice(8,10))} 일` : '　　 년 　 월 　 일';
 
         const invoiceContent = (titleSuffix) => `
-          <div class="doc-title" style="text-align:center;font-size:15pt;font-weight:900;margin-bottom:6px;letter-spacing:0.1em;">
-            거 래 명 세 표 <span style="font-size:11pt;font-weight:normal;">${titleSuffix}</span>
+          <div class="doc-title" style="text-align:center;font-size:13pt;font-weight:900;margin-bottom:4px;letter-spacing:0.1em;">
+            거 래 명 세 표 <span style="font-size:9pt;font-weight:normal;">${titleSuffix}</span>
           </div>
           
           <table style="width:100%;border-collapse:collapse;border:2px solid #000;margin-bottom:0;">
             <tr>
               <td style="width:45%;border-right:1px solid #000;vertical-align:top;padding:0;">
                 <table style="width:100%;border-collapse:collapse;text-align:center;height:100%;">
-                  <tr><td colspan="2" style="border-bottom:1px solid #000;padding:8px 6px;font-size:9pt;">${issueDateFmt}</td></tr>
+                  <tr><td colspan="2" style="border-bottom:1px solid #000;padding:5px 4px;font-size:7pt;">${issueDateFmt}</td></tr>
                   <tr>
-                    <td style="border-bottom:1px solid #000;padding:8px 6px;font-size:9pt;font-weight:bold;">${data.client || ''}</td>
-                    <td style="border-bottom:1px solid #000;padding:8px 6px;width:40px;font-size:9pt;">귀하</td>
+                    <td style="border-bottom:1px solid #000;padding:5px 4px;font-size:7pt;font-weight:bold;">${data.client || ''}</td>
+                    <td style="border-bottom:1px solid #000;padding:5px 4px;width:30px;font-size:7pt;">귀하</td>
                   </tr>
-                  <tr><td colspan="2" style="border-bottom:1px solid #000;padding:6px 6px;font-size:9pt;">아래와 같이 계산합니다</td></tr>
-                  <tr><td colspan="2" style="padding:10px 8px;text-align:left;font-size:10pt;">( ₩ <span style="display:inline-block;width:120px;text-align:center;font-weight:bold;font-size:10pt;">${fmtN(total)}</span> ) VAT 포함</td></tr>
+                  <tr><td colspan="2" style="border-bottom:1px solid #000;padding:4px;font-size:7pt;">아래와 같이 계산합니다</td></tr>
+                  <tr><td colspan="2" style="padding:6px 5px;text-align:left;font-size:8pt;">( ₩ <span style="display:inline-block;width:100px;text-align:center;font-weight:bold;font-size:8pt;">${fmtN(total)}</span> ) VAT 포함</td></tr>
                 </table>
               </td>
               <td style="width:55%;padding:0;">
                 <table style="width:100%;border-collapse:collapse;text-align:center;height:100%;">
                   <tr>
-                    <td rowspan="4" style="width:24px;border-right:1px solid #000;padding:3px;font-size:10pt;line-height:1.6;">공<br><br>급<br><br>자</td>
-                    <td style="width:50px;border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;font-size:10pt;">등록<br>번호</td>
-                    <td colspan="3" style="border-bottom:1px solid #000;padding:3px;letter-spacing:0.1em;font-weight:bold;font-size:10pt;">113 - 88 - 02729</td>
+                    <td rowspan="4" style="width:18px;border-right:1px solid #000;padding:2px;font-size:8pt;line-height:1.5;">공<br><br>급<br><br>자</td>
+                    <td style="width:40px;border-right:1px solid #000;border-bottom:1px solid #000;padding:2px;font-size:8pt;">등록<br>번호</td>
+                    <td colspan="3" style="border-bottom:1px solid #000;padding:2px;letter-spacing:0.1em;font-weight:bold;font-size:8pt;">113 - 88 - 02729</td>
                   </tr>
                   <tr>
-                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;font-size:10pt;">상호</td>
-                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;font-weight:bold;font-size:10pt;">㈜디케이앤에이치</td>
-                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;width:30px;font-size:10pt;">성명</td>
-                    <td style="border-bottom:1px solid #000;padding:3px;width:75px;font-size:10pt;white-space:nowrap;">김 주 영</td>
+                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px;font-size:8pt;">상호</td>
+                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px;font-weight:bold;font-size:8pt;">㈜디케이앤에이치</td>
+                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px;width:24px;font-size:8pt;">성명</td>
+                    <td style="border-bottom:1px solid #000;padding:2px;width:60px;font-size:8pt;white-space:nowrap;">김 주 영</td>
                   </tr>
                   <tr>
-                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;font-size:10pt;">사업장<br>주소</td>
-                    <td colspan="3" style="border-bottom:1px solid #000;padding:3px 4px;font-size:10pt;word-break:keep-all;">서울 동대문구 장한로 21, 5층 507호(북한연구소빌딩)</td>
+                    <td style="border-right:1px solid #000;border-bottom:1px solid #000;padding:2px;font-size:8pt;">사업장<br>주소</td>
+                    <td colspan="3" style="border-bottom:1px solid #000;padding:2px 3px;font-size:8pt;word-break:keep-all;">서울 동대문구 장한로 21, 5층 507호(북한연구소빌딩)</td>
                   </tr>
                   <tr>
-                    <td style="border-right:1px solid #000;padding:3px;font-size:10pt;">업태</td>
-                    <td style="border-right:1px solid #000;padding:3px;font-size:10pt;letter-spacing:-0.5px;">도매및소매업,제조업</td>
-                    <td style="border-right:1px solid #000;padding:3px;font-size:10pt;width:30px;">종목</td>
-                    <td style="padding:3px;font-size:9pt;white-space:nowrap;">식품용기류(플라스틱용기)</td>
+                    <td style="border-right:1px solid #000;padding:2px;font-size:8pt;">업태</td>
+                    <td style="border-right:1px solid #000;padding:2px;font-size:8pt;letter-spacing:-0.5px;">도매및소매업,제조업</td>
+                    <td style="border-right:1px solid #000;padding:2px;font-size:8pt;width:24px;">종목</td>
+                    <td style="padding:2px;font-size:7pt;white-space:nowrap;">식품용기류(플라스틱용기)</td>
                   </tr>
                 </table>
               </td>
@@ -3101,51 +3101,51 @@
 
           <table style="width:100%;border-collapse:collapse;border:2px solid #000;border-top:none;">
             <tr>
-              <td style="width:20%;padding:6px 16px;font-weight:bold;font-size:10pt;border-right:1px solid #000;">합 계 금 액</td>
-              <td style="padding:6px 16px;text-align:right;font-weight:bold;font-size:10pt;">${fmtN(total)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 원 정</td>
+              <td style="width:20%;padding:4px 10px;font-weight:bold;font-size:8pt;border-right:1px solid #000;">합 계 금 액</td>
+              <td style="padding:4px 10px;text-align:right;font-weight:bold;font-size:8pt;">${fmtN(total)} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 원 정</td>
             </tr>
           </table>
 
           <table style="width:100%;border-collapse:collapse;border:2px solid #000;border-top:none;text-align:center;">
             <thead>
               <tr style="background:#f9fafb;">
-                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:5px;width:60px;font-size:10pt;">입고일</th>
-                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:5px;font-size:10pt;">품 목</th>
-                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:5px;width:55px;font-size:10pt;">수량</th>
-                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:5px;width:65px;font-size:10pt;">단 가</th>
-                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:5px;width:80px;font-size:10pt;">공급가액</th>
-                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:5px;width:65px;font-size:10pt;">세액</th>
-                <th style="border-bottom:1px solid #000;padding:5px;width:70px;font-size:10pt;">비 고</th>
+                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;width:50px;font-size:8pt;">입고일</th>
+                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;font-size:8pt;">품 목</th>
+                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;width:45px;font-size:8pt;">수량</th>
+                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;width:55px;font-size:8pt;">단 가</th>
+                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;width:70px;font-size:8pt;">공급가액</th>
+                <th style="border-right:1px solid #000;border-bottom:1px solid #000;padding:3px;width:55px;font-size:8pt;">세액</th>
+                <th style="border-bottom:1px solid #000;padding:3px;width:85px;font-size:8pt;">비 고</th>
               </tr>
             </thead>
             <tbody>
               ${rows}
               <tr>
-                <td colspan="2" style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;font-weight:bold;font-size:10pt;">계</td>
-                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;font-weight:bold;text-align:right;font-size:10pt;">${fmtN(totQ)}</td>
-                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;"></td>
-                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;text-align:right;font-weight:bold;font-size:10pt;">${fmtN(sup)}</td>
-                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;text-align:right;font-weight:bold;font-size:10pt;">${fmtN(vatAmt)}</td>
-                <td style="border-top:1px solid #000;padding:5px;"></td>
+                <td colspan="2" style="border-right:1px solid #000;border-top:1px solid #000;padding:3px;font-weight:bold;font-size:8pt;">계</td>
+                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:3px;font-weight:bold;text-align:right;font-size:8pt;">${fmtN(totQ)}</td>
+                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:3px;"></td>
+                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:3px;text-align:right;font-weight:bold;font-size:8pt;">${fmtN(sup)}</td>
+                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:3px;text-align:right;font-weight:bold;font-size:8pt;">${fmtN(vatAmt)}</td>
+                <td style="border-top:1px solid #000;padding:3px;"></td>
               </tr>
               <tr>
-                <td colspan="4" style="border-right:1px solid #000;border-top:1px solid #000;padding:8px;font-weight:bold;font-size:10pt;letter-spacing:1.5em;">합  계</td>
-                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:8px;font-weight:bold;text-align:right;font-size:10pt;">${fmtN(total)}</td>
-                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:8px;font-weight:bold;font-size:10pt;letter-spacing:0.2em;">인 수 자</td>
-                <td style="border-top:1px solid #000;padding:8px;"></td>
+                <td colspan="4" style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;font-weight:bold;font-size:8pt;letter-spacing:1.5em;">합  계</td>
+                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;font-weight:bold;text-align:right;font-size:8pt;">${fmtN(total)}</td>
+                <td style="border-right:1px solid #000;border-top:1px solid #000;padding:5px;font-weight:bold;font-size:8pt;letter-spacing:0.2em;">인 수 자</td>
+                <td style="border-top:1px solid #000;padding:5px;"></td>
               </tr>
             </tbody>
           </table>
-          <div style="margin-top:8px;font-size:10pt;line-height:1.6;text-align:left;padding:0 4px;">
+          <div style="margin-top:6px;font-size:10pt;line-height:1.6;text-align:left;padding:0 4px;">
             ${data.remark ? `<div><strong style="color:#444;">참고사항 : </strong>${data.remark}</div>` : ''}
             <div><strong style="color:#444;">납 품 처 : </strong>${data.client || ''}${data.deliveryAddr ? ' / ' + data.deliveryAddr : ''}</div>
             ${(data.manager || data.managerTel) ? `<div><strong style="color:#444;">담 당 자 : </strong>${data.manager || ''}${data.managerTel ? ' / ' + data.managerTel : ''}</div>` : ''}
             ${data.requestNote ? `<div><strong style="color:#444;">요청사항 : </strong>${data.requestNote.replace(/\n/g, ' ')}</div>` : ''}
-            <div style="margin-top:10px;color:#666;font-size:9pt;">발급 No. ${data.issueNo}</div>
+            <div style="margin-top:8px;color:#666;font-size:7pt;">발급 No. ${data.issueNo}</div>
           </div>
         `;
 
-        return `<div class="doc" style="margin-bottom:20px;">${invoiceContent('(공급자용)')}</div>
+        return `<div class="doc" style="margin-bottom:14px;">${invoiceContent('(공급자용)')}</div>
   <div class="doc invoice-break">${invoiceContent('(공급받는자용)')}</div>`;
       }
 
