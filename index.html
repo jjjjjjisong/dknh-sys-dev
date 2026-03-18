@@ -2880,26 +2880,10 @@
       
       function onDocPallet(idx, val) { 
         docItems[idx].customPallet = val !== "" ? parseInt(val) : null;
-        const p = docItems[idx].product;
-        const eaB = p ? p.ea_per_b : docItems[idx].manualEaB;
-        const boxP = p ? p.box_per_p : docItems[idx].manualBoxP;
-        if (docItems[idx].customPallet !== null && eaB && boxP) {
-          docItems[idx].qty = docItems[idx].customPallet * boxP * eaB;
-          docItems[idx].customBox = docItems[idx].customPallet * boxP;
-          docItems[idx].customSupply = null;
-        }
         syncRowDOM(idx);
       }
       function onDocBox(idx, val) { 
         docItems[idx].customBox = val !== "" ? parseInt(val) : null;
-        const p = docItems[idx].product;
-        const eaB = p ? p.ea_per_b : docItems[idx].manualEaB;
-        const boxP = p ? p.box_per_p : docItems[idx].manualBoxP;
-        if (docItems[idx].customBox !== null && eaB) {
-          docItems[idx].qty = docItems[idx].customBox * eaB;
-          if (boxP) docItems[idx].customPallet = Math.ceil(docItems[idx].customBox / boxP);
-          docItems[idx].customSupply = null;
-        }
         syncRowDOM(idx);
       }
       function onDocUnitPrice(idx, val) {
