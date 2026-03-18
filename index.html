@@ -2984,8 +2984,10 @@
       function buildRelease(data) {
         const rows = data.items.map((it, i) => {
           const pEaP = (it.ea_per_b && it.box_per_p) ? (it.ea_per_b * it.box_per_p) : null;
-          const pVal = pEaP ? Math.ceil(it.qty / pEaP) : '-';
-          const bVal = it.ea_per_b ? Math.ceil(it.qty / it.ea_per_b) : '-';
+          let pVal = pEaP ? Math.ceil(it.qty / pEaP) : '-';
+          let bVal = it.ea_per_b ? Math.ceil(it.qty / it.ea_per_b) : '-';
+          if (it.customPallet !== null && it.customPallet !== undefined) pVal = it.customPallet;
+          if (it.customBox !== null && it.customBox !== undefined) bVal = it.customBox;
           const od = (it.orderDate || data.orderDate || '').slice(2).replace(/-/g, '.');
           const ad = (it.arriveDate || data.arriveDate || '').slice(2).replace(/-/g, '.');
           return `<tr>
@@ -3001,11 +3003,15 @@
     </tr>`;
         }).join('');
         const totP = data.items.reduce((s, it) => {
+          if (it.customPallet !== null && it.customPallet !== undefined) return s + it.customPallet;
           const e = (it.ea_per_b && it.box_per_p) ? it.ea_per_b * it.box_per_p : null;
           return s + (e ? Math.ceil(it.qty / e) : 0);
         }, 0);
-        const totB = data.items.reduce((s, it) => s + (it.ea_per_b ? Math.ceil(it.qty / it.ea_per_b) : 0), 0);
-        const totQ = data.items.reduce((s, it) => s + it.qty, 0);
+        const totB = data.items.reduce((s, it) => {
+          if (it.customBox !== null && it.customBox !== undefined) return s + it.customBox;
+          return s + (it.ea_per_b ? Math.ceil(it.qty / it.ea_per_b) : 0);
+        }, 0);
+        const totQ = data.items.reduce((s, it) => s + (it.qty || 0), 0);
 
         return `<div class="doc">
     <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
