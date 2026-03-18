@@ -1179,14 +1179,23 @@
     }
 
     .approval-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: flex; /* grid 대신 flex로 변경하여 그룹간 선 추가 */
+      min-width: 340px;
+    }
+
+    .approval-group {
+      display: flex;
+      flex: 1;
       border: 1px solid #999;
-      margin-bottom: 12px;
-      min-width: 320px;
+    }
+
+    .approval-group + .approval-group {
+      margin-left: -1px; /* 겹치기 */
+      border-left: 2px solid #333; /* 그룹 사이에 더 진한/굵은 선 */
     }
 
     .approval-cell {
+      flex: 1;
       border-right: 1px solid #999;
       text-align: center;
     }
@@ -3028,13 +3037,17 @@
         return `<div class="doc">
     <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
       <div class="approval-grid">
-        <div class="approval-cell"><div class="approval-hd">과장</div><div class="approval-body"></div></div>
-        <div class="approval-cell"><div class="approval-hd">실장</div><div class="approval-body"></div></div>
-        <div class="approval-cell"><div class="approval-hd">상무</div><div class="approval-body"></div></div>
-        <div class="approval-cell"><div class="approval-hd">대표</div><div class="approval-body"></div></div>
+        <div class="approval-group">
+          <div class="approval-cell"><div class="approval-hd">과장</div><div class="approval-body"></div></div>
+          <div class="approval-cell" style="border-right:none;"><div class="approval-hd">실장</div><div class="approval-body"></div></div>
+        </div>
+        <div class="approval-group">
+          <div class="approval-cell"><div class="approval-hd">상무</div><div class="approval-body"></div></div>
+          <div class="approval-cell" style="border-right:none;"><div class="approval-hd">대표</div><div class="approval-body"></div></div>
+        </div>
       </div>
     </div>
-    <div class="doc-title" style="font-size:24pt;font-weight:900;letter-spacing:.2em;margin-bottom:12px;">출 고 의 뢰 서</div>
+    <div class="doc-title" style="font-size:32pt;font-weight:900;letter-spacing:.3em;margin-bottom:16px;text-align:center;">출 고 의 뢰 서</div>
     <div class="doc-subtitle">수신: ${data.receiver || '세인테크 귀하'}&emsp;|&emsp;담당자: ${data.manager || '　　'}&emsp;|&emsp;발급 No. <strong>${data.issueNo}</strong></div>
     <table class="doc-tbl">
       <thead><tr><th>순</th><th>발주일</th><th>입고일</th><th>납품처</th><th>품 목</th><th>파렛트</th><th>BOX</th><th>수 량</th><th>비 고</th></tr></thead>
