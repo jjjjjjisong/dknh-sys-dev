@@ -3034,7 +3034,7 @@
         <div class="approval-cell"><div class="approval-hd">대표</div><div class="approval-body"></div></div>
       </div>
     </div>
-    <div class="doc-title">출 고 의 뢰 서</div>
+    <div class="doc-title" style="font-size:24pt;font-weight:900;letter-spacing:.2em;margin-bottom:12px;">출 고 의 뢰 서</div>
     <div class="doc-subtitle">수신: ${data.receiver || '세인테크 귀하'}&emsp;|&emsp;담당자: ${data.manager || '　　'}&emsp;|&emsp;발급 No. <strong>${data.issueNo}</strong></div>
     <table class="doc-tbl">
       <thead><tr><th>순</th><th>발주일</th><th>입고일</th><th>납품처</th><th>품 목</th><th>파렛트</th><th>BOX</th><th>수 량</th><th>비 고</th></tr></thead>
@@ -3051,6 +3051,7 @@
       ${data.deliveryAddr ? `<tr><td class="lbl">납품처</td><td>${data.deliveryAddr}</td></tr>` : ''}
       ${data.remark ? `<tr><td class="lbl">비 고</td><td>${data.remark}</td></tr>` : ''}
     </table>
+    ${data.requestNote ? `<div style="border:1px solid #ccc;border-radius:4px;padding:6px 10px;margin-top:6px;font-size:10pt;line-height:1.5;"><strong style="display:block;margin-bottom:2px;font-size:8.5pt;">요청사항</strong>${data.requestNote.replace(/\n/g, '<br>')}</div>` : ''}
     <div style="text-align:right;margin-top:24px;font-size:10pt;line-height:2;">
       ${fmtDate(data.orderDate)}<br><strong style="font-size:13pt;letter-spacing:.1em;">㈜ 디케이앤에이치</strong>
     </div>
