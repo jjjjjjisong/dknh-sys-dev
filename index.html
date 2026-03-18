@@ -1370,7 +1370,7 @@
       }
 
       #print-area.release-mode .doc-title {
-        font-size: 44pt !important;
+        font-size: 39pt !important;
         margin-bottom: 12px !important;
         letter-spacing: .2em !important;
         text-align: left !important;
@@ -2378,7 +2378,7 @@
             <div class="field col-span-3"><label>품목명 – 거래명세서</label><input type="text" id="pf-name2"
                 placeholder="거래명세서용 (비어있으면 위 품목명 사용)"></div>
             <div class="field"><label>외주 단가 (원/ea)</label><input type="number" id="pf-cost" placeholder="0"></div>
-            <div class="field"><label>판매 단가 (원/ea) *</label><input type="number" id="pf-sell" placeholder="0"></div>
+            <div class="field"><label>판매 단가 (원/ea)</label><input type="number" id="pf-sell" placeholder="0"></div>
             <div class="field"></div>
             <div class="field"><label>1 BOX = ea</label><input type="number" id="pf-ea-b" placeholder="예: 1800"></div>
             <div class="field"><label>1 파렛트 = BOX</label><input type="number" id="pf-box-p" placeholder="예: 24"></div>
@@ -3070,7 +3070,7 @@
         </div>
       </div>
     </div>
-    <div class="doc-title" style="font-size:38pt;font-weight:900;letter-spacing:.2em;margin-bottom:16px;text-align:left;">출 고 의 뢰 서</div>
+    <div class="doc-title" style="font-size:33pt;font-weight:900;letter-spacing:.2em;margin-bottom:16px;text-align:left;">출 고 의 뢰 서</div>
     <div class="doc-subtitle">수신: ${data.receiver || '세인테크 귀하'}&emsp;|&emsp;담당자: ${data.manager || '　　'}&emsp;|&emsp;발급 No. <strong>${data.issueNo}</strong></div>
     <table class="doc-tbl">
       <thead><tr><th>순</th><th>발주일</th><th>입고일</th><th>납품처</th><th>품 목</th><th>파렛트</th><th>BOX</th><th>수 량</th><th>비 고</th></tr></thead>
@@ -3923,7 +3923,6 @@
         const name1 = document.getElementById('pf-name1').value.trim();
         const sell = parseFloat(document.getElementById('pf-sell').value);
         if (!name1) { alert('품목명(출고의뢰서)을 입력하세요.'); return; }
-        if (isNaN(sell)) { alert('판매단가를 입력하세요.'); return; }
         const eaB = parseInt(document.getElementById('pf-ea-b').value) || null;
         const boxP = parseInt(document.getElementById('pf-box-p').value) || null;
         const obj = {
@@ -3934,7 +3933,7 @@
           name1,
           name2: document.getElementById('pf-name2').value.trim() || name1,
           cost_price: parseFloat(document.getElementById('pf-cost').value) || null,
-          sell_price: sell,
+          sell_price: isNaN(sell) ? null : sell,
           ea_per_b: eaB,
           box_per_p: boxP,
           ea_per_p: (eaB && boxP) ? eaB * boxP : null,
