@@ -2839,65 +2839,80 @@
       function onDocManualGubun(idx, val) { docItems[idx].manualGubun = val; }
       function onDocManualEaB(idx, val) { docItems[idx].manualEaB = parseInt(val) || null; onDocQty(idx, docItems[idx].qty); }
       function onDocManualBoxP(idx, val) { docItems[idx].manualBoxP = parseInt(val) || null; onDocQty(idx, docItems[idx].qty); }
-      function onDocQty(idx, val) {
-        const parsed = parseInt(val) || 0;
-        docItems[idx].qty = Math.min(parsed, 999999); // 최대 6자리(999,999)
-        docItems[idx].customSupply = null;
-        // 전체 re-render 없이 계산값만 갱신
-        const p = docItems[idx].product;
-        const unitPrice = docItems[idx].customPrice !== null && docItems[idx].customPrice !== undefined
-          ? docItems[idx].customPrice : (p ? p.sell_price : 0);
-        const sup = unitPrice ? Math.round(unitPrice * docItems[idx].qty) : 0;
-        docItems[idx].customSupply = null;
+      function syncRowDOM(idx) {
         const rows = document.getElementById('doc-items-body').rows;
-        if (rows[idx]) {
-          // 파렛트·BOX 갱신 (직접입력도 지원)
-          const eaB = p ? p.ea_per_b : docItems[idx].manualEaB;
-          const boxP = p ? p.box_per_p : docItems[idx].manualBoxP;
+        if (!rows[idx]) return;
+        const item = docItems[idx];
+        const p = item.product;
+        const eaB = p ? p.ea_per_b : item.manualEaB;
+        const boxP = p ? p.box_per_p : item.manualBoxP;
 
-          const pVal = docItems[idx].qty && eaB && boxP
-            ? Math.ceil(docItems[idx].qty / (eaB * boxP)) : null;
-          const bVal = docItems[idx].qty && eaB
-            ? Math.ceil(docItems[idx].qty / eaB) : null;
-          // 수동 수정값이 없을 때만 자동 계산값 반영
-          if (docItems[idx].customPallet === null || docItems[idx].customPallet === undefined) {
-            const pInput = document.getElementById('pallet-' + idx);
-            if (pInput) pInput.value = pVal || '';
-          }
-          if (docItems[idx].customBox === null || docItems[idx].customBox === undefined) {
-            const bInput = document.getElementById('box-' + idx);
-            if (bInput) bInput.value = bVal || '';
-          }
-          // 공급가액 갱신
-          const supInput = rows[idx].cells[9].querySelector('input');
-          if (supInput) supInput.value = sup || '';
-          docItems[idx].customSupply = sup || null;
-        }
+        const pAuto = item.qty && eaB && boxP ? Math.ceil(item.qty / (eaB * boxP)) : '';
+        const bAuto = item.qty && eaB ? Math.ceil(item.qty / eaB) : '';
+        const pVal = item.customPallet !== null && item.customPallet !== undefined ? item.customPallet : pAuto;
+        const bVal = item.customBox !== null && item.customBox !== undefined ? item.customBox : bAuto;
+
+        const unitPrice = item.customPrice !== null && item.customPrice !== undefined ? item.customPrice : (p ? p.sell_price : 0);
+        const supply = item.customSupply !== null && item.customSupply !== undefined ? item.customSupply : (unitPrice && item.qty ? Math.round(unitPrice * item.qty) : 0);
+
+        const cells = rows[idx].cells;
+        if(cells[5]) cells[5].querySelector('input').value = item.qty || '';
+        const pInp = document.getElementById('pallet-' + idx);
+        if(pInp) pInp.value = pVal !== '' ? pVal : '';
+        const bInp = document.getElementById('box-' + idx);
+        if(bInp) bInp.value = bVal !== '' ? bVal : '';
+        if(cells[8]) cells[8].querySelector('input').value = unitPrice || '';
+        if(cells[9]) cells[9].querySelector('input').value = supply || '';
+        
         updateTotals();
+      }
+
+      function onDocQty(idx, val) {
+        docItems[idx].qty = Math.min(parseInt(val) || 0, 999999);
+        docItems[idx].customPallet = null;
+        docItems[idx].customBox = null;
+        docItems[idx].customSupply = null; // force recalculate supply
+        syncRowDOM(idx);
       }
       function onDocVat(idx, v) { docItems[idx].vat = v; updateTotals(); }
       function onDocItemDate(idx, field, val) { docItems[idx][field] = val; }
       function onDocItemNote(idx, val) { docItems[idx].itemNote = val; }
-      function onDocPallet(idx, val) { docItems[idx].customPallet = val !== "" ? parseInt(val) : null; }
-      function onDocBox(idx, val) { docItems[idx].customBox = val !== "" ? parseInt(val) : null; }
-      function onDocUnitPrice(idx, val) {
-        docItems[idx].customPrice = parseFloat(val) || 0;
-        docItems[idx].customSupply = null; // 단가 바뀌면 공급가액 재계산
-        // 공급가액 셀만 업데이트 (전체 re-render 없이)
-        const rows = document.getElementById('doc-items-body').rows;
-        if (rows[idx]) {
-          const qty = docItems[idx].qty || 0;
-          const sup = Math.round((parseFloat(val) || 0) * qty);
+      
+      function onDocPallet(idx, val) { 
+        docItems[idx].customPallet = val !== "" ? parseInt(val) : null;
+        const p = docItems[idx].product;
+        const eaB = p ? p.ea_per_b : docItems[idx].manualEaB;
+        const boxP = p ? p.box_per_p : docItems[idx].manualBoxP;
+        if (docItems[idx].customPallet !== null && eaB && boxP) {
+          docItems[idx].qty = docItems[idx].customPallet * boxP * eaB;
+          docItems[idx].customBox = docItems[idx].customPallet * boxP;
           docItems[idx].customSupply = null;
-          const supInput = rows[idx].cells[9].querySelector('input');
-          if (supInput) supInput.value = sup || '';
-          docItems[idx].customSupply = sup || null;
         }
-        updateTotals();
+        syncRowDOM(idx);
+      }
+      function onDocBox(idx, val) { 
+        docItems[idx].customBox = val !== "" ? parseInt(val) : null;
+        const p = docItems[idx].product;
+        const eaB = p ? p.ea_per_b : docItems[idx].manualEaB;
+        const boxP = p ? p.box_per_p : docItems[idx].manualBoxP;
+        if (docItems[idx].customBox !== null && eaB) {
+          docItems[idx].qty = docItems[idx].customBox * eaB;
+          if (boxP) docItems[idx].customPallet = Math.ceil(docItems[idx].customBox / boxP);
+          docItems[idx].customSupply = null;
+        }
+        syncRowDOM(idx);
+      }
+      function onDocUnitPrice(idx, val) {
+        docItems[idx].customPrice = val !== "" ? parseFloat(val) : null;
+        docItems[idx].customSupply = null; 
+        syncRowDOM(idx);
       }
       function onDocSupply(idx, val) {
-        docItems[idx].customSupply = parseFloat(val) || 0;
-        updateTotals();
+        docItems[idx].customSupply = val !== "" ? parseFloat(val) : null;
+        if (docItems[idx].customSupply !== null && docItems[idx].qty > 0) {
+          docItems[idx].customPrice = docItems[idx].customSupply / docItems[idx].qty;
+        }
+        syncRowDOM(idx);
       }
       function removeDocItem(idx) { docItems.splice(idx, 1); renderDocItems(); }
 
