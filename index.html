@@ -2483,7 +2483,18 @@
 
       function handleHashChange() {
         const hash = window.location.hash.replace('#', '') || 'dashboard';
-        renderPage(hash);
+        if (hash.startsWith('doc-detail-')) {
+          const docId = hash.replace('doc-detail-', '');
+          renderPage('doc-history'); // 먼저 탭 활성화
+          viewHistDetail(docId, true); // 뒷단에서 상세 패널 열기
+        } else {
+          // 기존에 상세 패널이 열려있다면 닫기
+          const panel = document.getElementById('hist-edit-panel');
+          if (panel && panel.classList.contains('open')) {
+            closeHistPanel(true);
+          }
+          renderPage(hash);
+        }
       }
 
       function renderPage(page) {
@@ -2975,7 +2986,9 @@
             const name1 = i.product ? i.product.name1 : (i.manualName || '');
             const name2 = i.product ? (i.product.name2 || i.product.name1) : (i.manualName || '');
             const gubun = i.product ? i.product.gubun : (i.manualGubun || '기타');
-            return { ...i, unitPrice, supply, name1, name2, gubun, itemNote: i.itemNote || '' };
+            const ea_per_b = i.product ? i.product.ea_per_b : i.manualEaB;
+            const box_per_p = i.product ? i.product.box_per_p : i.manualBoxP;
+            return { ...i, unitPrice, supply, name1, name2, gubun, ea_per_b, box_per_p, itemNote: i.itemNote || '' };
           }),
         };
       }
@@ -3295,7 +3308,7 @@
           return;
         }
         el.innerHTML = list.map(h => `
-    <div class="hist-item${h.cancelled ? ' cancelled' : ''}" ondblclick="openHistDetail('${h.id}')" title="더블클릭: 상세/수정" style="cursor:pointer;">
+    <div class="hist-item${h.cancelled ? ' cancelled' : ''}" ondblclick="window.location.hash='doc-detail-${h.id}'" title="더블클릭: 상세/수정" style="cursor:pointer;">
       <div class="hist-no">${h.issueNo}</div>
       <div class="hist-info" style="flex:1;">
         <div class="hist-name" style="display:flex;align-items:center;">${h.client}${h.cancelled ? '<span class="hist-status-cancel">거래취소</span>' : ''}</div>
@@ -3313,14 +3326,13 @@
       // ═══════════════════════════════════════════════════
       //  HISTORY DETAIL
       // ═══════════════════════════════════════════════════
-      function openHistDetail(id) {
+      function viewHistDetail(id, fromHash = false) {
+        if (!fromHash) {
+          window.location.hash = 'doc-detail-' + id;
+          return;
+        }
         const h = history.find(x => String(x.id) === String(id));
         if (!h) return;
-
-        // 발행이력 페이지가 아니면 먼저 이동
-        if (!document.getElementById('page-doc-history').classList.contains('active')) {
-          go('doc-history');
-        }
 
         const iStyle = 'text-align:right;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;background:var(--surface);font-family:Geist Mono,monospace;';
         const fStyle = 'font-size:13px;border:1px solid var(--border);border-radius:var(--r);padding:6px 9px;width:100%;';
@@ -3452,7 +3464,11 @@
         document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
       }
 
-      function closeHistPanel() {
+      function closeHistPanel(fromHash = false) {
+        if (!fromHash) {
+          window.location.hash = 'doc-history';
+          return;
+        }
         document.getElementById('hist-edit-panel').classList.remove('open');
         document.getElementById('hist-list-view').style.display = '';
         // 페이지 헤더 원복
