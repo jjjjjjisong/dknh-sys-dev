@@ -3388,7 +3388,15 @@
         const fStyle = 'font-size:13px;border:1px solid var(--border);border-radius:var(--r);padding:6px 9px;width:100%;';
         const dStyle = 'font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 5px;width:100%;background:var(--surface);';
 
-        const itemRows = (h.items || []).map((it, i) => `
+        const itemRows = (h.items || []).map((it, i) => {
+          const eaB = it.ea_per_b;
+          const boxP = it.box_per_p;
+          const pAuto = it.qty && eaB && boxP ? Math.ceil(it.qty / (eaB * boxP)) : '';
+          const bAuto = it.qty && eaB ? Math.ceil(it.qty / eaB) : '';
+          const pVal = it.customPallet !== null && it.customPallet !== undefined ? it.customPallet : pAuto;
+          const bVal = it.customBox !== null && it.customBox !== undefined ? it.customBox : bAuto;
+
+          return `
     <tr>
       <td style="text-align:center;font-size:11px;color:var(--text-3);">${i + 1}</td>
       <td><input type="text" value="${(it.name1 || '').replace(/"/g, '&quot;')}"
@@ -3400,15 +3408,19 @@
       <td><input type="date" value="${it.arriveDate || h.arriveDate || ''}"
         onchange="histEditItem('${id}',${i},'arriveDate',this.value)" style="${dStyle}"></td>
       <td><input type="number" value="${it.qty || 0}"
-        onchange="histEditItem('${id}',${i},'qty',+this.value)"
+        oninput="onHistQty('${id}',${i},this.value)"
         style="${iStyle}width:72px;"></td>
-      <td style="text-align:center;font-size:11px;">${(it.ea_per_b && it.box_per_p) ? Math.ceil(it.qty / (it.ea_per_b * it.box_per_p)) : '-'}</td>
-      <td style="text-align:center;font-size:11px;">${it.ea_per_b ? Math.ceil(it.qty / it.ea_per_b) : '-'}</td>
+      <td><input type="number" id="hist-pallet-${i}" value="${pVal !== '' ? pVal : ''}" placeholder="자동"
+        oninput="onHistPallet('${id}',${i},this.value)"
+        style="${iStyle}width:52px;" title="자동계산 (수기 수정 가능)"></td>
+      <td><input type="number" id="hist-box-${i}" value="${bVal !== '' ? bVal : ''}" placeholder="자동"
+        oninput="onHistBox('${id}',${i},this.value)"
+        style="${iStyle}width:52px;" title="자동계산 (수기 수정 가능)"></td>
       <td><input type="number" value="${it.unitPrice || 0}"
-        onchange="histEditItem('${id}',${i},'unitPrice',+this.value)"
+        oninput="onHistPrice('${id}',${i},this.value)"
         style="${iStyle}width:80px;"></td>
       <td><input type="number" value="${it.supply || 0}"
-        onchange="histEditItem('${id}',${i},'supply',+this.value)"
+        oninput="onHistSupply('${id}',${i},this.value)"
         style="${iStyle}width:88px;"></td>
       <td style="text-align:center;">
         <label class="sw"><input type="checkbox" ${it.vat ? 'checked' : ''}
@@ -3416,7 +3428,8 @@
       </td>
       <td><textarea rows="2" onchange="histEditItem('${id}',${i},'itemNote',this.value)"
         style="font-size:11px;border:1px solid var(--border);border-radius:4px;padding:3px 6px;width:100%;resize:none;font-family:'Noto Sans KR',sans-serif;background:var(--surface);">${it.itemNote || ''}</textarea></td>
-    </tr>`).join('');
+    </tr>`;
+        }).join('');
 
         const cancelBtn = h.cancelled
           ? `<button class="btn btn-secondary" onclick="toggleCancel('${id}')">↩ 취소 해제</button>`
@@ -3486,7 +3499,7 @@
             <th style="width:88px">공급가액</th><th style="width:40px">VAT</th>
             <th style="width:100px">비고</th>
           </tr></thead>
-          <tbody>${itemRows}</tbody>
+          <tbody id="hist-items-body">${itemRows}</tbody>
         </table>
       </div>
     </div>
@@ -3537,6 +3550,70 @@
         const h = history.find(x => String(x.id) === String(id));
         if (h && h.items[idx]) h.items[idx][field] = val;
       }
+
+      function histSyncRowDOM(id, idx) {
+        const h = history.find(x => String(x.id) === String(id));
+        if (!h || !h.items[idx]) return;
+        const it = h.items[idx];
+        const eaB = it.ea_per_b;
+        const boxP = it.box_per_p;
+
+        const pAuto = it.qty && eaB && boxP ? Math.ceil(it.qty / (eaB * boxP)) : '';
+        const bAuto = it.qty && eaB ? Math.ceil(it.qty / eaB) : '';
+        const pVal = it.customPallet !== null && it.customPallet !== undefined ? it.customPallet : pAuto;
+        const bVal = it.customBox !== null && it.customBox !== undefined ? it.customBox : bAuto;
+
+        const tbody = document.getElementById('hist-items-body');
+        if (!tbody || !tbody.rows[idx]) return;
+        const cells = tbody.rows[idx].cells;
+        
+        if (cells[5]) cells[5].querySelector('input').value = it.qty || 0;
+        const pInp = document.getElementById('hist-pallet-' + idx);
+        if (pInp) pInp.value = pVal !== '' ? pVal : '';
+        const bInp = document.getElementById('hist-box-' + idx);
+        if (bInp) bInp.value = bVal !== '' ? bVal : '';
+        if (cells[8]) cells[8].querySelector('input').value = it.unitPrice || 0;
+        if (cells[9]) cells[9].querySelector('input').value = it.supply || 0;
+      }
+
+      function onHistQty(id, idx, val) {
+        const h = history.find(x => String(x.id) === String(id));
+        if (!h || !h.items[idx]) return;
+        const it = h.items[idx];
+        it.qty = Math.min(parseInt(val) || 0, 999999);
+        it.customPallet = null;
+        it.customBox = null;
+        it.supply = it.unitPrice ? Math.round(it.unitPrice * it.qty) : 0;
+        histSyncRowDOM(id, idx);
+      }
+      function onHistPallet(id, idx, val) {
+        const h = history.find(x => String(x.id) === String(id));
+        if (!h || !h.items[idx]) return;
+        h.items[idx].customPallet = val !== "" ? parseInt(val) : null;
+        histSyncRowDOM(id, idx);
+      }
+      function onHistBox(id, idx, val) {
+        const h = history.find(x => String(x.id) === String(id));
+        if (!h || !h.items[idx]) return;
+        h.items[idx].customBox = val !== "" ? parseInt(val) : null;
+        histSyncRowDOM(id, idx);
+      }
+      function onHistPrice(id, idx, val) {
+        const h = history.find(x => String(x.id) === String(id));
+        if (!h || !h.items[idx]) return;
+        const it = h.items[idx];
+        it.unitPrice = val !== "" ? parseFloat(val) : 0;
+        it.supply = it.unitPrice ? Math.round(it.unitPrice * (it.qty || 0)) : 0;
+        histSyncRowDOM(id, idx);
+      }
+      function onHistSupply(id, idx, val) {
+        const h = history.find(x => String(x.id) === String(id));
+        if (!h || !h.items[idx]) return;
+        const it = h.items[idx];
+        it.supply = val !== "" ? parseFloat(val) : 0;
+        if (it.supply && it.qty > 0) it.unitPrice = it.supply / it.qty;
+        histSyncRowDOM(id, idx);
+      }
       async function saveHistEdit(id) {
         const h = history.find(x => String(x.id) === String(id));
         if (!h) return;
@@ -3561,6 +3638,8 @@
               qty: it.qty || 0, unit_price: it.unitPrice || 0, supply: it.supply || 0,
               vat: it.vat || false, order_date: it.orderDate || null, arrive_date: it.arriveDate || null,
               item_note: it.itemNote || '', ea_per_b: it.ea_per_b || null, box_per_p: it.box_per_p || null,
+              custom_pallet: (it.customPallet !== null && it.customPallet !== undefined) ? it.customPallet : null,
+              custom_box: (it.customBox !== null && it.customBox !== undefined) ? it.customBox : null,
             })));
           }
           const now = new Date();
