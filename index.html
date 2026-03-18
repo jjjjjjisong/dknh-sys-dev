@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -122,7 +122,7 @@
     }
 
     .top-bar-logo {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       font-size: 15px;
       font-weight: 500;
       color: var(--accent);
@@ -152,7 +152,7 @@
     }
 
     .top-bar-clock {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       font-size: 12px;
       color: var(--text-3);
       letter-spacing: .02em;
@@ -412,7 +412,7 @@
       color: var(--text-1);
       letter-spacing: -.04em;
       line-height: 1;
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
     }
 
     .kpi-footer {
@@ -743,7 +743,7 @@
 
     /* ── MONO ── */
     .mono {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       font-size: 12px;
     }
 
@@ -754,7 +754,7 @@
       border-radius: 20px;
       font-size: 12px;
       font-weight: 500;
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       white-space: nowrap;
     }
 
@@ -871,7 +871,7 @@
 
     .totals-table td:last-child {
       text-align: right;
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       font-weight: 500;
       color: var(--text-1);
     }
@@ -1029,7 +1029,7 @@
     }
 
     .hist-no {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       font-size: 12px;
       font-weight: 500;
       color: var(--accent);
@@ -1387,7 +1387,7 @@
     }
 
     .login-logo-text {
-      font-family: 'Geist Mono', monospace;
+      font-family: 'Pretendard Variable', sans-serif;
       font-size: 22px;
       font-weight: 500;
       color: var(--accent);
@@ -1607,7 +1607,7 @@
       </div>
 
       <div class="login-footer">
-        v3.0 &nbsp;·&nbsp; 접속 문의: 시스템 관리자
+        접속 문의: 시스템 관리자
       </div>
     </div>
   </div>
@@ -1622,7 +1622,7 @@
       </div>
       <div class="top-bar-title">㈜ 디케이앤에이치 업무 관리 시스템</div>
       <div class="top-bar-right">
-        <span class="top-bar-ver">v3.0</span>
+        
         <span class="top-bar-clock" id="clock"></span>
         <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
         <span style="font-size:12px;color:var(--text-2);font-weight:500;" id="header-username"></span>
@@ -1767,7 +1767,7 @@
                 <div class="field"><label>입고일자</label><input type="date" id="arrive-date"></div>
                 <div class="field"><label>발급번호 <span
                       style="font-size:11px;color:var(--text-3);font-weight:400;">(자동·수정가능)</span></label><input
-                    type="text" id="issue-no" style="font-family:'Geist Mono',monospace;"></div>
+                    type="text" id="issue-no" style="font-family:'Pretendard Variable', sans-serif;"></div>
                 <div class="field"><label>납품처</label>
                   <select id="client-sel" onchange="onClientChange()">
                     <option value="">— 납품처 선택 —</option>
@@ -1830,7 +1830,7 @@
                   <table class="totals-table">
                     <tr>
                       <td>공급가액 합계</td>
-                      <td><input type="text" id="ttl-supply" value="0" style="text-align:right;font-family:'Geist Mono',monospace;font-size:13px;
+                      <td><input type="text" id="ttl-supply" value="0" style="text-align:right;font-family:'Pretendard Variable', sans-serif;font-size:13px;
                   border:1px solid var(--border);border-radius:6px;padding:5px 10px;
                   width:140px;background:var(--surface);" oninput="onTotalEdit()" placeholder="0">
                         <span style="color:var(--text-3);font-size:12px;margin-left:4px;">원</span>
@@ -1838,7 +1838,7 @@
                     </tr>
                     <tr>
                       <td>부가세 합계</td>
-                      <td><input type="text" id="ttl-vat" value="0" style="text-align:right;font-family:'Geist Mono',monospace;font-size:13px;
+                      <td><input type="text" id="ttl-vat" value="0" style="text-align:right;font-family:'Pretendard Variable', sans-serif;font-size:13px;
                   border:1px solid var(--border);border-radius:6px;padding:5px 10px;
                   width:140px;background:var(--surface);" oninput="onTotalEdit()" placeholder="0">
                         <span style="color:var(--text-3);font-size:12px;margin-left:4px;">원</span>
@@ -1846,7 +1846,7 @@
                     </tr>
                     <tr class="total-row">
                       <td>합계금액</td>
-                      <td><input type="text" id="ttl-total" value="0" style="text-align:right;font-family:'Geist Mono',monospace;font-size:15px;font-weight:700;
+                      <td><input type="text" id="ttl-total" value="0" style="text-align:right;font-family:'Pretendard Variable', sans-serif;font-size:15px;font-weight:700;
                   border:1.5px solid var(--text-1);border-radius:6px;padding:5px 10px;
                   width:140px;background:var(--surface);" oninput="onTotalEdit()" placeholder="0">
                         <span style="color:var(--text-3);font-size:12px;margin-left:4px;">원</span>
@@ -2757,7 +2757,7 @@
           const supply = item.customSupply !== null && item.customSupply !== undefined
             ? item.customSupply : (unitPrice && item.qty ? Math.round(unitPrice * item.qty) : 0);
           const gubunClass = !p ? 'b-other' : p.gubun === '컵' ? 'b-cup' : p.gubun === '뚜껑' ? 'b-lid' : p.gubun === '스트로우' ? 'b-straw' : 'b-other';
-          const iStyle = 'text-align:right;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;background:var(--surface);font-family:Geist Mono,monospace;';
+          const iStyle = 'text-align:right;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;background:var(--surface);font-family:'Pretendard Variable', sans-serif;';
           const dateStyle = 'font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 5px;width:100%;background:var(--surface);';
 
           return `<tr>
@@ -3366,12 +3366,12 @@
           pagedList.map(h => {
             const tdStyle = h.cancelled ? 'text-decoration:line-through;color:var(--text-3);' : '';
             return `<tr ondblclick="window.location.hash='doc-detail-${h.id}'" title="더블클릭: 상세/수정" style="cursor:pointer; transition:background-color 0.1s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor=''">
-              <td style="text-align:center;font-size:12px;color:var(--text-muted);font-family:Geist Mono,monospace;${tdStyle}">${h.issueNo}</td>
-              <td style="text-align:center;font-size:12px;font-family:Geist Mono,monospace;${tdStyle}">${h.orderDate || '-'}</td>
+              <td style="text-align:center;font-size:12px;color:var(--text-muted);font-family:'Pretendard Variable', sans-serif;${tdStyle}">${h.issueNo}</td>
+              <td style="text-align:center;font-size:12px;font-family:'Pretendard Variable', sans-serif;${tdStyle}">${h.orderDate || '-'}</td>
               <td style="font-weight:600;font-size:13px;${tdStyle}">${h.client}</td>
               <td style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;${tdStyle}">${h.items.map(i => i.name1).join(', ')}</td>
               <td style="text-align:center;font-size:12px;${tdStyle}">${h.author || '-'}</td>
-              <td style="text-align:center;font-size:12px;color:var(--text-3);font-family:Geist Mono,monospace;">${h.updatedAt || h.savedAt || ''}</td>
+              <td style="text-align:center;font-size:12px;color:var(--text-3);font-family:'Pretendard Variable', sans-serif;">${h.updatedAt || h.savedAt || ''}</td>
               </td>
             </tr>`;
           }).join('') +
@@ -3391,7 +3391,7 @@
         const h = history.find(x => String(x.id) === String(id));
         if (!h) return;
 
-        const iStyle = 'text-align:right;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;background:var(--surface);font-family:Geist Mono,monospace;';
+        const iStyle = 'text-align:right;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;width:100%;background:var(--surface);font-family:'Pretendard Variable', sans-serif;';
         const fStyle = 'font-size:13px;border:1px solid var(--border);border-radius:var(--r);padding:6px 9px;width:100%;';
         const dStyle = 'font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 5px;width:100%;background:var(--surface);';
 
@@ -3452,7 +3452,7 @@
         <div class="form-grid-2" style="gap:8px;">
           <div class="field"><label>발급번호</label>
             <input type="text" value="${h.issueNo || ''}" onchange="histEdit('${id}','issueNo',this.value)"
-              style="font-family:Geist Mono,monospace;${fStyle}"></div>
+              style="font-family:'Pretendard Variable', sans-serif;${fStyle}"></div>
           <div class="field"><label>납품처</label>
             <input type="text" value="${(h.client || '').replace(/"/g, '&quot;')}" onchange="histEdit('${id}','client',this.value)" style="${fStyle}"></div>
           <div class="field"><label>담당자</label>
@@ -3479,13 +3479,13 @@
         <div class="form-grid-2" style="gap:8px;">
           <div class="field"><label>공급가액</label>
             <input type="number" value="${h.totalSupply || 0}" onchange="histEdit('${id}','totalSupply',+this.value)"
-              style="font-family:Geist Mono,monospace;text-align:right;${fStyle}"></div>
+              style="font-family:'Pretendard Variable', sans-serif;text-align:right;${fStyle}"></div>
           <div class="field"><label>부가세</label>
             <input type="number" value="${h.totalVat || 0}" onchange="histEdit('${id}','totalVat',+this.value)"
-              style="font-family:Geist Mono,monospace;text-align:right;${fStyle}"></div>
+              style="font-family:'Pretendard Variable', sans-serif;text-align:right;${fStyle}"></div>
           <div class="field col-span-2"><label>합계금액</label>
             <input type="number" value="${h.totalAmount || 0}" onchange="histEdit('${id}','totalAmount',+this.value)"
-              style="font-family:Geist Mono,monospace;font-size:15px;font-weight:700;border:1.5px solid var(--text-1);text-align:right;border-radius:var(--r);padding:6px 9px;width:100%;"></div>
+              style="font-family:'Pretendard Variable', sans-serif;font-size:15px;font-weight:700;border:1.5px solid var(--text-1);text-align:right;border-radius:var(--r);padding:6px 9px;width:100%;"></div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-3);line-height:1.8;">
           <div>작성자: <strong style="color:var(--text-2);">${h.author || '-'}</strong></div>
@@ -3741,7 +3741,7 @@
         tbody.innerHTML = pagedList.map((e, idx) => {
           const i = (obPage - 1) * PAGE_SIZE + idx;
           const td = e.cancelled ? 'style="text-decoration:line-through;color:var(--text-3);"' : '';
-          const dateStyle = `text-align:center;font-family:'Geist Mono',monospace;font-size:12px;${e.cancelled ? 'text-decoration:line-through;color:var(--text-3);' : ''}`;
+          const dateStyle = `text-align:center;font-family:'Pretendard Variable', sans-serif;font-size:12px;${e.cancelled ? 'text-decoration:line-through;color:var(--text-3);' : ''}`;
           return `<tr>
       <td style="text-align:center;color:var(--text-3);font-size:11px;">${i + 1}</td>
       <td style="${dateStyle}">${e.date || ''}</td>
@@ -4222,3 +4222,4 @@
 </body>
 
 </html>
+
