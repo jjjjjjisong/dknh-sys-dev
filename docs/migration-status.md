@@ -23,9 +23,9 @@
 
 주요 파일:
 
-- [src/main.tsx](/C:/dknh-sys-main/dknh-sys-main/src/main.tsx)
-- [src/app/App.tsx](/C:/dknh-sys-main/dknh-sys-main/src/app/App.tsx)
-- [src/app/router.tsx](/C:/dknh-sys-main/dknh-sys-main/src/app/router.tsx)
+- [src/main.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/main.tsx)
+- [src/app/App.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/app/App.tsx)
+- [src/app/router.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/app/router.tsx)
 
 ### 2. Supabase 연결 분리
 
@@ -34,9 +34,9 @@
 
 주요 파일:
 
-- [src/api/supabase/client.ts](/C:/dknh-sys-main/dknh-sys-main/src/api/supabase/client.ts)
-- [src/lib/env.ts](/C:/dknh-sys-main/dknh-sys-main/src/lib/env.ts)
-- [.env.example](/C:/dknh-sys-main/dknh-sys-main/.env.example)
+- [src/api/supabase/client.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/api/supabase/client.ts)
+- [src/lib/env.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/lib/env.ts)
+- [.env.example](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/.env.example)
 
 ### 3. 납품처 관리
 
@@ -55,9 +55,9 @@
 
 주요 파일:
 
-- [src/pages/MasterClientPage.tsx](/C:/dknh-sys-main/dknh-sys-main/src/pages/MasterClientPage.tsx)
-- [src/api/clients.ts](/C:/dknh-sys-main/dknh-sys-main/src/api/clients.ts)
-- [docs/sql/clients.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/clients.sql)
+- [src/pages/MasterClientPage.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/pages/MasterClientPage.tsx)
+- [src/api/clients.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/api/clients.ts)
+- [docs/sql/clients.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/clients.sql)
 
 ### 4. 품목 관리
 
@@ -76,9 +76,9 @@
 
 주요 파일:
 
-- [src/pages/MasterProductPage.tsx](/C:/dknh-sys-main/dknh-sys-main/src/pages/MasterProductPage.tsx)
-- [src/api/products.ts](/C:/dknh-sys-main/dknh-sys-main/src/api/products.ts)
-- [docs/sql/products.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/products.sql)
+- [src/pages/MasterProductPage.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/pages/MasterProductPage.tsx)
+- [src/api/products.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/api/products.ts)
+- [docs/sql/products.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/products.sql)
 
 ### 5. 문서 작성
 
@@ -102,10 +102,10 @@
 
 주요 파일:
 
-- [src/pages/DocCreatePage.tsx](/C:/dknh-sys-main/dknh-sys-main/src/pages/DocCreatePage.tsx)
-- [src/api/documents.ts](/C:/dknh-sys-main/dknh-sys-main/src/api/documents.ts)
-- [src/types/document.ts](/C:/dknh-sys-main/dknh-sys-main/src/types/document.ts)
-- [docs/sql/documents.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/documents.sql)
+- [src/pages/DocCreatePage.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx)
+- [src/api/documents.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/api/documents.ts)
+- [src/types/document.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/types/document.ts)
+- [docs/sql/documents.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/documents.sql)
 
 ### 6. 발행 이력
 
@@ -133,9 +133,9 @@
 
 주요 파일:
 
-- [src/pages/DocHistoryPage.tsx](/C:/dknh-sys-main/dknh-sys-main/src/pages/DocHistoryPage.tsx)
-- [src/app/router.tsx](/C:/dknh-sys-main/dknh-sys-main/src/app/router.tsx)
-- [src/api/documents.ts](/C:/dknh-sys-main/dknh-sys-main/src/api/documents.ts)
+- [src/pages/DocHistoryPage.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/pages/DocHistoryPage.tsx)
+- [src/app/router.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/app/router.tsx)
+- [src/api/documents.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/api/documents.ts)
 
 ### 7. 수주대장
 
@@ -154,9 +154,9 @@
 
 주요 파일:
 
-- [src/pages/OrderBookPage.tsx](/C:/dknh-sys-main/dknh-sys-main/src/pages/OrderBookPage.tsx)
-- [src/api/order-book.ts](/C:/dknh-sys-main/dknh-sys-main/src/api/order-book.ts)
-- [docs/sql/order_book.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/order_book.sql)
+- [src/pages/OrderBookPage.tsx](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx)
+- [src/api/order-book.ts](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/api/order-book.ts)
+- [docs/sql/order_book.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/order_book.sql)
 
 ## 스타일 작업 상태
 
@@ -171,11 +171,11 @@
 
 관련 파일:
 
-- [src/styles/globals.css](/C:/dknh-sys-main/dknh-sys-main/src/styles/globals.css)
+- [src/styles/globals.css](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/styles/globals.css)
 
 롤백용 백업:
 
-- [src/styles/globals.rollback-20260319.css](/C:/dknh-sys-main/dknh-sys-main/src/styles/globals.rollback-20260319.css)
+- [src/styles/globals.rollback-20260319.css](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/src/styles/globals.rollback-20260319.css)
 
 롤백이 필요하면 이 파일 내용을 `globals.css`로 되돌리면 됩니다.
 
@@ -193,14 +193,19 @@ npm run build
 npm run dev
 ```
 
+작업 원칙:
+
+- 기능 수정이나 UI 변경 작업 후에는 가능하면 로컬 dev 서버까지 실행해서 직접 확인합니다.
+- PC 또는 실행 환경이 바뀐 경우에는 `.env` 설정과 `npm` 실행 가능 여부를 먼저 확인한 뒤 서버를 띄웁니다.
+
 ## SQL 적용 파일
 
 dev Supabase SQL Editor에서 전체 실행 기준으로 관리하는 파일:
 
-- [docs/sql/clients.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/clients.sql)
-- [docs/sql/products.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/products.sql)
-- [docs/sql/documents.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/documents.sql)
-- [docs/sql/order_book.sql](/C:/dknh-sys-main/dknh-sys-main/docs/sql/order_book.sql)
+- [docs/sql/clients.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/clients.sql)
+- [docs/sql/products.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/products.sql)
+- [docs/sql/documents.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/documents.sql)
+- [docs/sql/order_book.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/order_book.sql)
 
 주의:
 
