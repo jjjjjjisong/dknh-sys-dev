@@ -1,0 +1,76 @@
+export type DocumentItemPayload = {
+  seq: number;
+  name1: string;
+  name2: string;
+  gubun: string;
+  qty: number;
+  unitPrice: number;
+  supply: number;
+  vat: boolean;
+  orderDate: string | null;
+  arriveDate: string | null;
+  itemNote: string;
+  eaPerB: number | null;
+  boxPerP: number | null;
+  customPallet: number | null;
+  customBox: number | null;
+};
+
+export type DocumentPayload = {
+  issueNo: string;
+  client: string;
+  manager: string;
+  managerTel: string;
+  receiver: string;
+  orderDate: string | null;
+  arriveDate: string | null;
+  deliveryAddr: string;
+  remark: string;
+  requestNote: string;
+  totalSupply: number;
+  totalVat: number;
+  totalAmount: number;
+  author: string;
+  items: DocumentItemPayload[];
+};
+
+export type DocumentHistoryItem = {
+  id: string;
+  seq: number;
+  name1: string;
+  name2: string;
+  gubun: string;
+  qty: number;
+  unitPrice: number;
+  supply: number;
+  vat: boolean;
+  orderDate: string | null;
+  arriveDate: string | null;
+  itemNote: string;
+  eaPerB: number | null;
+  boxPerP: number | null;
+  customPallet: number | null;
+  customBox: number | null;
+};
+
+export type DocumentHistory = {
+  id: string;
+  issueNo: string;
+  client: string;
+  manager: string;
+  managerTel: string;
+  receiver: string;
+  orderDate: string | null;
+  arriveDate: string | null;
+  deliveryAddr: string;
+  remark: string;
+  requestNote: string;
+  totalSupply: number;
+  totalVat: number;
+  totalAmount: number;
+  author: string;
+  cancelled: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+  items: DocumentHistoryItem[];
+};
