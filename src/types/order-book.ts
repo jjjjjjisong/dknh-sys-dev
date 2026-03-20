@@ -13,3 +13,15 @@ export type OrderBookEntry = {
   fromDoc: boolean;
   createdAt: string | null;
 };
+
+export type OrderBookInput = {
+  issueNo: string;
+  date: string | null;
+  deadline: string | null;
+  client: string;
+  product: string;
+  qty: number;
+  note: string;
+  receipt: string;
+  cancelled: boolean;
+};
