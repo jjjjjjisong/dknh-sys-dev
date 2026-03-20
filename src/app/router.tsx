@@ -8,7 +8,7 @@ import MasterClientPage from '../pages/MasterClientPage';
 import MasterProductPage from '../pages/MasterProductPage';
 import AccountPage from '../pages/AccountPage';
 import LoginPage from '../pages/LoginPage';
-import { getStoredUser } from '../lib/session';
+import { getStoredUser, isAdminUser } from '../lib/session';
 
 function ProtectedLayout() {
   const location = useLocation();
@@ -25,6 +25,21 @@ function ProtectedLayout() {
   );
 }
 
+function AdminOnlyRoute() {
+  const user = getStoredUser();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdminUser(user)) {
+    window.alert('권한이 없습니다.');
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
+}
+
 export const router = createHashRouter([
   { path: '/login', element: <LoginPage /> },
   {
@@ -39,7 +54,10 @@ export const router = createHashRouter([
       { path: 'order-book', element: <OrderBookPage /> },
       { path: 'master-client', element: <MasterClientPage /> },
       { path: 'master-product', element: <MasterProductPage /> },
-      { path: 'account', element: <AccountPage /> },
+      {
+        element: <AdminOnlyRoute />,
+        children: [{ path: 'account', element: <AccountPage /> }],
+      },
     ],
   },
   { path: '*', element: <Navigate to="/dashboard" replace /> },
