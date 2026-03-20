@@ -381,6 +381,12 @@ a {
   gap: 8px;
 }
 
+.account-actions,
+.order-book-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -677,6 +683,14 @@ a {
   border: 1px solid var(--border);
   padding: 24px;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+.account-modal-card {
+  width: min(100%, 640px);
+}
+
+.password-modal-card {
+  width: min(100%, 420px);
 }
 
 .modal-head {

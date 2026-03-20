@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { getStoredUser, isAdminUser, subscribeSessionChange } from '../../lib/session';
 
 type NavItem = {
   label: string;
@@ -23,9 +25,17 @@ const groupedItems = navItems.reduce<Record<string, NavItem[]>>((acc, item) => {
 }, {});
 
 export default function Sidebar() {
+  const [user, setUser] = useState(() => getStoredUser());
+
+  useEffect(() => subscribeSessionChange(() => setUser(getStoredUser())), []);
+
+  const visibleGroups = Object.entries(groupedItems).filter(([group]) =>
+    group === '관리자' ? isAdminUser(user) : true,
+  );
+
   return (
     <aside className="sidebar">
-      {Object.entries(groupedItems).map(([group, items]) => (
+      {visibleGroups.map(([group, items]) => (
         <section key={group} className="sidebar-section">
           <div className="sidebar-section-title">{group}</div>
           <div className="sidebar-links">

@@ -1,10 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authenticateAccount } from '../lib/accounts';
 import { getStoredUser, saveStoredUser } from '../lib/session';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [name, setName] = useState('로컬 사용자');
+  const [id, setId] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
 
   useEffect(() => {
     if (getStoredUser()) {
@@ -12,17 +16,30 @@ export default function LoginPage() {
     }
   }, [navigate]);
 
-  const handleLogin = (event: FormEvent) => {
+  function handleLogin(event: FormEvent) {
     event.preventDefault();
 
-    saveStoredUser({
-      id: 'local-dev-user',
-      name: name.trim() || '로컬 사용자',
-      role: 'admin',
-    });
+    if (!id.trim() || !password) {
+      setError('아이디와 비밀번호를 모두 입력해주세요.');
+      return;
+    }
 
-    navigate('/dashboard', { replace: true });
-  };
+    setLoggingIn(true);
+    setError(null);
+
+    window.setTimeout(() => {
+      const user = authenticateAccount(id, password);
+      if (!user) {
+        setError('아이디 또는 비밀번호가 올바르지 않습니다.');
+        setPassword('');
+        setLoggingIn(false);
+        return;
+      }
+
+      saveStoredUser(user);
+      navigate('/dashboard', { replace: true });
+    }, 250);
+  }
 
   return (
     <div className="login-page">
@@ -30,21 +47,35 @@ export default function LoginPage() {
         <div className="login-eyebrow">React + TypeScript + Vite 전환 1차</div>
         <h1>DKH 시스템</h1>
         <p className="login-description">
-          이번 단계에서는 인증 구조를 바꾸지 않고 로컬 테스트용 임시 로그인만
-          제공합니다.
+          계정 정보를 입력해 시스템에 로그인하세요. 기본 관리자 계정은
+          <strong> admin / dkh2025!</strong> 입니다.
         </p>
 
         <label className="field">
-          <span>표시 이름</span>
+          <span>아이디</span>
           <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="로컬 사용자"
+            value={id}
+            onChange={(event) => setId(event.target.value)}
+            placeholder="아이디 입력"
+            autoComplete="username"
           />
         </label>
 
-        <button type="submit" className="btn btn-primary btn-block">
-          임시 로그인 후 시작
+        <label className="field">
+          <span>비밀번호</span>
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="비밀번호 입력"
+            autoComplete="current-password"
+          />
+        </label>
+
+        {error ? <div className="alert alert-error">{error}</div> : null}
+
+        <button type="submit" className="btn btn-primary btn-block" disabled={loggingIn}>
+          {loggingIn ? '로그인 중..' : '로그인'}
         </button>
       </form>
     </div>
