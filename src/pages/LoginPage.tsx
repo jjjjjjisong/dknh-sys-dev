@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authenticateAccount } from '../api/accounts';
 import { getStoredUser, saveStoredUser } from '../lib/session';
+import logoImage from '../../logo.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -48,12 +49,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleLogin}>
-        <div className="login-eyebrow">React + TypeScript + Vite 전환 1차</div>
-        <h1>DKH 시스템</h1>
-        <p className="login-description">
-          계정 정보를 입력해 시스템에 로그인하세요. 기본 관리자 계정은
-          <strong> admin / dkh2025!</strong> 입니다.
-        </p>
+        <img className="login-logo-image" src={logoImage} alt="DKH 시스템" />
 
         <label className="field">
           <span>아이디</span>

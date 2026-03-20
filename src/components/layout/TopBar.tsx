@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { clearStoredUser, getStoredUser, subscribeSessionChange } from '../../lib/session';
+import logoImage from '../../../logo.png';
 
 const titleMap: Record<string, string> = {
   '/dashboard': '대시보드',
@@ -38,8 +39,7 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <div className="topbar-brand">
-        <div className="topbar-dot" />
-        <div className="topbar-logo">DKH 시스템</div>
+        <img className="topbar-logo-image" src={logoImage} alt="DKH 시스템" />
         <div className="topbar-title">{title}</div>
       </div>
       <div className="topbar-actions">
