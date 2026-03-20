@@ -113,4 +113,20 @@
 
 ---
 
+## 6. 테이블: `accounts` (임시 계정 관리)
+React 마이그레이션 단계에서 로그인 및 계정 관리 화면에 사용하는 dev 계정 테이블입니다.
+
+| 컬럼명 | 타입 | 기본값 | 제약조건 | 설명 |
+| :--- | :--- | :--- | :--- | :--- |
+| **id** | `text` | - | PRIMARY KEY | 로그인 아이디 |
+| **created_at** | `timestamptz` | `now()` | - | 계정 생성 시각 |
+| **password** | `text` | - | NOT NULL | 현재는 dev 용도의 평문 비밀번호 저장 |
+| **name** | `text` | - | NOT NULL | 사용자 이름 |
+| **rank** | `text` | `''` | - | 직급 |
+| **tel** | `text` | `''` | - | 연락처 |
+| **email** | `text` | `''` | - | 이메일 |
+| **role** | `text` | `'user'` | CHECK (`admin`, `user`) | 권한 구분 |
+
+---
+
 > 이 문서는 `index.html` 내의 저장 코드와 `seed_data.sql` 구조의 변경이 있을 경우 함께 업데이트되어야 합니다.

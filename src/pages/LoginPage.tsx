@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authenticateAccount } from '../lib/accounts';
+import { authenticateAccount } from '../api/accounts';
 import { getStoredUser, saveStoredUser } from '../lib/session';
 
 export default function LoginPage() {
@@ -16,7 +16,7 @@ export default function LoginPage() {
     }
   }, [navigate]);
 
-  function handleLogin(event: FormEvent) {
+  async function handleLogin(event: FormEvent) {
     event.preventDefault();
 
     if (!id.trim() || !password) {
@@ -27,8 +27,8 @@ export default function LoginPage() {
     setLoggingIn(true);
     setError(null);
 
-    window.setTimeout(() => {
-      const user = authenticateAccount(id, password);
+    try {
+      const user = await authenticateAccount(id, password);
       if (!user) {
         setError('아이디 또는 비밀번호가 올바르지 않습니다.');
         setPassword('');
@@ -38,7 +38,11 @@ export default function LoginPage() {
 
       saveStoredUser(user);
       navigate('/dashboard', { replace: true });
-    }, 250);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '로그인에 실패했습니다.');
+    } finally {
+      setLoggingIn(false);
+    }
   }
 
   return (

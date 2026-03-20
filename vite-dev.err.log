@@ -1,0 +1,39 @@
+[2mAM 6:59:02[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../lib/accounts" from "src\pages\LoginPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/LoginPage.tsx[39m:3:36
+[33m  18 |  import { useEffect, useState } from "react";
+  19 |  import { useNavigate } from "react-router-dom";
+  20 |  import { authenticateAccount } from "../lib/accounts";
+     |                                       ^
+  21 |  import { getStoredUser, saveStoredUser } from "../lib/session";
+  22 |  export default function LoginPage() {[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 5)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mAM 6:59:02[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../lib/accounts" from "src\pages\AccountPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/AccountPage.tsx[39m:10:7
+[33m  25 |    toUserSession,
+  26 |    updateAccount
+  27 |  } from "../lib/accounts";
+     |          ^
+  28 |  import { getStoredUser, isAdminUser, saveStoredUser } from "../lib/session";
+  29 |  const emptyForm = {[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 5)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+Failed to resolve import "../lib/accounts" from "src\pages\AccountPage.tsx". Does the file exist?

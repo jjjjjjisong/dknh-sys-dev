@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import PageHeader from '../components/PageHeader';
 import {
   createAccount,
-  getAccounts,
+  fetchAccounts,
   removeAccount,
   resetAccountPassword,
   toUserSession,
   updateAccount,
-} from '../lib/accounts';
+} from '../api/accounts';
 import { getStoredUser, isAdminUser, saveStoredUser } from '../lib/session';
 import type { Account, AccountInput } from '../types/account';
 
@@ -35,10 +35,11 @@ export default function AccountPage() {
   const [passwordValue, setPasswordValue] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setAccounts(getAccounts());
+    void loadAccounts();
   }, []);
 
   const filteredAccounts = useMemo(() => {
@@ -65,8 +66,21 @@ export default function AccountPage() {
     );
   }
 
-  function reloadAccounts() {
-    setAccounts(getAccounts());
+  async function loadAccounts() {
+    try {
+      setLoading(true);
+      setError(null);
+      const rows = await fetchAccounts();
+      setAccounts(rows);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '계정 목록을 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function reloadAccounts() {
+    await loadAccounts();
   }
 
   function openCreateModal() {
@@ -139,12 +153,12 @@ export default function AccountPage() {
 
       let saved: Account;
       if (editingId) {
-        saved = updateAccount(editingId, form);
+        saved = await updateAccount(editingId, form);
       } else {
-        saved = createAccount(form);
+        saved = await createAccount(form);
       }
 
-      reloadAccounts();
+      await loadAccounts();
       setModalOpen(false);
 
       if (currentUser && currentUser.id === editingId) {
@@ -172,8 +186,13 @@ export default function AccountPage() {
     const confirmed = window.confirm(`"${account.name}" 계정을 삭제하시겠습니까?`);
     if (!confirmed) return;
 
-    removeAccount(account.id);
-    reloadAccounts();
+    try {
+      await removeAccount(account.id);
+      await loadAccounts();
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '계정 삭제에 실패했습니다.');
+    }
   }
 
   async function handlePasswordReset(event: FormEvent) {
@@ -192,8 +211,8 @@ export default function AccountPage() {
     try {
       setSaving(true);
       setPasswordError(null);
-      const saved = resetAccountPassword(passwordTarget.id, passwordValue);
-      reloadAccounts();
+      const saved = await resetAccountPassword(passwordTarget.id, passwordValue);
+      await loadAccounts();
       setPasswordModalOpen(false);
 
       if (currentUser?.id === saved.id) {
@@ -238,69 +257,73 @@ export default function AccountPage() {
           <div className="toolbar-meta">계정 {filteredAccounts.length}개</div>
         </div>
 
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{ width: 56 }}>No</th>
-                <th style={{ width: 120 }}>아이디</th>
-                <th>이름</th>
-                <th style={{ width: 100 }}>직급</th>
-                <th style={{ width: 140 }}>연락처</th>
-                <th>이메일</th>
-                <th style={{ width: 80 }}>권한</th>
-                <th style={{ width: 220 }}>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAccounts.length === 0 ? (
+        {loading ? (
+          <div className="empty-state">계정 목록을 불러오는 중입니다...</div>
+        ) : (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
                 <tr>
-                  <td colSpan={8} className="table-empty">
-                    표시할 계정이 없습니다.
-                  </td>
+                  <th style={{ width: 56 }}>No</th>
+                  <th style={{ width: 120 }}>아이디</th>
+                  <th>이름</th>
+                  <th style={{ width: 100 }}>직급</th>
+                  <th style={{ width: 140 }}>연락처</th>
+                  <th>이메일</th>
+                  <th style={{ width: 80 }}>권한</th>
+                  <th style={{ width: 220 }}>관리</th>
                 </tr>
-              ) : (
-                filteredAccounts.map((account, index) => (
-                  <tr key={account.id}>
-                    <td>{index + 1}</td>
-                    <td className="table-primary">{account.id}</td>
-                    <td>
-                      {account.name}
-                      {currentUser?.id === account.id ? (
-                        <span className="badge badge-muted history-badge">현재 로그인</span>
-                      ) : null}
-                    </td>
-                    <td>{account.rank || '-'}</td>
-                    <td>{account.tel || '-'}</td>
-                    <td>{account.email || '-'}</td>
-                    <td>
-                      <span
-                        className={
-                          account.role === 'admin' ? 'badge badge-muted-blue' : 'badge badge-muted'
-                        }
-                      >
-                        {account.role === 'admin' ? '관리자' : '사용자'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="button-row account-actions">
-                        <button className="btn btn-secondary" onClick={() => openEditModal(account)}>
-                          수정
-                        </button>
-                        <button className="btn btn-secondary" onClick={() => openPasswordModal(account)}>
-                          비밀번호 초기화
-                        </button>
-                        <button className="btn btn-danger" onClick={() => void handleDelete(account)}>
-                          삭제
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {filteredAccounts.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="table-empty">
+                      표시할 계정이 없습니다.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredAccounts.map((account, index) => (
+                    <tr key={account.id}>
+                      <td>{index + 1}</td>
+                      <td className="table-primary">{account.id}</td>
+                      <td>
+                        {account.name}
+                        {currentUser?.id === account.id ? (
+                          <span className="badge badge-muted history-badge">현재 로그인</span>
+                        ) : null}
+                      </td>
+                      <td>{account.rank || '-'}</td>
+                      <td>{account.tel || '-'}</td>
+                      <td>{account.email || '-'}</td>
+                      <td>
+                        <span
+                          className={
+                            account.role === 'admin' ? 'badge badge-muted-blue' : 'badge badge-muted'
+                          }
+                        >
+                          {account.role === 'admin' ? '관리자' : '사용자'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="button-row account-actions">
+                          <button className="btn btn-secondary" onClick={() => openEditModal(account)}>
+                            수정
+                          </button>
+                          <button className="btn btn-secondary" onClick={() => openPasswordModal(account)}>
+                            비밀번호 초기화
+                          </button>
+                          <button className="btn btn-danger" onClick={() => void handleDelete(account)}>
+                            삭제
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {modalOpen ? (

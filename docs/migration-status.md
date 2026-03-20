@@ -206,6 +206,7 @@ dev Supabase SQL Editor에서 전체 실행 기준으로 관리하는 파일:
 - [docs/sql/products.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/products.sql)
 - [docs/sql/documents.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/documents.sql)
 - [docs/sql/order_book.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/order_book.sql)
+- [docs/sql/accounts.sql](/C:/Users/soose/OneDrive/바탕%20화면/Project/dknh-sys-dev/docs/sql/accounts.sql)
 
 주의:
 
