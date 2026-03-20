@@ -1,4 +1,29 @@
 
-  [32m[1mVITE[22m v4.5.5[39m  [2mready in [0m[1m150[22m[2m[0m ms[22m
+> dkh-sys-main@0.1.0 dev
+> vite --host 127.0.0.1 --port 5173 --strictPort
+
+
+  [32m[1mVITE[22m v4.5.5[39m  [2mready in [0m[1m144[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui/Alert.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui/Badge.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui/Button.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui/FormField.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui/Modal.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui/Button.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mAM 8:22:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mAM 8:23:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mAM 8:23:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mAM 8:23:59[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mAM 8:23:59[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mAM 8:26:15[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mAM 8:27:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mAM 8:28:46[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mAM 8:28:46[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mAM 8:29:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mAM 8:33:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/AccountPage.tsx[22m
+[2mAM 8:33:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/MasterClientPage.tsx[22m
+[2mAM 8:33:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/MasterProductPage.tsx[22m
+[2mAM 8:37:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/layout/TopBar.tsx[22m

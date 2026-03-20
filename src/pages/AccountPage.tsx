@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import PageHeader from '../components/PageHeader';
+import Alert from '../components/ui/Alert';
+import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import FormField from '../components/ui/FormField';
+import Modal from '../components/ui/Modal';
+import TableActionButton from '../components/ui/TableActionButton';
 import {
   createAccount,
   fetchAccounts,
@@ -234,17 +240,17 @@ export default function AccountPage() {
         description="시스템 접속 계정을 관리합니다."
         action={
           <div className="button-row">
-            <button className="btn btn-secondary" onClick={reloadAccounts}>
+            <Button variant="secondary" onClick={reloadAccounts}>
               새로고침
-            </button>
-            <button className="btn btn-primary" onClick={openCreateModal}>
+            </Button>
+            <Button variant="primary" onClick={openCreateModal}>
               + 계정 추가
-            </button>
+            </Button>
           </div>
         }
       />
 
-      {error ? <div className="alert alert-error">{error}</div> : null}
+      {error ? <Alert>{error}</Alert> : null}
 
       <section className="card">
         <div className="toolbar">
@@ -289,34 +295,32 @@ export default function AccountPage() {
                       <td>
                         {account.name}
                         {currentUser?.id === account.id ? (
-                          <span className="badge badge-muted history-badge">현재 로그인</span>
+                          <Badge variant="muted" className="history-badge">
+                            현재 로그인
+                          </Badge>
                         ) : null}
                       </td>
                       <td>{account.rank || '-'}</td>
                       <td>{account.tel || '-'}</td>
                       <td>{account.email || '-'}</td>
                       <td>
-                        <span
-                          className={
-                            account.role === 'admin' ? 'badge badge-muted-blue' : 'badge badge-muted'
-                          }
-                        >
+                        <Badge variant={account.role === 'admin' ? 'muted-blue' : 'muted'}>
                           {account.role === 'admin' ? '관리자' : '사용자'}
-                        </span>
+                        </Badge>
                       </td>
-                      <td>
-                        <div className="button-row account-actions">
-                          <button className="btn btn-secondary" onClick={() => openEditModal(account)}>
-                            수정
-                          </button>
-                          <button className="btn btn-secondary" onClick={() => openPasswordModal(account)}>
-                            비밀번호 초기화
-                          </button>
-                          <button className="btn btn-danger" onClick={() => void handleDelete(account)}>
-                            삭제
-                          </button>
-                        </div>
-                      </td>
+                        <td>
+                          <div className="button-row account-actions">
+                            <TableActionButton variant="secondary" onClick={() => openEditModal(account)}>
+                              수정
+                            </TableActionButton>
+                            <TableActionButton variant="secondary" onClick={() => openPasswordModal(account)}>
+                              비밀번호 초기화
+                            </TableActionButton>
+                            <TableActionButton variant="danger" onClick={() => void handleDelete(account)}>
+                              삭제
+                            </TableActionButton>
+                          </div>
+                        </td>
                     </tr>
                   ))
                 )}
@@ -326,79 +330,76 @@ export default function AccountPage() {
         )}
       </section>
 
-      {modalOpen ? (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-card account-modal-card" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-head">
-              <div>
-                <h2>{editingId ? '계정 수정' : '계정 추가'}</h2>
-                <p>현재 단계에서는 로컬 저장소 기반 임시 계정으로 관리됩니다.</p>
-              </div>
-              <button className="btn btn-secondary" onClick={closeModal}>
-                닫기
-              </button>
-            </div>
-
-            <form className="modal-form" onSubmit={handleSubmit}>
-              <div className="form-grid">
-                <label className="field">
-                  <span>아이디 *</span>
+      <Modal
+        open={modalOpen}
+        title={editingId ? '계정 수정' : '계정 추가'}
+        description="현재 단계에서는 Supabase의 `accounts` 테이블을 기준으로 관리됩니다."
+        onClose={closeModal}
+        cardClassName="account-modal-card"
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={closeModal}>
+              취소
+            </Button>
+            <Button type="submit" form="account-form" variant="primary" disabled={saving}>
+              {saving ? '저장 중..' : '저장'}
+            </Button>
+          </>
+        }
+      >
+        <form id="account-form" className="modal-form" onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <FormField label="아이디 *">
                   <input
                     value={form.id}
                     onChange={(event) => updateFormField('id', event.target.value)}
                     placeholder="영문+숫자 조합"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>{editingId ? '새 비밀번호' : '비밀번호 *'}</span>
+            <FormField label={editingId ? '새 비밀번호' : '비밀번호 *'}>
                   <input
                     type="password"
                     value={form.password}
                     onChange={(event) => updateFormField('password', event.target.value)}
                     placeholder={editingId ? '비워두면 기존 비밀번호 유지' : '신규 계정 비밀번호'}
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>이름 *</span>
+            <FormField label="이름 *">
                   <input
                     value={form.name}
                     onChange={(event) => updateFormField('name', event.target.value)}
                     placeholder="홍길동"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>직급</span>
+            <FormField label="직급">
                   <input
                     value={form.rank}
                     onChange={(event) => updateFormField('rank', event.target.value)}
                     placeholder="예: 과장, 대리"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>연락처</span>
+            <FormField label="연락처">
                   <input
                     value={form.tel}
                     onChange={(event) => updateFormField('tel', event.target.value)}
                     placeholder="010-0000-0000"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>이메일</span>
+            <FormField label="이메일">
                   <input
                     type="email"
                     value={form.email}
                     onChange={(event) => updateFormField('email', event.target.value)}
                     placeholder="example@email.com"
                   />
-                </label>
+            </FormField>
 
-                <label className="field field-span-2">
-                  <span>권한</span>
+            <FormField label="권한" className="field-span-2">
                   <select
                     className="search-input"
                     value={form.role}
@@ -409,74 +410,57 @@ export default function AccountPage() {
                     <option value="user">일반 사용자</option>
                     <option value="admin">관리자</option>
                   </select>
-                </label>
-              </div>
-
-              {formError ? <div className="alert alert-error">{formError}</div> : null}
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  취소
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '저장 중..' : '저장'}
-                </button>
-              </div>
-            </form>
+            </FormField>
           </div>
-        </div>
-      ) : null}
+          {formError ? <Alert>{formError}</Alert> : null}
+        </form>
+      </Modal>
 
-      {passwordModalOpen && passwordTarget ? (
-        <div className="modal-overlay" onClick={closePasswordModal}>
-          <div className="modal-card password-modal-card" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-head">
-              <div>
-                <h2>비밀번호 초기화</h2>
-                <p>
-                  <strong>{passwordTarget.name}</strong> 계정의 비밀번호를 새로 설정합니다.
-                </p>
-              </div>
-              <button className="btn btn-secondary" onClick={closePasswordModal}>
-                닫기
-              </button>
-            </div>
-
-            <form className="modal-form" onSubmit={handlePasswordReset}>
-              <label className="field">
-                <span>새 비밀번호 *</span>
+      <Modal
+        open={passwordModalOpen && !!passwordTarget}
+        title="비밀번호 초기화"
+        description={
+          passwordTarget ? (
+            <>
+              <strong>{passwordTarget.name}</strong> 계정의 비밀번호를 새로 설정합니다.
+            </>
+          ) : undefined
+        }
+        onClose={closePasswordModal}
+        cardClassName="password-modal-card"
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={closePasswordModal}>
+              취소
+            </Button>
+            <Button type="submit" form="password-form" variant="primary" disabled={saving}>
+              {saving ? '초기화 중..' : '초기화'}
+            </Button>
+          </>
+        }
+      >
+        <form id="password-form" className="modal-form" onSubmit={handlePasswordReset}>
+          <FormField label="새 비밀번호 *">
                 <input
                   type="password"
                   value={passwordValue}
                   onChange={(event) => setPasswordValue(event.target.value)}
                   placeholder="새 비밀번호 입력"
                 />
-              </label>
+          </FormField>
 
-              <label className="field">
-                <span>비밀번호 확인 *</span>
+          <FormField label="비밀번호 확인 *">
                 <input
                   type="password"
                   value={passwordConfirm}
                   onChange={(event) => setPasswordConfirm(event.target.value)}
                   placeholder="새 비밀번호 재입력"
                 />
-              </label>
+          </FormField>
 
-              {passwordError ? <div className="alert alert-error">{passwordError}</div> : null}
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={closePasswordModal}>
-                  취소
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '초기화 중..' : '초기화'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
+          {passwordError ? <Alert>{passwordError}</Alert> : null}
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -6,6 +6,13 @@ import {
   updateOrderBookEntry,
 } from '../api/order-book';
 import PageHeader from '../components/PageHeader';
+import Alert from '../components/ui/Alert';
+import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
+import FormField from '../components/ui/FormField';
+import Modal from '../components/ui/Modal';
+import TableActionButton from '../components/ui/TableActionButton';
+import TopActionButton from '../components/ui/TopActionButton';
 import type { OrderBookEntry, OrderBookInput } from '../types/order-book';
 
 const today = new Date();
@@ -194,45 +201,42 @@ export default function OrderBookPage() {
       <PageHeader
         title="수주대장"
         description="날짜별 거래 내역을 관리합니다"
-        action={
-          <div className="button-row">
-            <button className="btn btn-secondary" onClick={() => void loadEntries()}>
-              새로고침
-            </button>
-            <button className="btn btn-primary" onClick={openCreateModal}>
-              + 수주 추가
-            </button>
-          </div>
-        }
+          action={
+            <div className="button-row order-book-top-actions">
+              <TopActionButton variant="secondary" onClick={() => void loadEntries()}>
+                새로고침
+              </TopActionButton>
+              <TopActionButton variant="primary" onClick={openCreateModal}>
+                + 수주 추가
+              </TopActionButton>
+            </div>
+          }
       />
-      {error ? <div className="alert alert-error">{error}</div> : null}
+      {error ? <Alert>{error}</Alert> : null}
 
       <section className="card">
         <div className="history-filter-grid">
-          <label className="field">
-            <span>날짜 (시작)</span>
+          <FormField label="날짜 (시작)">
             <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
-          </label>
-          <label className="field">
-            <span>날짜 (종료)</span>
+          </FormField>
+          <FormField label="날짜 (종료)">
             <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
-          </label>
-          <label className="field field-span-2">
-            <span>거래처 / 품목 / 발급번호 / 수령상태</span>
+          </FormField>
+          <FormField label="거래처 / 품목 / 발급번호 / 수령상태" className="field-span-2">
             <input
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
               placeholder="거래처, 품목명, 발급번호, 수령상태 검색..."
             />
-          </label>
+          </FormField>
         </div>
         <div className="button-row">
-          <button className="btn btn-primary" type="button">
+          <Button variant="primary" type="button">
             검색
-          </button>
-          <button className="btn btn-secondary" onClick={resetSearch}>
+          </Button>
+          <Button variant="secondary" onClick={resetSearch}>
             초기화
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -279,31 +283,31 @@ export default function OrderBookPage() {
                     <td>{entry.note || '-'}</td>
                     <td style={{ textAlign: 'center' }}>
                       {entry.receipt ? (
-                        <span className="badge badge-muted-blue">{entry.receipt}</span>
+                        <Badge variant="muted-blue">{entry.receipt}</Badge>
                       ) : (
                         '-'
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`badge ${entry.cancelled ? 'badge-cancel' : 'badge-muted-blue'}`}>
+                      <Badge variant={entry.cancelled ? 'cancel' : 'muted-blue'}>
                         {entry.cancelled ? '취소' : '정상'}
-                      </span>
+                      </Badge>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div className="button-row order-book-actions">
-                        <button className="btn btn-secondary" onClick={() => openEditModal(entry)}>
-                          수정
-                        </button>
-                        <button
-                          className={entry.fromDoc ? 'btn btn-disabled' : 'btn btn-danger'}
-                          disabled={entry.fromDoc}
-                          onClick={() => void handleDelete(entry)}
-                          title={entry.fromDoc ? '문서 연동 항목은 문서에서 관리합니다.' : undefined}
-                        >
-                          {entry.fromDoc ? '연동' : '삭제'}
-                        </button>
-                      </div>
-                    </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div className="button-row order-book-actions">
+                          <TableActionButton variant="secondary" onClick={() => openEditModal(entry)}>
+                            수정
+                          </TableActionButton>
+                          <TableActionButton
+                            variant={entry.fromDoc ? 'disabled' : 'danger'}
+                            disabled={entry.fromDoc}
+                            onClick={() => void handleDelete(entry)}
+                            title={entry.fromDoc ? '문서 연동 항목은 문서에서 관리합니다.' : undefined}
+                          >
+                            {entry.fromDoc ? '연동' : '삭제'}
+                          </TableActionButton>
+                        </div>
+                      </td>
                   </tr>
                 ))}
               </tbody>
@@ -312,36 +316,37 @@ export default function OrderBookPage() {
         )}
       </section>
 
-      {modalOpen ? (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-head">
-              <div>
-                <h2>{editingEntry ? '수주 항목 수정' : '수주 항목 추가'}</h2>
-                <p>
-                  {editingEntry?.fromDoc
-                    ? '문서 연동 항목은 삭제할 수 없지만, 수령 상태와 메모는 여기서 보정할 수 있습니다.'
-                    : '이번 단계에서는 dev DB의 `order_book` 테이블에 바로 반영됩니다.'}
-                </p>
-              </div>
-              <button className="btn btn-secondary" onClick={closeModal}>
-                닫기
-              </button>
-            </div>
-
-            <form className="modal-form" onSubmit={handleSubmit}>
-              <div className="form-grid">
-                <label className="field">
-                  <span>발급번호</span>
+      <Modal
+        open={modalOpen}
+        title={editingEntry ? '수주 항목 수정' : '수주 항목 추가'}
+        description={
+          editingEntry?.fromDoc
+            ? '문서 연동 항목은 삭제할 수 없지만, 수령 상태와 메모는 여기서 보정할 수 있습니다.'
+            : '이번 단계에서는 dev DB의 `order_book` 테이블에 바로 반영됩니다.'
+        }
+        onClose={closeModal}
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={closeModal}>
+              취소
+            </Button>
+            <Button type="submit" form="order-book-form" variant="primary" disabled={saving}>
+              {saving ? '저장 중..' : '저장'}
+            </Button>
+          </>
+        }
+      >
+        <form id="order-book-form" className="modal-form" onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <FormField label="발급번호">
                   <input
                     value={form.issueNo}
                     onChange={(event) => updateForm('issueNo', event.target.value)}
                     placeholder="예: 26001"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>수량 (ea) *</span>
+            <FormField label="수량 (ea) *">
                   <input
                     type="number"
                     min={0}
@@ -349,55 +354,49 @@ export default function OrderBookPage() {
                     onChange={(event) => updateForm('qty', parseNonNegativeInteger(event.target.value))}
                     placeholder="0"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>날짜</span>
+            <FormField label="날짜">
                   <input
                     type="date"
                     value={form.date ?? ''}
                     onChange={(event) => updateForm('date', emptyToNull(event.target.value))}
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>납기일</span>
+            <FormField label="납기일">
                   <input
                     type="date"
                     value={form.deadline ?? ''}
                     onChange={(event) => updateForm('deadline', emptyToNull(event.target.value))}
                   />
-                </label>
+            </FormField>
 
-                <label className="field field-span-2">
-                  <span>거래처 *</span>
+            <FormField label="거래처 *" className="field-span-2">
                   <input
                     value={form.client}
                     onChange={(event) => updateForm('client', event.target.value)}
                     placeholder="예: 샘플 거래처"
                   />
-                </label>
+            </FormField>
 
-                <label className="field field-span-2">
-                  <span>품목명 *</span>
+            <FormField label="품목명 *" className="field-span-2">
                   <input
                     value={form.product}
                     onChange={(event) => updateForm('product', event.target.value)}
                     placeholder="예: PET 92파이 16온스"
                   />
-                </label>
+            </FormField>
 
-                <label className="field">
-                  <span>명세서 수령상태</span>
+            <FormField label="명세서 수령상태">
                   <input
                     value={form.receipt}
                     onChange={(event) => updateForm('receipt', event.target.value)}
                     placeholder="예: 수령완료, 전달예정"
                   />
-                </label>
+            </FormField>
 
-                <label className="field field-check">
-                  <span>상태</span>
+            <FormField label="상태" className="field-check">
                   <label className="inline-check">
                     <input
                       type="checkbox"
@@ -406,32 +405,20 @@ export default function OrderBookPage() {
                     />
                     정상
                   </label>
-                </label>
+            </FormField>
 
-                <label className="field field-span-2">
-                  <span>비고</span>
+            <FormField label="비고" className="field-span-2">
                   <textarea
                     value={form.note}
                     onChange={(event) => updateForm('note', event.target.value)}
                     placeholder="요청사항이나 메모를 적어주세요."
                   />
-                </label>
-              </div>
-
-              {formError ? <div className="alert alert-error">{formError}</div> : null}
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  취소
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '저장 중..' : '저장'}
-                </button>
-              </div>
-            </form>
+            </FormField>
           </div>
-        </div>
-      ) : null}
+
+          {formError ? <Alert>{formError}</Alert> : null}
+        </form>
+      </Modal>
     </div>
   );
 }

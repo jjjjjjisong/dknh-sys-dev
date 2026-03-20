@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import PageHeader from '../components/PageHeader';
+import TableActionButton from '../components/ui/TableActionButton';
 import {
   createClient,
   fetchClients,
@@ -237,22 +238,16 @@ export default function MasterClientPage() {
                           {client.active === false ? '비활성' : '사용중'}
                         </span>
                       </td>
-                      <td>
-                        <div className="button-row">
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => openEditModal(client)}
-                          >
-                            수정
-                          </button>
-                          <button
-                            className="btn btn-danger"
-                            onClick={() => void handleDelete(client)}
-                          >
-                            삭제
-                          </button>
-                        </div>
-                      </td>
+                        <td>
+                          <div className="button-row">
+                            <TableActionButton variant="secondary" onClick={() => openEditModal(client)}>
+                              수정
+                            </TableActionButton>
+                            <TableActionButton variant="danger" onClick={() => void handleDelete(client)}>
+                              삭제
+                            </TableActionButton>
+                          </div>
+                        </td>
                     </tr>
                   ))
                 )}

@@ -2,6 +2,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authenticateAccount } from '../api/accounts';
 import { getStoredUser, saveStoredUser } from '../lib/session';
+import Alert from '../components/ui/Alert';
+import Button from '../components/ui/Button';
+import FormField from '../components/ui/FormField';
 import logoImage from '../../logo.png';
 
 export default function LoginPage() {
@@ -51,18 +54,16 @@ export default function LoginPage() {
       <form className="login-card" onSubmit={handleLogin}>
         <img className="login-logo-image" src={logoImage} alt="DKH 시스템" />
 
-        <label className="field">
-          <span>아이디</span>
+        <FormField label="아이디">
           <input
             value={id}
             onChange={(event) => setId(event.target.value)}
             placeholder="아이디 입력"
             autoComplete="username"
           />
-        </label>
+        </FormField>
 
-        <label className="field">
-          <span>비밀번호</span>
+        <FormField label="비밀번호">
           <input
             type="password"
             value={password}
@@ -70,13 +71,13 @@ export default function LoginPage() {
             placeholder="비밀번호 입력"
             autoComplete="current-password"
           />
-        </label>
+        </FormField>
 
-        {error ? <div className="alert alert-error">{error}</div> : null}
+        {error ? <Alert>{error}</Alert> : null}
 
-        <button type="submit" className="btn btn-primary btn-block" disabled={loggingIn}>
+        <Button type="submit" variant="primary" block disabled={loggingIn}>
           {loggingIn ? '로그인 중..' : '로그인'}
-        </button>
+        </Button>
       </form>
     </div>
   );

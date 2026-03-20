@@ -380,6 +380,30 @@ a {
   flex-wrap: wrap;
 }
 
+.order-book-top-actions {
+  align-items: center;
+}
+
+.top-action-button {
+  min-width: 84px;
+  height: 36px;
+  padding: 0 14px;
+  line-height: 1;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table-action-button {
+  min-width: 48px;
+  height: 30px;
+  padding: 0 10px;
+  line-height: 1;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -449,6 +473,12 @@ a {
 
 .btn-block {
   width: 100%;
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
 }
 
 .placeholder-panel {

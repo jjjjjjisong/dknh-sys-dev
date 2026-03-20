@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import PageHeader from '../components/PageHeader';
+import TableActionButton from '../components/ui/TableActionButton';
 import { fetchClients } from '../api/clients';
 import {
   createProduct,
@@ -294,22 +295,16 @@ export default function MasterProductPage() {
                       <td>{formatNumber(product.sell_price)}</td>
                       <td>{formatNumber(product.ea_per_b)}</td>
                       <td>{formatNumber(product.box_per_p)}</td>
-                      <td>
-                        <div className="button-row">
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => openEditModal(product)}
-                          >
-                            수정
-                          </button>
-                          <button
-                            className="btn btn-danger"
-                            onClick={() => void handleDelete(product)}
-                          >
-                            삭제
-                          </button>
-                        </div>
-                      </td>
+                        <td>
+                          <div className="button-row">
+                            <TableActionButton variant="secondary" onClick={() => openEditModal(product)}>
+                              수정
+                            </TableActionButton>
+                            <TableActionButton variant="danger" onClick={() => void handleDelete(product)}>
+                              삭제
+                            </TableActionButton>
+                          </div>
+                        </td>
                     </tr>
                   ))
                 )}
