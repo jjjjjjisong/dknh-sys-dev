@@ -1,56 +1,141 @@
 import { getSupabaseClient } from './supabase/client';
-import type { DashboardSummary, RecentDocument } from '../types/dashboard';
+import type {
+  DashboardIncomingDocument,
+  DashboardRecentDocument,
+  DashboardSummary,
+} from '../types/dashboard';
 
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const supabase = getSupabaseClient();
 
-  const [clientsResult, productsCountResult, documentsCountResult, recentDocumentsResult] =
-    await Promise.all([
-      supabase.from('clients').select('id, active').order('id'),
-      supabase.from('products').select('id', { count: 'exact', head: true }),
-      supabase.from('documents').select('id', { count: 'exact', head: true }),
-      supabase
-        .from('documents')
-        .select('id, issue_no, client, order_date, author, created_at, updated_at, cancelled')
-        .order('created_at', { ascending: false })
-        .limit(8),
-    ]);
+  const [documentsResult, orderBookResult] = await Promise.all([
+    supabase
+      .from('documents')
+      .select(
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, cancelled',
+      )
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase
+      .from('order_book')
+      .select('issue_no, receipt, cancelled, from_doc')
+      .order('created_at', { ascending: false }),
+  ]);
 
-  if (clientsResult.error) throw clientsResult.error;
-  if (productsCountResult.error) throw productsCountResult.error;
-  if (documentsCountResult.error) throw documentsCountResult.error;
-  if (recentDocumentsResult.error) throw recentDocumentsResult.error;
+  if (documentsResult.error) throw documentsResult.error;
+  if (orderBookResult.error) throw orderBookResult.error;
 
-  const activeClientCount = (clientsResult.data ?? []).filter(
-    (client: { active: boolean | null }) => client.active !== false,
-  ).length;
+  const today = new Date();
+  const todayKey = toDateKey(today);
+  const weekRange = getWeekRange(today);
 
-  const recentDocuments: RecentDocument[] = (recentDocumentsResult.data ?? []).map(
-    (document: {
-      id: number | string;
-      issue_no: number | string | null;
-      client: string | null;
-      order_date: string | null;
-      author: string | null;
-      created_at: string | null;
-      updated_at: string | null;
-      cancelled: boolean | null;
-    }) => ({
-      id: String(document.id),
-      issueNo: String(document.issue_no ?? ''),
-      client: document.client ?? '',
-      orderDate: document.order_date ?? '',
-      author: document.author ?? '',
-      createdAt: document.created_at ?? '',
-      updatedAt: document.updated_at ?? '',
-      cancelled: document.cancelled ?? false,
-    }),
-  );
+  const receiptMap = new Map<string, string>();
+
+  for (const row of orderBookResult.data ?? []) {
+    const issueNo = String(row.issue_no ?? '').trim();
+    if (!issueNo) continue;
+
+    const current = receiptMap.get(issueNo) ?? '';
+    const next = String(row.receipt ?? '').trim();
+
+    if (!current || isReceiptCompleted(next)) {
+      receiptMap.set(issueNo, next);
+    }
+  }
+
+  const mappedDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
+    .filter((document: any) => !(document.cancelled ?? false))
+    .map((document: any) => {
+      const issueNo = String(document.issue_no ?? '');
+      const receipt = receiptMap.get(issueNo) ?? '';
+
+      return {
+        id: String(document.id),
+        issueNo,
+        client: document.client ?? '',
+        receiver: document.receiver ?? '',
+        orderDate: document.order_date ?? '',
+        arriveDate: document.arrive_date ?? '',
+        author: document.author ?? '',
+        createdAt: document.created_at ?? '',
+        updatedAt: document.updated_at ?? '',
+        cancelled: document.cancelled ?? false,
+        receipt,
+      };
+    });
+
+  const todayIncomingDocuments = mappedDocuments
+    .filter((document) => document.arriveDate === todayKey)
+    .sort(compareIncomingDocuments)
+    .map(mapIncomingDocument);
+
+  const weekIncomingDocuments = mappedDocuments
+    .filter(
+      (document) =>
+        Boolean(document.arriveDate) &&
+        document.arriveDate >= weekRange.start &&
+        document.arriveDate <= weekRange.end &&
+        !isReceiptCompleted(document.receipt),
+    )
+    .sort(compareIncomingDocuments)
+    .map(mapIncomingDocument);
+
+  const incompleteDocuments = mappedDocuments
+    .filter((document) => !isReceiptCompleted(document.receipt))
+    .sort(compareIncomingDocuments)
+    .map(mapIncomingDocument);
 
   return {
-    activeClientCount,
-    productCount: productsCountResult.count ?? 0,
-    documentCount: documentsCountResult.count ?? 0,
-    recentDocuments,
+    todayIncomingCount: todayIncomingDocuments.length,
+    weekIncomingCount: weekIncomingDocuments.length,
+    incompleteCount: incompleteDocuments.length,
+    todayIncomingDocuments,
+    weekIncomingDocuments,
+    incompleteDocuments,
+    recentDocuments: mappedDocuments.slice(0, 8),
   };
+}
+
+function mapIncomingDocument(document: DashboardRecentDocument): DashboardIncomingDocument {
+  return {
+    id: document.id,
+    issueNo: document.issueNo,
+    orderDate: document.orderDate,
+    arriveDate: document.arriveDate,
+    client: document.client,
+    receiver: document.receiver,
+    receipt: document.receipt,
+  };
+}
+
+function compareIncomingDocuments(a: DashboardRecentDocument, b: DashboardRecentDocument) {
+  const arriveCompare = (a.arriveDate || '').localeCompare(b.arriveDate || '');
+  if (arriveCompare !== 0) {
+    return arriveCompare;
+  }
+
+  return (a.issueNo || '').localeCompare(b.issueNo || '');
+}
+
+function toDateKey(date: Date) {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function getWeekRange(baseDate: Date) {
+  const start = new Date(baseDate);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return {
+    start: toDateKey(start),
+    end: toDateKey(end),
+  };
+}
+
+function isReceiptCompleted(receipt: string) {
+  return receipt.trim().includes('완료');
 }

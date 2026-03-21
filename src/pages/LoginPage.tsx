@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authenticateAccount } from '../api/accounts';
-import { getStoredUser, saveStoredUser } from '../lib/session';
 import Alert from '../components/ui/Alert';
 import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
+import { getStoredUser, saveStoredUser } from '../lib/session';
 import logoImage from '../../logo.png';
 
 export default function LoginPage() {
@@ -51,8 +51,15 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      <form className="login-card" onSubmit={handleLogin}>
+      <div className="login-hero">
         <img className="login-logo-image" src={logoImage} alt="DKH 시스템" />
+        <p className="login-hero-subtitle">(주) 디케이앤에이치 업무 관리 시스템</p>
+      </div>
+
+      <form className="login-card" onSubmit={handleLogin}>
+        <div className="login-card-head">
+          <h1 className="login-card-title">로그인</h1>
+        </div>
 
         <FormField label="아이디">
           <input
