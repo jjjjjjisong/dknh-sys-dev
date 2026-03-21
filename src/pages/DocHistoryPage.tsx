@@ -1,10 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
+import { fetchProductsByClient } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
+import type { Product } from '../types/product';
 
 type PreviewType = 'release' | 'invoice' | null;
+const MANUAL_PRODUCT_ID = '__manual__';
 
 const today = new Date().toISOString().slice(0, 10);
 const oneYearAgo = getDateOneYearAgo(today);
@@ -25,6 +28,7 @@ export default function DocHistoryPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<PreviewType>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     void reload();
@@ -55,6 +59,32 @@ export default function DocHistoryPage() {
     setDraft(selected ? cloneDocument(selected) : null);
   }, [documentId, documents]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadProducts() {
+      if (!draft?.client) {
+        setProducts([]);
+        return;
+      }
+
+      try {
+        const rows = await fetchProductsByClient(draft.client);
+        if (!mounted) return;
+        setProducts(rows);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err instanceof Error ? err.message : '품목 목록을 불러오지 못했습니다.');
+      }
+    }
+
+    void loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [draft?.client]);
+
   const filteredDocuments = useMemo(() => {
     const search = keyword.trim().toLowerCase();
 
@@ -82,6 +112,10 @@ export default function DocHistoryPage() {
 
   const previewStyles =
     previewType === 'release' ? getReleasePreviewStyles(false) : getInvoicePreviewStyles(false);
+  const productOptions = useMemo(
+    () => [{ id: MANUAL_PRODUCT_ID, label: '직접입력' }, ...products.map((product) => ({ id: product.id, label: product.name1 }))],
+    [products],
+  );
 
   function openDocument(document: DocumentHistory) {
     navigate(`/doc-history/${document.id}`);
@@ -111,6 +145,49 @@ export default function DocHistoryPage() {
     });
   }
 
+  function addDraftItem() {
+    if (!draft) return;
+
+    setDraft((current) => {
+      if (!current) return current;
+      const nextItem: DocumentHistoryItem = {
+        id: `new-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        seq: current.items.length + 1,
+        name1: '',
+        name2: '',
+        gubun: '',
+        qty: 0,
+        unitPrice: 0,
+        supply: 0,
+        vat: true,
+        orderDate: current.orderDate,
+        arriveDate: current.arriveDate,
+        itemNote: '',
+        eaPerB: null,
+        boxPerP: null,
+        customPallet: null,
+        customBox: null,
+        delYn: 'N',
+        updatedAt: null,
+        updatedBy: '',
+      };
+      const items = [...current.items, nextItem].map((item, idx) => ({ ...item, seq: idx + 1 }));
+      const totals = getDocumentTotals(items);
+      return { ...current, items, totalSupply: totals.totalSupply, totalVat: totals.totalVat, totalAmount: totals.totalAmount };
+    });
+  }
+
+  function removeDraftItem(index: number) {
+    setDraft((current) => {
+      if (!current || current.items.length === 1) return current;
+      const items = current.items
+        .filter((_, itemIndex) => itemIndex !== index)
+        .map((item, idx) => ({ ...item, seq: idx + 1 }));
+      const totals = getDocumentTotals(items);
+      return { ...current, items, totalSupply: totals.totalSupply, totalVat: totals.totalVat, totalAmount: totals.totalAmount };
+    });
+  }
+
   async function handleSave() {
     if (!draft) return;
 
@@ -129,12 +206,19 @@ export default function DocHistoryPage() {
 
   async function handleToggleCancel() {
     if (!draft) return;
-    const nextCancelled = !draft.cancelled;
+    const nextStatus = draft.status === 'ST01' ? 'ST00' : 'ST01';
+    const nextCancelled = nextStatus === 'ST01';
 
     try {
       setSaving(true);
       setError(null);
       await toggleDocumentCancelled(draft.id, nextCancelled);
+      setDraft((current) => (current ? { ...current, status: nextStatus } : current));
+      setDocuments((current) =>
+        current.map((document) =>
+          document.id === draft.id ? { ...document, status: nextStatus } : document,
+        ),
+      );
       await reload();
       window.alert(nextCancelled ? '거래취소 처리되었습니다.' : '거래취소가 해제되었습니다.');
     } catch (err) {
@@ -206,6 +290,7 @@ export default function DocHistoryPage() {
                   <thead>
                     <tr>
                       <th style={{ width: 90, textAlign: 'center' }}>발급번호</th>
+                      <th style={{ width: 120, textAlign: 'center' }}>발주일자</th>
                       <th style={{ width: 120, textAlign: 'center' }}>입고일자</th>
                       <th style={{ minWidth: 180 }}>납품처</th>
                       <th style={{ minWidth: 150 }}>수신처</th>
@@ -230,9 +315,10 @@ export default function DocHistoryPage() {
                         <tr
                           key={doc.id}
                           onClick={() => openDocument(doc)}
-                          className={doc.cancelled ? 'history-row-cancelled' : undefined}
+                          className={doc.status === 'ST01' ? 'history-row-cancelled' : undefined}
                         >
                           <td style={{ textAlign: 'center' }}>{doc.issueNo}</td>
+                          <td style={{ textAlign: 'center' }}>{doc.orderDate || '-'}</td>
                           <td style={{ textAlign: 'center' }}>{doc.arriveDate || '-'}</td>
                           <td style={{ fontWeight: 700 }}>{doc.client}</td>
                           <td>{doc.receiver || '-'}</td>
@@ -242,7 +328,7 @@ export default function DocHistoryPage() {
                           <td style={{ textAlign: 'right' }}>{formatNumber(sumItemBox(doc.items))}</td>
                           <td style={{ textAlign: 'center' }}>{doc.author || '-'}</td>
                           <td style={{ textAlign: 'center' }}>{formatCompactDateTime(doc.updatedAt || doc.createdAt)}</td>
-                          <td style={{ textAlign: 'center' }}>{doc.cancelled ? '거래취소' : ''}</td>
+                          <td style={{ textAlign: 'center' }}>{doc.status === 'ST01' ? '거래취소' : ''}</td>
                         </tr>
                       ))
                     )}
@@ -302,6 +388,9 @@ export default function DocHistoryPage() {
                 <div>
                   <h2>품목정보</h2>
                 </div>
+                <button className="btn btn-primary" type="button" onClick={addDraftItem}>
+                  + 품목 추가
+                </button>
               </div>
 
               <div className="table-wrap">
@@ -320,23 +409,83 @@ export default function DocHistoryPage() {
                       <th style={{ width: 110 }}>공급가액</th>
                       <th style={{ width: 70, textAlign: 'center' }}>VAT</th>
                       <th style={{ width: 140 }}>비고</th>
+                      <th style={{ width: 84, textAlign: 'center' }}>관리</th>
                     </tr>
                   </thead>
                   <tbody>
                     {draft.items.map((item, index) => (
                       <tr key={item.id || `${draft.id}-${index}`}>
                         <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                        <td><input value={item.name1} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, name1: event.target.value }))} /></td>
+                        <td className="doc-item-name-cell">
+                          <select
+                            className="doc-cell-control"
+                            value={findProductOptionValue(item, products)}
+                            onChange={(event) => {
+                              const selectedValue = event.target.value;
+
+                              if (selectedValue === MANUAL_PRODUCT_ID) {
+                                updateDraftItem(index, (current) => ({
+                                  ...current,
+                                  gubun: current.gubun || '기타',
+                                  eaPerB: null,
+                                  boxPerP: null,
+                                }));
+                                return;
+                              }
+
+                              const selectedProduct = products.find((product) => product.id === selectedValue);
+                              if (!selectedProduct) return;
+
+                              updateDraftItem(index, (current) => ({
+                                ...current,
+                                name1: selectedProduct.name1,
+                                name2: selectedProduct.name2 || selectedProduct.name1,
+                                gubun: selectedProduct.gubun,
+                                unitPrice: selectedProduct.sell_price ?? current.unitPrice,
+                                eaPerB: selectedProduct.ea_per_b,
+                                boxPerP: selectedProduct.box_per_p,
+                                customPallet: null,
+                                customBox: null,
+                              }));
+                            }}
+                          >
+                            <option value="">품목 선택</option>
+                            {productOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          {isManualItem(item, products) ? (
+                            <input
+                              className="doc-cell-control doc-item-name-input"
+                              value={item.name1}
+                              onChange={(event) =>
+                                updateDraftItem(index, (current) => ({
+                                  ...current,
+                                  name1: event.target.value,
+                                  name2: event.target.value,
+                                }))
+                              }
+                              placeholder="품목명"
+                            />
+                          ) : null}
+                        </td>
                         <td style={{ textAlign: 'center' }}>{item.gubun || '-'}</td>
-                        <td><input type="date" value={item.orderDate || draft.orderDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, orderDate: emptyToNull(event.target.value) }))} /></td>
-                        <td><input type="date" value={item.arriveDate || draft.arriveDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, arriveDate: emptyToNull(event.target.value) }))} /></td>
-                        <td><input type="number" value={item.qty} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, qty: Math.max(parseInt(event.target.value || '0', 10) || 0, 0) }))} /></td>
-                        <td><input type="number" value={item.customPallet ?? calculatePallet(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customPallet: parseNullableInteger(event.target.value) }))} /></td>
-                        <td><input type="number" value={item.customBox ?? calculateBox(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customBox: parseNullableInteger(event.target.value) }))} /></td>
-                        <td><input type="number" value={item.unitPrice} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, unitPrice: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
-                        <td><input type="number" value={item.supply} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, supply: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
+                        <td><input className="doc-cell-control" type="date" value={item.orderDate || draft.orderDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, orderDate: emptyToNull(event.target.value) }))} /></td>
+                        <td><input className="doc-cell-control" type="date" value={item.arriveDate || draft.arriveDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, arriveDate: emptyToNull(event.target.value) }))} /></td>
+                        <td><input className="doc-cell-control" type="number" value={item.qty} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, qty: Math.max(parseInt(event.target.value || '0', 10) || 0, 0) }))} /></td>
+                        <td><input className="doc-cell-control" type="number" value={item.customPallet ?? calculatePallet(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customPallet: parseNullableInteger(event.target.value) }))} /></td>
+                        <td><input className="doc-cell-control" type="number" value={item.customBox ?? calculateBox(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customBox: parseNullableInteger(event.target.value) }))} /></td>
+                        <td><input className="doc-cell-control" type="number" value={item.unitPrice} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, unitPrice: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
+                        <td><input className="doc-cell-control" type="number" value={item.supply} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, supply: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
                         <td style={{ textAlign: 'center' }}><input type="checkbox" checked={item.vat} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, vat: event.target.checked }))} /></td>
-                        <td><textarea rows={2} value={item.itemNote} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, itemNote: event.target.value }))} /></td>
+                        <td><textarea className="doc-cell-control doc-item-note" rows={1} value={item.itemNote} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, itemNote: event.target.value }))} /></td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button type="button" className="btn btn-danger doc-delete-button" onClick={() => removeDraftItem(index)}>
+                            삭제
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -352,8 +501,8 @@ export default function DocHistoryPage() {
 
             <div className="doc-action-stack inline">
               <button className="btn btn-primary" disabled={saving} onClick={handleSave}>{saving ? '저장 중..' : '수정 저장'}</button>
-              <button className={draft.cancelled ? 'btn btn-secondary' : 'btn btn-danger'} disabled={saving} onClick={handleToggleCancel}>
-                {draft.cancelled ? '취소 해제' : '거래취소'}
+              <button className={draft.status === 'ST01' ? 'btn btn-secondary' : 'btn btn-danger'} disabled={saving} onClick={handleToggleCancel}>
+                {draft.status === 'ST01' ? '취소 해제' : '거래취소'}
               </button>
               <button className="btn btn-secondary" onClick={() => setPreviewType('release')}>출고의뢰서</button>
               <button className="btn btn-primary" onClick={() => setPreviewType('invoice')}>거래명세서</button>
@@ -390,6 +539,16 @@ export default function DocHistoryPage() {
 
 function cloneDocument(document: DocumentHistory): DocumentHistory {
   return { ...document, items: document.items.map((item) => ({ ...item })) };
+}
+
+function findProductOptionValue(item: DocumentHistoryItem, products: Product[]) {
+  const matched = products.find((product) => product.name1 === item.name1);
+  if (matched) return matched.id;
+  return item.name1 ? MANUAL_PRODUCT_ID : '';
+}
+
+function isManualItem(item: DocumentHistoryItem, products: Product[]) {
+  return findProductOptionValue(item, products) === MANUAL_PRODUCT_ID;
 }
 
 function calculatePallet(item: DocumentHistoryItem) {

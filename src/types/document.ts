@@ -1,3 +1,5 @@
+export type DocumentStatus = 'ST00' | 'ST01';
+
 export type DocumentItemPayload = {
   seq: number;
   name1: string;
@@ -37,6 +39,7 @@ export type DocumentPayload = {
   totalVat: number;
   totalAmount: number;
   author: string;
+  status: DocumentStatus;
   items: DocumentItemPayload[];
 };
 
@@ -84,7 +87,7 @@ export type DocumentHistory = {
   totalVat: number;
   totalAmount: number;
   author: string;
-  cancelled: boolean;
+  status: DocumentStatus;
   createdAt: string | null;
   updatedAt: string | null;
   updatedBy: string;

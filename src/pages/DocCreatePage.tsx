@@ -445,6 +445,7 @@ export default function DocCreatePage() {
         totalVat: previewData.totalVat,
         totalAmount: previewData.totalAmount,
         author: getStoredUser()?.name ?? '로컬 사용자',
+        status: 'ST00',
         items: previewData.items.map((item) => ({
           seq: item.seq,
           name1: item.name1,

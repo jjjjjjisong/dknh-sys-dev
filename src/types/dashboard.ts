@@ -22,7 +22,7 @@ export type DashboardRecentDocument = {
   author: string;
   createdAt: string;
   updatedAt: string;
-  cancelled: boolean;
+  status: string;
   receipt: string;
 };
 

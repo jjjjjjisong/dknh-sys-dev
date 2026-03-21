@@ -27,7 +27,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
     supabase
       .from('documents')
       .select(
-        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, cancelled, del_yn, document_items(id, name1, name2, qty, order_date, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, cancelled, del_yn, document_items(id, name1, name2, qty, order_date, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
       )
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false })
@@ -60,7 +60,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   }
 
   const recentDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
-    .filter((document: any) => !(document.cancelled ?? false) && (document.del_yn ?? 'N') === 'N')
+    .filter((document: any) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .map((document: any) => {
       const issueNo = String(document.issue_no ?? '').trim();
       return {
@@ -73,14 +73,14 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
         author: document.author ?? '',
         createdAt: document.created_at ?? '',
         updatedAt: document.updated_at ?? '',
-        cancelled: document.cancelled ?? false,
+        status: mapStatus(document.status, document.cancelled),
         receipt: receiptMap.get(issueNo) ?? '',
       };
     })
     .slice(0, 3);
 
   const incomingItems: DashboardIncomingDocument[] = (documentsResult.data ?? [])
-    .filter((document: any) => !(document.cancelled ?? false) && (document.del_yn ?? 'N') === 'N')
+    .filter((document: any) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .flatMap((document: any) => {
       const issueNo = String(document.issue_no ?? '').trim();
       const status = receiptMap.get(issueNo) ?? '';
@@ -207,4 +207,9 @@ function formatShortDate(value: string) {
 
 function isReceiptCompleted(receipt: string) {
   return receipt.trim().includes('완료');
+}
+function mapStatus(status: string | null | undefined, cancelled?: boolean | null) {
+  if (status === 'ST01') return 'ST01';
+  if (status === 'ST00') return 'ST00';
+  return cancelled ? 'ST01' : 'ST00';
 }

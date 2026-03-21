@@ -26,7 +26,7 @@ const emptyForm: OrderBookInput = {
   qty: 0,
   note: '',
   receipt: '',
-  cancelled: false,
+  status: 'ST00',
 };
 
 function getDefaultDateRange() {
@@ -45,6 +45,7 @@ export default function OrderBookPage() {
   const [dateFrom, setDateFrom] = useState(defaults.from);
   const [dateTo, setDateTo] = useState(defaults.to);
   const [keyword, setKeyword] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'client' | 'product' | 'issueNo' | 'receipt'>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<OrderBookEntry | null>(null);
   const [form, setForm] = useState<OrderBookInput>(emptyForm);
@@ -75,17 +76,19 @@ export default function OrderBookPage() {
       if (dateFrom && baseDate && baseDate < dateFrom) return false;
       if (dateTo && baseDate && baseDate > dateTo) return false;
       if (!search) return true;
-      return [entry.client, entry.product, entry.issueNo, entry.note, entry.receipt]
-        .join(' ')
-        .toLowerCase()
-        .includes(search);
+      if (filterType === 'client') return entry.client.toLowerCase().includes(search);
+      if (filterType === 'product') return entry.product.toLowerCase().includes(search);
+      if (filterType === 'issueNo') return entry.issueNo.toLowerCase().includes(search);
+      if (filterType === 'receipt') return entry.receipt.toLowerCase().includes(search);
+      return [entry.client, entry.product, entry.issueNo, entry.note, entry.receipt].join(' ').toLowerCase().includes(search);
     });
-  }, [dateFrom, dateTo, entries, keyword]);
+  }, [dateFrom, dateTo, entries, filterType, keyword]);
 
   function resetSearch() {
     const next = getDefaultDateRange();
     setDateFrom(next.from);
     setDateTo(next.to);
+    setFilterType('all');
     setKeyword('');
   }
 
@@ -110,7 +113,7 @@ export default function OrderBookPage() {
       qty: entry.qty,
       note: entry.note,
       receipt: entry.receipt,
-      cancelled: entry.cancelled,
+      status: entry.status,
     });
     setFormError(null);
     setModalOpen(true);
@@ -160,7 +163,7 @@ export default function OrderBookPage() {
         qty: form.qty,
         note: form.note.trim(),
         receipt: form.receipt.trim(),
-        cancelled: form.cancelled,
+        status: form.status,
       };
 
       if (editingEntry) {
@@ -289,8 +292,8 @@ export default function OrderBookPage() {
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <Badge variant={entry.cancelled ? 'cancel' : 'muted-blue'}>
-                        {entry.cancelled ? '취소' : '정상'}
+                      <Badge variant={entry.status === 'ST01' ? 'cancel' : 'muted-blue'}>
+                        {entry.status === 'ST01' ? '취소' : '정상'}
                       </Badge>
                     </td>
                       <td style={{ textAlign: 'center' }}>
@@ -400,8 +403,8 @@ export default function OrderBookPage() {
                   <label className="inline-check">
                     <input
                       type="checkbox"
-                      checked={!form.cancelled}
-                      onChange={(event) => updateForm('cancelled', !event.target.checked)}
+                      checked={form.status === 'ST00'}
+                      onChange={(event) => updateForm('status', event.target.checked ? 'ST00' : 'ST01')}
                     />
                     정상
                   </label>

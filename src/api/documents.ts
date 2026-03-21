@@ -1,6 +1,6 @@
 import { getSupabaseClient } from './supabase/client';
 import { getActiveAuditFields, getDeletedAuditFields } from './audit';
-import type { DocumentHistory, DocumentPayload } from '../types/document';
+import type { DocumentHistory, DocumentPayload, DocumentStatus } from '../types/document';
 
 export async function saveDocument(payload: DocumentPayload) {
   const supabase = getSupabaseClient();
@@ -30,7 +30,7 @@ export async function saveDocument(payload: DocumentPayload) {
       total_vat: payload.totalVat,
       total_amount: payload.totalAmount,
       author: payload.author,
-      cancelled: false,
+      status: payload.status,
       ...auditFields,
     })
     .select('id')
@@ -78,7 +78,7 @@ export async function saveDocument(payload: DocumentPayload) {
         qty: item.qty,
         note: item.itemNote,
         receipt: '',
-        cancelled: false,
+        status: payload.status,
         from_doc: true,
         ...auditFields,
       })),
@@ -96,7 +96,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('documents')
-    .select('id, issue_no, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)')
+    .select('id, issue_no, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, status, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)')
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
@@ -126,7 +126,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
     totalVat: row.total_vat ?? 0,
     totalAmount: row.total_amount ?? 0,
     author: row.author ?? '',
-    cancelled: row.cancelled ?? false,
+    status: mapDocumentStatus(row.status, row.cancelled),
     createdAt: row.created_at ?? null,
     updatedAt: row.updated_at ?? null,
     updatedBy: row.updated_by ?? '',
@@ -163,7 +163,7 @@ export async function updateDocument(document: DocumentHistory) {
   const auditFields = getActiveAuditFields();
   const deletedAuditFields = getDeletedAuditFields();
 
-  const { error: docError } = await supabase
+  const { data: updatedDocumentRows, error: docError } = await supabase
     .from('documents')
     .update({
       issue_no: document.issueNo,
@@ -185,13 +185,18 @@ export async function updateDocument(document: DocumentHistory) {
       total_supply: document.totalSupply,
       total_vat: document.totalVat,
       total_amount: document.totalAmount,
-      cancelled: document.cancelled,
+      status: document.status,
       ...auditFields,
     })
-    .eq('id', document.id);
+    .eq('id', document.id)
+    .select('id');
 
   if (docError) {
     throw docError;
+  }
+
+  if (!updatedDocumentRows || updatedDocumentRows.length === 0) {
+    throw new Error('문서 업데이트 권한이 없거나 DB 정책이 적용되지 않았습니다.');
   }
 
   const { error: deleteItemError } = await supabase
@@ -252,7 +257,7 @@ export async function updateDocument(document: DocumentHistory) {
         qty: item.qty,
         note: item.itemNote,
         receipt: '',
-        cancelled: document.cancelled,
+        status: document.status,
         from_doc: true,
         ...auditFields,
       })),
@@ -267,23 +272,35 @@ export async function updateDocument(document: DocumentHistory) {
 export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
+  const status: DocumentStatus = cancelled ? 'ST01' : 'ST00';
 
-  const { error: docError } = await supabase
+  const { data: updatedDocumentRows, error: docError } = await supabase
     .from('documents')
-    .update({ cancelled, ...auditFields })
-    .eq('id', id);
+    .update({ status, ...auditFields })
+    .eq('id', id)
+    .select('id');
 
   if (docError) {
     throw docError;
   }
 
+  if (!updatedDocumentRows || updatedDocumentRows.length === 0) {
+    throw new Error('문서 상태 변경 권한이 없거나 DB 정책이 적용되지 않았습니다.');
+  }
+
   const { error: orderBookError } = await supabase
     .from('order_book')
-    .update({ cancelled, ...auditFields })
+    .update({ status, ...auditFields })
     .eq('doc_id', id)
     .eq('del_yn', 'N');
 
   if (orderBookError) {
     throw orderBookError;
   }
+}
+
+function mapDocumentStatus(status: string | null | undefined, cancelled?: boolean | null): DocumentStatus {
+  if (status === 'ST01') return 'ST01';
+  if (status === 'ST00') return 'ST00';
+  return cancelled ? 'ST01' : 'ST00';
 }

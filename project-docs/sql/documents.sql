@@ -24,7 +24,7 @@ create table if not exists public.documents (
   total_vat numeric not null default 0,
   total_amount numeric not null default 0,
   author text not null default '',
-  cancelled boolean not null default false,
+  status text not null default 'ST00',
   del_yn text not null default 'N',
   updated_by text not null default ''
 );
@@ -75,7 +75,7 @@ alter table public.documents add column if not exists total_supply numeric not n
 alter table public.documents add column if not exists total_vat numeric not null default 0;
 alter table public.documents add column if not exists total_amount numeric not null default 0;
 alter table public.documents add column if not exists author text not null default '';
-alter table public.documents add column if not exists cancelled boolean not null default false;
+alter table public.documents add column if not exists status text not null default 'ST00';
 alter table public.documents add column if not exists del_yn text not null default 'N';
 alter table public.documents add column if not exists updated_by text not null default '';
 
@@ -109,11 +109,14 @@ set
   supplier_address = coalesce(supplier_address, ''),
   supplier_business_type = coalesce(supplier_business_type, ''),
   supplier_business_item = coalesce(supplier_business_item, ''),
+  status = coalesce(nullif(status, ''), 'ST00'),
   del_yn = coalesce(nullif(del_yn, ''), 'N'),
   updated_at = coalesce(updated_at, created_at, now()),
   updated_by = coalesce(nullif(updated_by, ''), coalesce(nullif(author, ''), 'system'))
 where issue_no is null
    or client is null
+   or status is null
+   or status = ''
    or del_yn is null
    or del_yn = ''
    or updated_at is null
@@ -139,6 +142,14 @@ alter table public.documents alter column client set not null;
 do $$
 begin
   if not exists (
+    select 1 from pg_constraint where conname = 'documents_status_check'
+  ) then
+    alter table public.documents
+      add constraint documents_status_check
+      check (status in ('ST00', 'ST01'));
+  end if;
+
+  if not exists (
     select 1 from pg_constraint where conname = 'documents_del_yn_check'
   ) then
     alter table public.documents
@@ -158,6 +169,7 @@ $$;
 
 create index if not exists idx_documents_created_at on public.documents (created_at desc);
 create index if not exists idx_documents_issue_no on public.documents (issue_no);
+create index if not exists idx_documents_status on public.documents (status);
 create index if not exists idx_document_items_document_id on public.document_items (document_id);
 create index if not exists idx_documents_del_yn on public.documents (del_yn);
 create index if not exists idx_documents_updated_at_v2 on public.documents (updated_at desc);
@@ -190,6 +202,16 @@ $$;
 do $$
 begin
   if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'documents' and policyname = 'documents_update_anon'
+  ) then
+    create policy documents_update_anon on public.documents for update to anon using (true) with check (true);
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
     select 1 from pg_policies where schemaname = 'public' and tablename = 'document_items' and policyname = 'document_items_select_anon'
   ) then
     create policy document_items_select_anon on public.document_items for select to anon using (true);
@@ -203,6 +225,16 @@ begin
     select 1 from pg_policies where schemaname = 'public' and tablename = 'document_items' and policyname = 'document_items_insert_anon'
   ) then
     create policy document_items_insert_anon on public.document_items for insert to anon with check (true);
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'document_items' and policyname = 'document_items_update_anon'
+  ) then
+    create policy document_items_update_anon on public.document_items for update to anon using (true) with check (true);
   end if;
 end
 $$;

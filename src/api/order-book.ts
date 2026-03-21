@@ -1,12 +1,12 @@
 import { getSupabaseClient } from './supabase/client';
 import { getActiveAuditFields, getDeletedAuditFields } from './audit';
-import type { OrderBookEntry, OrderBookInput } from '../types/order-book';
+import type { OrderBookEntry, OrderBookInput, OrderBookStatus } from '../types/order-book';
 
 export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('order_book')
-    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
+    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, status, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
@@ -25,9 +25,12 @@ export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
     qty: row.qty ?? 0,
     note: row.note ?? '',
     receipt: row.receipt ?? '',
-    cancelled: row.cancelled ?? false,
+    status: mapOrderBookStatus(row.status, row.cancelled),
     fromDoc: row.from_doc ?? false,
     createdAt: row.created_at ?? null,
+    delYn: (row.del_yn ?? 'N') as OrderBookEntry['delYn'],
+    updatedAt: row.updated_at ?? null,
+    updatedBy: row.updated_by ?? '',
   }));
 }
 
@@ -44,11 +47,11 @@ export async function createOrderBookEntry(payload: OrderBookInput) {
       qty: payload.qty,
       note: payload.note,
       receipt: payload.receipt,
-      cancelled: payload.cancelled,
+      status: payload.status,
       from_doc: false,
       ...getActiveAuditFields(),
     })
-    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
+    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, status, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -71,11 +74,11 @@ export async function updateOrderBookEntry(id: string, payload: OrderBookInput) 
       qty: payload.qty,
       note: payload.note,
       receipt: payload.receipt,
-      cancelled: payload.cancelled,
+      status: payload.status,
       ...getActiveAuditFields(),
     })
     .eq('id', id)
-    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
+    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, status, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -106,11 +109,17 @@ function mapOrderBookRow(row: any): OrderBookEntry {
     qty: row.qty ?? 0,
     note: row.note ?? '',
     receipt: row.receipt ?? '',
-    cancelled: row.cancelled ?? false,
+    status: mapOrderBookStatus(row.status, row.cancelled),
     fromDoc: row.from_doc ?? false,
     createdAt: row.created_at ?? null,
     delYn: (row.del_yn ?? 'N') as OrderBookEntry['delYn'],
     updatedAt: row.updated_at ?? null,
     updatedBy: row.updated_by ?? '',
   };
+}
+
+function mapOrderBookStatus(status: string | null | undefined, cancelled?: boolean | null): OrderBookStatus {
+  if (status === 'ST01') return 'ST01';
+  if (status === 'ST00') return 'ST00';
+  return cancelled ? 'ST01' : 'ST00';
 }

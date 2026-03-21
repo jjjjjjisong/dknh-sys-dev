@@ -1,3 +1,5 @@
+export type OrderBookStatus = 'ST00' | 'ST01';
+
 export type OrderBookEntry = {
   id: string;
   docId: string | null;
@@ -9,7 +11,7 @@ export type OrderBookEntry = {
   qty: number;
   note: string;
   receipt: string;
-  cancelled: boolean;
+  status: OrderBookStatus;
   fromDoc: boolean;
   createdAt: string | null;
   delYn: 'Y' | 'N';
@@ -26,5 +28,5 @@ export type OrderBookInput = {
   qty: number;
   note: string;
   receipt: string;
-  cancelled: boolean;
+  status: OrderBookStatus;
 };
