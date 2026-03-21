@@ -1419,6 +1419,12 @@ a {
   width: 100%;
 }
 
+.history-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .history-row-cancelled td {
   text-decoration: line-through;
   color: var(--text-3);

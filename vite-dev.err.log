@@ -753,3 +753,117 @@ C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocHistoryP
       at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
       at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
       at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
+[2mPM 9:40:11[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/order-book" from "src\pages\OrderBookPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx[39m:7:7
+[33m  22 |    removeOrderBookEntry,
+  23 |    updateOrderBookEntry
+  24 |  } from "../api/order-book";
+     |          ^
+  25 |  import PageHeader from "../components/PageHeader";
+  26 |  import Alert from "../components/ui/Alert";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 4)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 9:40:11[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/order-book" from "src\pages\OrderBookPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx[39m:7:7
+[33m  22 |    removeOrderBookEntry,
+  23 |    updateOrderBookEntry
+  24 |  } from "../api/order-book";
+     |          ^
+  25 |  import PageHeader from "../components/PageHeader";
+  26 |  import Alert from "../components/ui/Alert";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 4)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 9:40:11[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/order-book" from "src\pages\OrderBookPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx[39m:7:7
+[33m  22 |    removeOrderBookEntry,
+  23 |    updateOrderBookEntry
+  24 |  } from "../api/order-book";
+     |          ^
+  25 |  import PageHeader from "../components/PageHeader";
+  26 |  import Alert from "../components/ui/Alert";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 4)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 9:46:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/order-book" from "src\pages\OrderBookPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx[39m:7:7
+[33m  22 |    removeOrderBookEntry,
+  23 |    updateOrderBookEntry
+  24 |  } from "../api/order-book";
+     |          ^
+  25 |  import PageHeader from "../components/PageHeader";
+  26 |  import Alert from "../components/ui/Alert";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 4)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 9:46:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/order-book" from "src\pages\OrderBookPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx[39m:7:7
+[33m  22 |    removeOrderBookEntry,
+  23 |    updateOrderBookEntry
+  24 |  } from "../api/order-book";
+     |          ^
+  25 |  import PageHeader from "../components/PageHeader";
+  26 |  import Alert from "../components/ui/Alert";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 4)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 9:46:37[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/order-book" from "src\pages\OrderBookPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/OrderBookPage.tsx[39m:7:7
+[33m  22 |    removeOrderBookEntry,
+  23 |    updateOrderBookEntry
+  24 |  } from "../api/order-book";
+     |          ^
+  25 |  import PageHeader from "../components/PageHeader";
+  26 |  import Alert from "../components/ui/Alert";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 4)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)

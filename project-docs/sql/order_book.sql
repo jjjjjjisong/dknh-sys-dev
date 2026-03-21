@@ -14,6 +14,7 @@ create table if not exists public.order_book (
   note text not null default '',
   receipt text not null default '',
   status text not null default 'ST00',
+  shipped_status text not null default '미출고',
   from_doc boolean not null default false,
   del_yn text not null default 'N',
   updated_by text not null default ''
@@ -31,6 +32,7 @@ alter table public.order_book add column if not exists qty integer not null defa
 alter table public.order_book add column if not exists note text not null default '';
 alter table public.order_book add column if not exists receipt text not null default '';
 alter table public.order_book add column if not exists status text not null default 'ST00';
+alter table public.order_book add column if not exists shipped_status text not null default '미출고';
 alter table public.order_book add column if not exists from_doc boolean not null default false;
 alter table public.order_book add column if not exists del_yn text not null default 'N';
 alter table public.order_book add column if not exists updated_by text not null default '';
@@ -38,11 +40,14 @@ alter table public.order_book add column if not exists updated_by text not null 
 update public.order_book
 set
   status = coalesce(nullif(status, ''), 'ST00'),
+  shipped_status = coalesce(nullif(shipped_status, ''), '미출고'),
   del_yn = coalesce(nullif(del_yn, ''), 'N'),
   updated_at = coalesce(updated_at, created_at, now()),
   updated_by = coalesce(nullif(updated_by, ''), 'system')
 where status is null
    or status = ''
+   or shipped_status is null
+   or shipped_status = ''
    or del_yn is null
    or del_yn = ''
    or updated_at is null
@@ -60,6 +65,14 @@ begin
   end if;
 
   if not exists (
+    select 1 from pg_constraint where conname = 'order_book_shipped_status_check'
+  ) then
+    alter table public.order_book
+      add constraint order_book_shipped_status_check
+      check (shipped_status in ('미출고', '출고'));
+  end if;
+
+  if not exists (
     select 1 from pg_constraint where conname = 'order_book_del_yn_check'
   ) then
     alter table public.order_book
@@ -74,6 +87,7 @@ create index if not exists idx_order_book_date on public.order_book (date desc);
 create index if not exists idx_order_book_client on public.order_book (client);
 create index if not exists idx_order_book_doc_id on public.order_book (doc_id);
 create index if not exists idx_order_book_status on public.order_book (status);
+create index if not exists idx_order_book_shipped_status on public.order_book (shipped_status);
 create index if not exists idx_order_book_del_yn on public.order_book (del_yn);
 create index if not exists idx_order_book_updated_at on public.order_book (updated_at desc);
 
