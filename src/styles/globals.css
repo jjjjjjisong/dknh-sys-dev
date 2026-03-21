@@ -71,6 +71,9 @@ a {
   justify-content: space-between;
   padding: 0 18px;
   gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .topbar-brand,
@@ -108,6 +111,11 @@ a {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  min-height: calc(100vh - 56px);
+  overflow-y: auto;
 }
 
 .sidebar-section-title {
