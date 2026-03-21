@@ -1019,6 +1019,12 @@ a {
 
 .product-toolbar {
   align-items: center;
+  grid-template-columns: 180px minmax(260px, 1fr) auto;
+}
+
+.product-toolbar-actions {
+  margin-top: -12px;
+  margin-bottom: 12px;
 }
 
 .detail-stack {
