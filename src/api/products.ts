@@ -33,6 +33,38 @@ export async function fetchProducts(): Promise<Product[]> {
   }) => mapProductRow(product));
 }
 
+export async function fetchProductsByClient(clientName: string): Promise<Product[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select(
+      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
+    )
+    .eq('del_yn', 'N')
+    .eq('client', clientName)
+    .order('no');
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((product: {
+    id: number | string;
+    no: number | null;
+    gubun: string | null;
+    client: string | null;
+    name1: string | null;
+    name2: string | null;
+    supplier: string | null;
+    cost_price: number | null;
+    sell_price: number | null;
+    ea_per_b: number | null;
+    box_per_p: number | null;
+    ea_per_p: number | null;
+    pallets_per_truck: number | null;
+  }) => mapProductRow(product));
+}
+
 export async function createProduct(input: ProductInput): Promise<Product> {
   const supabase = getSupabaseClient();
   const { data: maxRows, error: maxError } = await supabase

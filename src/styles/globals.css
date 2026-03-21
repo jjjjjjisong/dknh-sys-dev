@@ -783,6 +783,27 @@ a {
   min-width: 220px;
 }
 
+.doc-cell-control {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 11px;
+  font-size: 13px;
+  font-family: "Pretendard Variable", "Pretendard", sans-serif;
+  background: var(--surface);
+}
+
+.doc-cell-control[type="date"] {
+  padding-right: 10px;
+}
+
+.doc-items-table textarea.doc-cell-control {
+  min-height: 36px;
+  padding: 8px 11px;
+  resize: vertical;
+}
+
 .doc-number-input-sm {
   width: 88px;
   text-align: right;
@@ -791,6 +812,17 @@ a {
 .doc-number-input-price {
   width: 78px;
   text-align: right;
+}
+
+.doc-item-note {
+  font-family: "Pretendard Variable", "Pretendard", sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.doc-delete-button {
+  white-space: nowrap;
+  min-width: 56px;
 }
 
 .doc-action-stack {
@@ -804,6 +836,28 @@ a {
   flex-direction: row;
   flex-wrap: wrap;
   margin-top: 0;
+}
+
+.doc-sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  margin-top: 20px;
+  padding: 14px 0 8px;
+  background: linear-gradient(180deg, rgba(245, 247, 251, 0) 0%, rgba(245, 247, 251, 0.92) 22%, #f5f7fb 100%);
+}
+
+.doc-action-stack-sticky {
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.doc-sticky-action-button {
+  min-width: 92px;
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .doc-totals-strip {
