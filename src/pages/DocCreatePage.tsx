@@ -162,6 +162,7 @@ export default function DocCreatePage() {
   const [saving, setSaving] = useState(false);
   const [previewType, setPreviewType] = useState<PreviewType>(null);
   const [error, setError] = useState<string | null>(null);
+  const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -578,15 +579,24 @@ export default function DocCreatePage() {
             <div>
               <h2>공급자 정보</h2>
             </div>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={() => setSupplierSectionOpen((current) => !current)}
+            >
+              {supplierSectionOpen ? '접기' : '펼치기'}
+            </button>
           </div>
-          <div className="doc-form-grid">
-            <label className="field"><span>등록번호</span><input value={form.supplierBizNo} onChange={(event) => updateForm('supplierBizNo', event.target.value)} /></label>
-            <label className="field"><span>상호</span><input value={form.supplierName} onChange={(event) => updateForm('supplierName', event.target.value)} /></label>
-            <label className="field"><span>성명</span><input value={form.supplierOwner} onChange={(event) => updateForm('supplierOwner', event.target.value)} /></label>
-            <label className="field field-span-2"><span>사업장주소</span><textarea value={form.supplierAddress} onChange={(event) => updateForm('supplierAddress', event.target.value)} /></label>
-            <label className="field"><span>업태</span><input value={form.supplierBusinessType} onChange={(event) => updateForm('supplierBusinessType', event.target.value)} /></label>
-            <label className="field"><span>종목</span><input value={form.supplierBusinessItem} onChange={(event) => updateForm('supplierBusinessItem', event.target.value)} /></label>
-          </div>
+          {supplierSectionOpen ? (
+            <div className="doc-form-grid">
+              <label className="field"><span>등록번호</span><input value={form.supplierBizNo} onChange={(event) => updateForm('supplierBizNo', event.target.value)} /></label>
+              <label className="field"><span>상호</span><input value={form.supplierName} onChange={(event) => updateForm('supplierName', event.target.value)} /></label>
+              <label className="field"><span>성명</span><input value={form.supplierOwner} onChange={(event) => updateForm('supplierOwner', event.target.value)} /></label>
+              <label className="field field-span-2"><span>사업장주소</span><textarea value={form.supplierAddress} onChange={(event) => updateForm('supplierAddress', event.target.value)} /></label>
+              <label className="field"><span>업태</span><input value={form.supplierBusinessType} onChange={(event) => updateForm('supplierBusinessType', event.target.value)} /></label>
+              <label className="field"><span>종목</span><input value={form.supplierBusinessItem} onChange={(event) => updateForm('supplierBusinessItem', event.target.value)} /></label>
+            </div>
+          ) : null}
         </section>
 
         <section className="card">
@@ -603,16 +613,16 @@ export default function DocCreatePage() {
                 <tr>
                   <th>#</th>
                   <th className="doc-item-name-cell">품목명</th>
-                  <th>구분</th>
+                  <th className="doc-gubun-col">구분</th>
                   <th>발주일자</th>
                   <th>입고일자</th>
                   <th>수량(ea)</th>
-                  <th>파렛트</th>
-                  <th>BOX</th>
+                  <th className="doc-pallet-col">파렛트</th>
+                  <th className="doc-box-col">BOX</th>
                   <th>단가</th>
                   <th>공급가액</th>
                   <th>VAT</th>
-                  <th>비고</th>
+                  <th className="doc-note-col">비고</th>
                   <th>관리</th>
                 </tr>
               </thead>
@@ -651,7 +661,7 @@ export default function DocCreatePage() {
                           ) : null}
                         </div>
                       </td>
-                      <td>
+                      <td className="doc-gubun-cell">
                         {manualMode ? (
                           <div className="doc-inline-stack">
                             <select className="doc-cell-control" value={item.manualGubun} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))}>
@@ -667,12 +677,12 @@ export default function DocCreatePage() {
                       <td><input className="doc-cell-control" type="date" value={item.orderDate} onChange={(event) => updateItem(item.id, (current) => ({ ...current, orderDate: event.target.value }))} /></td>
                       <td><input className="doc-cell-control" type="date" value={item.arriveDate} onChange={(event) => updateItem(item.id, (current) => ({ ...current, arriveDate: event.target.value }))} /></td>
                       <td><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.qty)} onFocus={() => handleNumericFocus(item.id, 'qty')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, qty: parseNullableInteger(stripNonNumeric(event.target.value)), customPallet: null, customBox: null, customSupply: null }))} /></td>
-                      <td><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.customPallet)} onFocus={() => handleNumericFocus(item.id, 'customPallet')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customPallet: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={summary.pallet !== null ? String(summary.pallet) : '자동'} /></td>
-                      <td><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.customBox)} onFocus={() => handleNumericFocus(item.id, 'customBox')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customBox: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={summary.box !== null ? String(summary.box) : '자동'} /></td>
+                      <td className="doc-pallet-col"><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.customPallet)} onFocus={() => handleNumericFocus(item.id, 'customPallet')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customPallet: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={summary.pallet !== null ? String(summary.pallet) : '자동'} /></td>
+                      <td className="doc-box-col"><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.customBox)} onFocus={() => handleNumericFocus(item.id, 'customBox')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customBox: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={summary.box !== null ? String(summary.box) : '자동'} /></td>
                       <td><input className="doc-cell-control doc-number-input-price" type="text" inputMode="decimal" value={formatDecimalInput(item.unitPrice)} onFocus={() => handleNumericFocus(item.id, 'unitPrice')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, unitPrice: parseNullableDecimal(event.target.value), customSupply: null }))} placeholder="단가" /></td>
                       <td><input className="doc-cell-control doc-number-input-price" type="text" inputMode="numeric" value={formatIntegerInput(item.customSupply)} onFocus={() => handleNumericFocus(item.id, 'customSupply')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customSupply: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={formatNumber(summary.supply)} /></td>
                       <td><label className="inline-check"><input type="checkbox" checked={item.vat} onChange={(event) => updateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))} />포함</label></td>
-                      <td><textarea className="doc-cell-control doc-item-note" rows={2} value={item.itemNote} onChange={(event) => updateItem(item.id, (current) => ({ ...current, itemNote: event.target.value }))} placeholder="비고" /></td>
+                      <td className="doc-note-col"><textarea className="doc-cell-control doc-item-note" rows={1} value={item.itemNote} onChange={(event) => updateItem(item.id, (current) => ({ ...current, itemNote: event.target.value }))} placeholder="비고" /></td>
                       <td><button className="btn btn-danger doc-delete-button" onClick={() => removeItem(item.id)}>삭제</button></td>
                     </tr>
                   );

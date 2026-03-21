@@ -808,8 +808,9 @@ a {
 
 .doc-items-table textarea.doc-cell-control {
   min-height: 36px;
+  height: 36px;
   padding: 8px 11px;
-  resize: vertical;
+  resize: none;
 }
 
 .doc-number-input-sm {
@@ -826,6 +827,22 @@ a {
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   font-size: 13px;
   line-height: 1.4;
+}
+
+.doc-gubun-col,
+.doc-gubun-cell {
+  width: 84px;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+.doc-note-col {
+  width: 118px;
+}
+
+.doc-pallet-col,
+.doc-box-col {
+  width: 78px;
 }
 
 .doc-delete-button {
