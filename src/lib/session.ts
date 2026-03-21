@@ -4,7 +4,7 @@ const STORAGE_KEY = 'dkh_user';
 const SESSION_EVENT = 'dkh-session-change';
 
 export function getStoredUser(): UserSession | null {
-  const raw = window.localStorage.getItem(STORAGE_KEY) ?? migrateLegacySessionStorage();
+  const raw = window.sessionStorage.getItem(STORAGE_KEY) ?? clearLegacyLocalStorageSession();
   if (!raw) {
     return null;
   }
@@ -17,8 +17,8 @@ export function getStoredUser(): UserSession | null {
 }
 
 export function saveStoredUser(user: UserSession) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  window.sessionStorage.removeItem(STORAGE_KEY);
+  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  window.localStorage.removeItem(STORAGE_KEY);
   window.dispatchEvent(new CustomEvent(SESSION_EVENT));
 }
 
@@ -42,12 +42,12 @@ export function subscribeSessionChange(listener: () => void) {
   };
 }
 
-function migrateLegacySessionStorage() {
-  const legacy = window.sessionStorage.getItem(STORAGE_KEY);
+function clearLegacyLocalStorageSession() {
+  const legacy = window.localStorage.getItem(STORAGE_KEY);
   if (!legacy) {
     return null;
   }
 
-  window.localStorage.setItem(STORAGE_KEY, legacy);
-  return legacy;
+  window.localStorage.removeItem(STORAGE_KEY);
+  return null;
 }
