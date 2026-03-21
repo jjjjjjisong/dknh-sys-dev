@@ -327,6 +327,35 @@ a {
   white-space: nowrap;
 }
 
+.dashboard-week-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dashboard-week-nav-button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dashboard-week-nav-button:hover {
+  background: var(--surface-2);
+}
+
 .dashboard-donut-wrap {
   display: flex;
   align-items: center;
@@ -422,7 +451,7 @@ a {
   border: 0;
   background: transparent;
   cursor: pointer;
-  transition: transform 0.18s ease;
+  transition: transform 0.28s ease, opacity 0.28s ease;
 }
 
 .dashboard-bar-label,
@@ -473,9 +502,10 @@ a {
   background: linear-gradient(180deg, #6d9aff 0%, #3b6fe8 100%);
   box-shadow: none;
   transition:
-    height 0.2s ease,
-    filter 0.18s ease,
-    transform 0.18s ease;
+    height 0.32s ease,
+    filter 0.22s ease,
+    transform 0.22s ease,
+    opacity 0.22s ease;
   transform-origin: bottom center;
 }
 

@@ -1,3 +1,5 @@
+import type { OrderBookShippingStatus, OrderBookStatus } from './order-book';
+
 export type DashboardIncomingDocument = {
   id: string;
   documentId: string;
@@ -10,8 +12,8 @@ export type DashboardIncomingDocument = {
   qty: number;
   pallet: number | null;
   box: number | null;
-  status: string;
-  shippedStatus: '미출고' | '출고';
+  status: OrderBookStatus;
+  shippedStatus: OrderBookShippingStatus;
 };
 
 export type DashboardRecentDocument = {
@@ -24,7 +26,7 @@ export type DashboardRecentDocument = {
   author: string;
   createdAt: string;
   updatedAt: string;
-  status: string;
+  status: OrderBookStatus;
   receipt: string;
 };
 

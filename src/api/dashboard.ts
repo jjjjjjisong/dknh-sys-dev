@@ -5,19 +5,35 @@ import type {
   DashboardRecentDocument,
   DashboardSummary,
 } from '../types/dashboard';
+import type { OrderBookShippingStatus, OrderBookStatus } from '../types/order-book';
 
 type DocumentItemRow = {
   id: string | number | null;
   name1: string | null;
   name2: string | null;
   qty: number | null;
-  order_date: string | null;
   arrive_date: string | null;
   ea_per_b: number | null;
   box_per_p: number | null;
   custom_pallet: number | null;
   custom_box: number | null;
   del_yn: string | null;
+};
+
+type DocumentRow = {
+  id: string | number | null;
+  issue_no: string | null;
+  client: string | null;
+  receiver: string | null;
+  order_date: string | null;
+  arrive_date: string | null;
+  author: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  status: string | null;
+  cancelled: boolean | null;
+  del_yn: string | null;
+  document_items: DocumentItemRow[] | null;
 };
 
 type OrderBookRow = {
@@ -30,18 +46,18 @@ type OrderBookRow = {
   del_yn: string | null;
 };
 
-export async function fetchDashboardSummary(): Promise<DashboardSummary> {
+export async function fetchDashboardSummary(baseDate: Date = new Date()): Promise<DashboardSummary> {
   const supabase = getSupabaseClient();
 
   const [documentsResult, orderBookResult] = await Promise.all([
     supabase
       .from('documents')
       .select(
-        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, cancelled, del_yn, document_items(id, name1, name2, qty, order_date, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, cancelled, del_yn, document_items(id, name1, name2, qty, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
       )
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false })
-      .limit(200),
+      .limit(300),
     supabase
       .from('order_book')
       .select('id, issue_no, product, receipt, status, shipped_status, del_yn')
@@ -64,18 +80,19 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
 
   const today = new Date();
   const todayKey = toDateKey(today);
-  const weekRange = getWeekRange(today);
+  const weekRange = getWeekRange(baseDate);
 
-  const recentDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
-    .filter((document: any) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
-    .map((document: any) => {
-      const documentItems = ((document.document_items ?? []) as DocumentItemRow[]).filter((item) => (item.del_yn ?? 'N') === 'N');
-      const firstKey = getOrderBookKey(document.issue_no, documentItems[0]?.name1 ?? '');
-      const firstOrderBook = firstKey ? orderBookMap.get(firstKey) : undefined;
+  const sourceDocuments = (documentsResult.data ?? []) as DocumentRow[];
+
+  const recentDocuments: DashboardRecentDocument[] = sourceDocuments
+    .filter((document) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
+    .map((document) => {
+      const items = (document.document_items ?? []).filter((item) => (item.del_yn ?? 'N') === 'N');
+      const firstOrderBook = orderBookMap.get(getOrderBookKey(document.issue_no, items[0]?.name1 ?? ''));
 
       return {
-        id: String(document.id),
-        issueNo: String(document.issue_no ?? '').trim(),
+        id: String(document.id ?? ''),
+        issueNo: String(document.issue_no ?? ''),
         client: document.client ?? '',
         receiver: document.receiver ?? '',
         orderDate: document.order_date ?? '',
@@ -89,13 +106,13 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
     })
     .slice(0, 3);
 
-  const incomingItems: DashboardIncomingDocument[] = (documentsResult.data ?? [])
-    .filter((document: any) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
-    .flatMap((document: any) => {
-      return ((document.document_items ?? []) as DocumentItemRow[])
+  const incomingItems: DashboardIncomingDocument[] = sourceDocuments
+    .filter((document) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
+    .flatMap((document) =>
+      (document.document_items ?? [])
         .filter((item) => (item.del_yn ?? 'N') === 'N')
-        .map((item) => mapIncomingItem(document, item, orderBookMap));
-    })
+        .map((item) => mapIncomingItem(document, item, orderBookMap)),
+    )
     .sort(compareIncomingDocuments);
 
   const todayIncomingDocuments = incomingItems.filter((item) => item.arriveDate === todayKey);
@@ -122,7 +139,69 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
-function mapIncomingItem(document: any, item: DocumentItemRow, orderBookMap: Map<string, OrderBookRow>): DashboardIncomingDocument {
+export async function fetchDashboardWeeklyArrivals(
+  baseDate: Date = new Date(),
+): Promise<Pick<DashboardSummary, 'weekLabel' | 'weeklyArrivals'>> {
+  const supabase = getSupabaseClient();
+
+  const [documentsResult, orderBookResult] = await Promise.all([
+    supabase
+      .from('documents')
+      .select(
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, cancelled, del_yn, document_items(id, name1, name2, qty, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
+      )
+      .eq('del_yn', 'N')
+      .order('created_at', { ascending: false })
+      .limit(300),
+    supabase
+      .from('order_book')
+      .select('id, issue_no, product, receipt, status, shipped_status, del_yn')
+      .eq('del_yn', 'N')
+      .order('created_at', { ascending: false }),
+  ]);
+
+  if (documentsResult.error) throw documentsResult.error;
+  if (orderBookResult.error) throw orderBookResult.error;
+
+  const orderBookRows = (orderBookResult.data ?? []) as OrderBookRow[];
+  const orderBookMap = new Map<string, OrderBookRow>();
+
+  for (const row of orderBookRows) {
+    const key = getOrderBookKey(row.issue_no, row.product);
+    if (key) {
+      orderBookMap.set(key, row);
+    }
+  }
+
+  const weekRange = getWeekRange(baseDate);
+  const sourceDocuments = (documentsResult.data ?? []) as DocumentRow[];
+
+  const incomingItems: DashboardIncomingDocument[] = sourceDocuments
+    .filter(
+      (document) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N',
+    )
+    .flatMap((document) =>
+      (document.document_items ?? [])
+        .filter((item) => (item.del_yn ?? 'N') === 'N')
+        .map((item) => mapIncomingItem(document, item, orderBookMap)),
+    )
+    .sort(compareIncomingDocuments);
+
+  const weekIncomingDocuments = incomingItems.filter(
+    (item) => item.arriveDate >= weekRange.start && item.arriveDate <= weekRange.end,
+  );
+
+  return {
+    weekLabel: `${formatShortDate(weekRange.start)} - ${formatShortDate(weekRange.end)}`,
+    weeklyArrivals: buildWeeklyArrivals(weekRange, weekIncomingDocuments),
+  };
+}
+
+function mapIncomingItem(
+  document: DocumentRow,
+  item: DocumentItemRow,
+  orderBookMap: Map<string, OrderBookRow>,
+): DashboardIncomingDocument {
   const qty = item.qty ?? 0;
   const arriveDate = item.arrive_date ?? document.arrive_date ?? '';
   const productName = item.name2?.trim() || item.name1?.trim() || '';
@@ -130,7 +209,7 @@ function mapIncomingItem(document: any, item: DocumentItemRow, orderBookMap: Map
 
   return {
     id: String(item.id ?? `${document.id}-${productName}-${qty}`),
-    documentId: String(document.id),
+    documentId: String(document.id ?? ''),
     orderBookId: orderBook?.id ?? null,
     issueNo: String(document.issue_no ?? ''),
     arriveDate,
@@ -153,7 +232,7 @@ function buildWeeklyArrivals(
     const items = documents.filter((document) => document.arriveDate === date);
     return {
       date,
-      label: getWeekdayLabel(date),
+      label: formatTrendLabel(date),
       count: items.length,
       documents: items,
     };
@@ -185,7 +264,11 @@ function compareIncomingDocuments(a: DashboardIncomingDocument, b: DashboardInco
 
 function getOrderBookKey(issueNo: string | null | undefined, product: string | null | undefined) {
   const normalizedIssueNo = String(issueNo ?? '').trim();
-  const normalizedProduct = String(product ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const normalizedProduct = String(product ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
   return normalizedIssueNo && normalizedProduct ? `${normalizedIssueNo}::${normalizedProduct}` : '';
 }
 
@@ -212,10 +295,11 @@ function getWeekRange(baseDate: Date) {
   };
 }
 
-function getWeekdayLabel(value: string) {
+function formatTrendLabel(value: string) {
   const [year, month, day] = value.split('-').map(Number);
   const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString('ko-KR', { weekday: 'short' });
+  const weekday = date.toLocaleDateString('ko-KR', { weekday: 'short' });
+  return `${String(day).padStart(2, '0')}(${weekday})`;
 }
 
 function formatShortDate(value: string) {
@@ -223,12 +307,12 @@ function formatShortDate(value: string) {
   return `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
 }
 
-function mapStatus(status: string | null | undefined, cancelled?: boolean | null) {
+function mapStatus(status: string | null | undefined, cancelled?: boolean | null): OrderBookStatus {
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
   return cancelled ? 'ST01' : 'ST00';
 }
 
-function mapShippedStatus(value: string | null | undefined) {
+function mapShippedStatus(value: string | null | undefined): OrderBookShippingStatus {
   return value === '출고' ? '출고' : '미출고';
 }

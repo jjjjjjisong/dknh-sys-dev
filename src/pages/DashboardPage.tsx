@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchDashboardSummary } from '../api/dashboard';
+import { fetchDashboardSummary, fetchDashboardWeeklyArrivals } from '../api/dashboard';
 import { updateManyOrderBookShippedStatus, updateOrderBookShippedStatus } from '../api/order-book';
 import PageHeader from '../components/PageHeader';
 import Badge from '../components/ui/Badge';
@@ -40,6 +40,10 @@ export default function DashboardPage() {
   const [selectedTrend, setSelectedTrend] = useState<DashboardArrivalTrend | null>(null);
   const [selectedOrderBookIds, setSelectedOrderBookIds] = useState<string[]>([]);
   const [batchUpdating, setBatchUpdating] = useState(false);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [trendWeekLabel, setTrendWeekLabel] = useState('');
+  const [trendWeeklyArrivals, setTrendWeeklyArrivals] = useState<DashboardArrivalTrend[]>([]);
+  const [trendLoading, setTrendLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -68,6 +72,34 @@ export default function DashboardPage() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadTrend() {
+      try {
+        setTrendLoading(true);
+        const result = await fetchDashboardWeeklyArrivals(getShiftedWeekDate(weekOffset));
+        if (mounted) {
+          setTrendWeekLabel(result.weekLabel);
+          setTrendWeeklyArrivals(result.weeklyArrivals);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err.message : '주간 입고 예정 데이터를 불러오지 못했습니다.');
+        }
+      } finally {
+        if (mounted) {
+          setTrendLoading(false);
+        }
+      }
+    }
+
+    void loadTrend();
+    return () => {
+      mounted = false;
+    };
+  }, [weekOffset]);
 
   useEffect(() => {
     setSelectedOrderBookIds([]);
@@ -135,6 +167,12 @@ export default function DashboardPage() {
     selectedOrderBookIds.length > 0 &&
     panelConfig?.items.some((item) => selectedOrderBookIds.includes(item.orderBookId ?? ''));
 
+  const allChecked =
+    panelType === 'unshipped' &&
+    panelConfig &&
+    panelConfig.items.length > 0 &&
+    panelConfig.items.every((item) => item.orderBookId && selectedOrderBookIds.includes(item.orderBookId));
+
   function closePanel() {
     setPanelType(null);
     setSelectedTrend(null);
@@ -151,7 +189,9 @@ export default function DashboardPage() {
 
   function toggleSelectAll(checked: boolean) {
     if (!panelConfig || panelType !== 'unshipped') return;
-    const ids = panelConfig.items.map((item) => item.orderBookId).filter((value): value is string => Boolean(value));
+    const ids = panelConfig.items
+      .map((item) => item.orderBookId)
+      .filter((value): value is string => Boolean(value));
     setSelectedOrderBookIds(checked ? ids : []);
   }
 
@@ -162,7 +202,10 @@ export default function DashboardPage() {
     });
   }
 
-  async function handleShippedStatusChange(document: DashboardIncomingDocument, shippedStatus: OrderBookShippingStatus) {
+  async function handleShippedStatusChange(
+    document: DashboardIncomingDocument,
+    shippedStatus: OrderBookShippingStatus,
+  ) {
     if (!document.orderBookId) return;
 
     try {
@@ -193,12 +236,6 @@ export default function DashboardPage() {
       setBatchUpdating(false);
     }
   }
-
-  const allChecked =
-    panelType === 'unshipped' &&
-    panelConfig &&
-    panelConfig.items.length > 0 &&
-    panelConfig.items.every((item) => item.orderBookId && selectedOrderBookIds.includes(item.orderBookId));
 
   return (
     <div className="page-content dashboard-page">
@@ -262,18 +299,37 @@ export default function DashboardPage() {
         <article className="dashboard-chart-card">
           <div className="dashboard-card-head">
             <h2>최근 7일 입고 예정 건수</h2>
-            <span>{data.weekLabel}</span>
+            <div className="dashboard-week-nav">
+              <button
+                type="button"
+                className="dashboard-week-nav-button"
+                onClick={() => setWeekOffset((current) => current - 1)}
+                aria-label="이전 주"
+              >
+                ‹
+              </button>
+              <span>{trendWeekLabel}</span>
+              <button
+                type="button"
+                className="dashboard-week-nav-button"
+                onClick={() => setWeekOffset((current) => current + 1)}
+                aria-label="다음 주"
+              >
+                ›
+              </button>
+            </div>
           </div>
 
           <div className="dashboard-bar-chart">
-            {(loading ? getEmptyTrendBars() : data.weeklyArrivals).map((item) => (
+            {(trendLoading ? getEmptyTrendBars() : trendWeeklyArrivals).map((item, index) => (
               <TrendBar
                 key={item.date || item.label}
                 item={item}
-                max={getTrendMax(data.weeklyArrivals)}
-                loading={loading}
+                max={getTrendMax(trendWeeklyArrivals)}
+                loading={trendLoading}
+                index={index}
                 onClick={() => {
-                  if (!loading) {
+                  if (!trendLoading) {
                     setSelectedTrend(item);
                     setPanelType('trend');
                   }
@@ -353,7 +409,11 @@ export default function DashboardPage() {
               <tr>
                 {panelType === 'unshipped' ? (
                   <th style={{ width: 42, textAlign: 'center' }}>
-                    <input type="checkbox" checked={Boolean(allChecked)} onChange={(event) => toggleSelectAll(event.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={Boolean(allChecked)}
+                      onChange={(event) => toggleSelectAll(event.target.checked)}
+                    />
                   </th>
                 ) : null}
                 <th style={{ width: 88, textAlign: 'center' }}>발급번호</th>
@@ -385,7 +445,9 @@ export default function DashboardPage() {
                     key={`${panelType}-${document.id}`}
                     document={document}
                     showSelection={panelType === 'unshipped'}
-                    checked={document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false}
+                    checked={
+                      document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false
+                    }
                     showShippedStatus={panelType === 'unshipped'}
                     onToggleSelect={(checked) => {
                       if (document.orderBookId) {
@@ -393,7 +455,9 @@ export default function DashboardPage() {
                       }
                     }}
                     onOpen={openDocumentInNewTab}
-                    onChangeShippedStatus={(shippedStatus) => void handleShippedStatusChange(document, shippedStatus)}
+                    onChangeShippedStatus={(shippedStatus) =>
+                      void handleShippedStatusChange(document, shippedStatus)
+                    }
                   />
                 ))
               )}
@@ -431,11 +495,13 @@ function TrendBar({
   item,
   max,
   loading,
+  index,
   onClick,
 }: {
   item: DashboardArrivalTrend;
   max: number;
   loading: boolean;
+  index: number;
   onClick: () => void;
 }) {
   const height = max === 0 ? 16 : Math.max((item.count / max) * 100, item.count > 0 ? 16 : 10);
@@ -446,10 +512,17 @@ function TrendBar({
       className="dashboard-bar-item"
       title={item.date ? `${item.date}: ${item.count}건` : undefined}
       onClick={onClick}
+      style={{ transitionDelay: `${index * 35}ms` }}
     >
       <span className="dashboard-bar-label">{item.label}</span>
       <div className="dashboard-bar-track">
-        <div className="dashboard-bar-fill" style={{ height: `${height}%` }} />
+        <div
+          className="dashboard-bar-fill"
+          style={{
+            height: `${height}%`,
+            transitionDelay: `${index * 35}ms`,
+          }}
+        />
       </div>
       <strong className="dashboard-bar-value">{loading ? '...' : item.count}</strong>
     </button>
@@ -477,7 +550,11 @@ function DashboardIncomingRow({
     <tr className="dashboard-clickable-row" onClick={() => onOpen(document.documentId)}>
       {showSelection ? (
         <td style={{ textAlign: 'center' }} onClick={(event) => event.stopPropagation()}>
-          <input type="checkbox" checked={checked} onChange={(event) => onToggleSelect?.(event.target.checked)} />
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(event) => onToggleSelect?.(event.target.checked)}
+          />
         </td>
       ) : null}
       <td style={{ textAlign: 'center' }}>{document.issueNo || '-'}</td>
@@ -494,12 +571,17 @@ function DashboardIncomingRow({
       <td style={{ textAlign: 'center' }}>{formatInteger(document.qty)}</td>
       <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.pallet)}</td>
       <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.box)}</td>
-      <td style={{ textAlign: 'center' }} onClick={(event) => showShippedStatus && event.stopPropagation()}>
+      <td
+        style={{ textAlign: 'center' }}
+        onClick={(event) => showShippedStatus && event.stopPropagation()}
+      >
         {showShippedStatus ? (
           <select
             className="history-filter-select"
             value={document.shippedStatus}
-            onChange={(event) => onChangeShippedStatus?.(event.target.value as OrderBookShippingStatus)}
+            onChange={(event) =>
+              onChangeShippedStatus?.(event.target.value as OrderBookShippingStatus)
+            }
           >
             <option value="미출고">미출고</option>
             <option value="출고">출고</option>
@@ -568,8 +650,11 @@ function applyShippedStatusToSummary(
   for (const item of trackedItems) {
     uniqueTrackedIds.set(item.id, item);
   }
+
   const trackedCount = uniqueTrackedIds.size;
-  const completedCount = Array.from(uniqueTrackedIds.values()).filter((item) => item.shippedStatus === '출고').length;
+  const completedCount = Array.from(uniqueTrackedIds.values()).filter(
+    (item) => item.shippedStatus === '출고',
+  ).length;
 
   return {
     ...summary,
@@ -588,12 +673,18 @@ function getTrendMax(items: DashboardArrivalTrend[]) {
 }
 
 function getEmptyTrendBars(): DashboardArrivalTrend[] {
-  return ['일', '월', '화', '수', '목', '금', '토'].map((label, index) => ({
+  return Array.from({ length: 7 }, (_, index) => ({
     date: `loading-${index}`,
-    label,
+    label: '--(-)',
     count: 0,
     documents: [],
   }));
+}
+
+function getShiftedWeekDate(offset: number) {
+  const base = new Date();
+  base.setDate(base.getDate() + offset * 7);
+  return base;
 }
 
 function formatTrendTitleDate(value: string) {
