@@ -47,7 +47,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -576,9 +577,20 @@ a {
   transform: translateY(-50%);
   color: var(--text-3);
   pointer-events: none;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
+  width: 10px;
+  height: 10px;
+  font-size: 0;
+  line-height: 0;
+}
+
+.client-search-caret::before {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--text-2);
+  border-bottom: 2px solid var(--text-2);
+  transform: rotate(45deg);
 }
 
 .client-search-dropdown {
@@ -666,6 +678,10 @@ a {
 
 .dashboard-clickable-row:hover td {
   background: #f8fbff;
+}
+
+.table tbody tr {
+  cursor: pointer;
 }
 
 .dashboard-ellipsis-cell {
@@ -972,6 +988,11 @@ a {
   border-color: #bfdbfe;
 }
 
+.history-date-input {
+  width: 170px;
+  max-width: 100%;
+}
+
 .client-toolbar {
   flex-wrap: wrap;
 }
@@ -1110,6 +1131,26 @@ a {
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   background: var(--surface);
   color: var(--text-1);
+}
+
+.field select {
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 36px 0 11px;
+  font-size: 13px;
+  font-family: "Pretendard Variable", "Pretendard", sans-serif;
+  background: var(--surface);
+  color: var(--text-1);
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-2) 50%),
+    linear-gradient(135deg, var(--text-2) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 14px,
+    calc(100% - 12px) 14px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
 }
 
 .field textarea {
@@ -1356,12 +1397,31 @@ a {
 
 .history-filter-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: 170px 170px 150px minmax(220px, 1fr);
+  gap: 10px;
+  align-items: end;
 }
 
-.history-badge {
-  margin-left: 8px;
+.history-filter-grid .field {
+  margin-bottom: 0;
+}
+
+.history-filter-grid .field input,
+.history-filter-grid .field select {
+  height: 36px;
+}
+
+.history-date-field {
+  margin-bottom: 0;
+}
+
+.history-filter-select {
+  width: 100%;
+}
+
+.history-row-cancelled td {
+  text-decoration: line-through;
+  color: var(--text-3);
 }
 
 .history-editor-header {

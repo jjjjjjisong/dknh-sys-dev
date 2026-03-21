@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
 import PageHeader from '../components/PageHeader';
@@ -7,6 +7,8 @@ import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 type PreviewType = 'release' | 'invoice' | null;
 
 const today = new Date().toISOString().slice(0, 10);
+const oneYearAgo = getDateOneYearAgo(today);
+const oneYearLater = getDateOneYearLater(today);
 
 export default function DocHistoryPage() {
   const navigate = useNavigate();
@@ -18,10 +20,11 @@ export default function DocHistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'client' | 'author'>('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(oneYearAgo);
+  const [dateTo, setDateTo] = useState(oneYearLater);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<PreviewType>(null);
+  const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
 
   useEffect(() => {
     void reload();
@@ -56,14 +59,14 @@ export default function DocHistoryPage() {
     const search = keyword.trim().toLowerCase();
 
     return documents.filter((doc) => {
-      const docDate = doc.orderDate || doc.createdAt?.slice(0, 10) || '';
+      const docDate = doc.arriveDate || '';
       if (dateFrom && docDate && docDate < dateFrom) return false;
       if (dateTo && docDate && docDate > dateTo) return false;
       if (!search) return true;
       if (filterType === 'client') return doc.client.toLowerCase().includes(search);
       if (filterType === 'author') return doc.author.toLowerCase().includes(search);
 
-      return [doc.issueNo, doc.client, doc.author, doc.items.map((item) => item.name1).join(' ')]
+      return [doc.issueNo, doc.client, doc.receiver, doc.author, doc.items.map((item) => `${item.name1} ${item.name2}`).join(' ')]
         .join(' ')
         .toLowerCase()
         .includes(search);
@@ -161,17 +164,8 @@ export default function DocHistoryPage() {
   return (
     <div className="page-content">
       <PageHeader
-        title="발행 이력"
-        description="저장된 출고 문서 목록입니다."
-        action={
-          !draft ? (
-            <div className="button-row">
-              <button className="btn btn-secondary" onClick={() => void reload()}>
-                새로고침
-              </button>
-            </div>
-          ) : undefined
-        }
+        title={draft ? '발행이력 상세' : '발행 이력'}
+        description=""
       />
 
       {error ? <div className="alert alert-error">{error}</div> : null}
@@ -180,17 +174,17 @@ export default function DocHistoryPage() {
         <>
           <section className="card">
             <div className="history-filter-grid">
-              <label className="field">
-                <span>작성일(시작)</span>
-                <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+              <label className="field history-date-field">
+                <span>입고일(시작)</span>
+                <input className="history-date-input" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
               </label>
-              <label className="field">
-                <span>작성일(종료)</span>
-                <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+              <label className="field history-date-field">
+                <span>입고일(종료)</span>
+                <input className="history-date-input" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
               </label>
               <label className="field">
                 <span>검색 필터</span>
-                <select value={filterType} onChange={(event) => setFilterType(event.target.value as 'all' | 'client' | 'author')}>
+                <select className="history-filter-select" value={filterType} onChange={(event) => setFilterType(event.target.value as 'all' | 'client' | 'author')}>
                   <option value="all">전체</option>
                   <option value="client">납품업체</option>
                   <option value="author">작성자</option>
@@ -198,7 +192,7 @@ export default function DocHistoryPage() {
               </label>
               <label className="field">
                 <span>키워드</span>
-                <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="검색어 입력..." />
+                <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="검색어를 입력해주세요." />
               </label>
             </div>
           </section>
@@ -206,41 +200,52 @@ export default function DocHistoryPage() {
           <section className="card">
             {loading ? (
               <div className="empty-state">발행 이력을 불러오는 중입니다...</div>
-            ) : filteredDocuments.length === 0 ? (
-              <div className="empty-state">검색 결과가 없습니다.</div>
             ) : (
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
                       <th style={{ width: 90, textAlign: 'center' }}>발급번호</th>
-                      <th style={{ width: 120, textAlign: 'center' }}>발주일자</th>
+                      <th style={{ width: 120, textAlign: 'center' }}>입고일자</th>
                       <th style={{ minWidth: 180 }}>납품처</th>
-                      <th>품목정보</th>
+                      <th style={{ minWidth: 150 }}>수신처</th>
+                      <th style={{ minWidth: 220 }}>품목명</th>
+                      <th style={{ width: 90, textAlign: 'right' }}>수량</th>
+                      <th style={{ width: 90, textAlign: 'right' }}>파렛트</th>
+                      <th style={{ width: 80, textAlign: 'right' }}>박스</th>
                       <th style={{ width: 90, textAlign: 'center' }}>작성자</th>
                       <th style={{ width: 180, textAlign: 'center' }}>수정/저장일시</th>
-                      <th style={{ width: 88, textAlign: 'center' }}>상태</th>
+                      <th style={{ width: 90, textAlign: 'center' }}>상태</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDocuments.map((doc) => (
-                      <tr key={doc.id} onClick={() => openDocument(doc)}>
-                        <td style={{ textAlign: 'center' }}>{doc.issueNo}</td>
-                        <td style={{ textAlign: 'center' }}>{doc.orderDate || '-'}</td>
-                        <td style={{ fontWeight: 700 }}>
-                          {doc.client}
-                          {doc.cancelled ? <span className="badge badge-cancel history-badge">거래취소</span> : null}
-                        </td>
-                        <td>{doc.items.map((item) => item.name1).join(', ')}</td>
-                        <td style={{ textAlign: 'center' }}>{doc.author || '-'}</td>
-                        <td style={{ textAlign: 'center' }}>{formatDateTime(doc.updatedAt || doc.createdAt)}</td>
-                        <td style={{ textAlign: 'center' }}>
-                          <span className={`badge ${doc.cancelled ? 'badge-cancel' : 'badge-muted-blue'}`}>
-                            {doc.cancelled ? '취소' : '완료'}
-                          </span>
+                    {filteredDocuments.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="table-empty" style={{ textAlign: 'center' }}>
+                          검색 결과가 없습니다.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredDocuments.map((doc) => (
+                        <tr
+                          key={doc.id}
+                          onClick={() => openDocument(doc)}
+                          className={doc.cancelled ? 'history-row-cancelled' : undefined}
+                        >
+                          <td style={{ textAlign: 'center' }}>{doc.issueNo}</td>
+                          <td style={{ textAlign: 'center' }}>{doc.arriveDate || '-'}</td>
+                          <td style={{ fontWeight: 700 }}>{doc.client}</td>
+                          <td>{doc.receiver || '-'}</td>
+                          <td>{summarizeItemNames(doc.items)}</td>
+                          <td style={{ textAlign: 'right' }}>{formatNumber(sumItemQty(doc.items))}</td>
+                          <td style={{ textAlign: 'right' }}>{formatNumber(sumItemPallet(doc.items))}</td>
+                          <td style={{ textAlign: 'right' }}>{formatNumber(sumItemBox(doc.items))}</td>
+                          <td style={{ textAlign: 'center' }}>{doc.author || '-'}</td>
+                          <td style={{ textAlign: 'center' }}>{formatCompactDateTime(doc.updatedAt || doc.createdAt)}</td>
+                          <td style={{ textAlign: 'center' }}>{doc.cancelled ? '거래취소' : ''}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -249,73 +254,95 @@ export default function DocHistoryPage() {
         </>
       ) : (
         <section className="card">
-          <div className="history-editor-header">
-            <button className="btn btn-secondary" onClick={closeEditor}>
-              목록으로
-            </button>
-            <div className="history-editor-title">
-              <h2>
-                발행 이력 상세
-                {draft.cancelled ? ' [거래취소]' : ''}
-              </h2>
-              <p>
-                {draft.issueNo} · {draft.client}
-              </p>
-            </div>
-          </div>
-
           <div className="detail-stack">
-            <div className="history-edit-grid">
+            <div className="doc-form-grid">
+              <label className="field"><span>발주일</span><input type="date" value={draft.orderDate || ''} onChange={(event) => updateDraft('orderDate', emptyToNull(event.target.value))} /></label>
+              <label className="field"><span>입고일</span><input type="date" value={draft.arriveDate || ''} onChange={(event) => updateDraft('arriveDate', emptyToNull(event.target.value))} /></label>
               <label className="field"><span>발급번호</span><input value={draft.issueNo} onChange={(event) => updateDraft('issueNo', event.target.value)} /></label>
+
               <label className="field"><span>납품처</span><input value={draft.client} onChange={(event) => updateDraft('client', event.target.value)} /></label>
               <label className="field"><span>담당자</span><input value={draft.manager} onChange={(event) => updateDraft('manager', event.target.value)} /></label>
               <label className="field"><span>담당자 연락처</span><input value={draft.managerTel} onChange={(event) => updateDraft('managerTel', event.target.value)} /></label>
-              <label className="field"><span>수신</span><input value={draft.receiver} onChange={(event) => updateDraft('receiver', event.target.value)} /></label>
-              <label className="field"><span>발주일자</span><input type="date" value={draft.orderDate || ''} onChange={(event) => updateDraft('orderDate', emptyToNull(event.target.value))} /></label>
-              <label className="field"><span>입고일자</span><input type="date" value={draft.arriveDate || ''} onChange={(event) => updateDraft('arriveDate', emptyToNull(event.target.value))} /></label>
-              <label className="field field-span-2"><span>납품 주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
-              <label className="field field-span-2"><span>비고</span><input value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
+
+              <label className="field"><span>수신처</span><input value={draft.receiver} onChange={(event) => updateDraft('receiver', event.target.value)} /></label>
+              <label className="field field-span-2-cols"><span>납품주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
+
+              <label className="field field-span-2"><span>비고</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
               <label className="field field-span-2"><span>요청사항</span><textarea rows={2} value={draft.requestNote} onChange={(event) => updateDraft('requestNote', event.target.value)} /></label>
             </div>
 
-            <div className="table-wrap">
-              <table className="table doc-items-table wide">
-                <thead>
-                  <tr>
-                    <th style={{ width: 32, textAlign: 'center' }}>#</th>
-                    <th>품목명</th>
-                    <th style={{ width: 60, textAlign: 'center' }}>구분</th>
-                    <th style={{ width: 110 }}>발주일자</th>
-                    <th style={{ width: 110 }}>입고일자</th>
-                    <th style={{ width: 90 }}>수량(ea)</th>
-                    <th style={{ width: 70 }}>파렛트</th>
-                    <th style={{ width: 70 }}>BOX</th>
-                    <th style={{ width: 110 }}>단가</th>
-                    <th style={{ width: 110 }}>공급가액</th>
-                    <th style={{ width: 70, textAlign: 'center' }}>VAT</th>
-                    <th style={{ width: 140 }}>비고</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {draft.items.map((item, index) => (
-                    <tr key={item.id || `${draft.id}-${index}`}>
-                      <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                      <td><input value={item.name1} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, name1: event.target.value }))} /></td>
-                      <td style={{ textAlign: 'center' }}>{item.gubun || '-'}</td>
-                      <td><input type="date" value={item.orderDate || draft.orderDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, orderDate: emptyToNull(event.target.value) }))} /></td>
-                      <td><input type="date" value={item.arriveDate || draft.arriveDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, arriveDate: emptyToNull(event.target.value) }))} /></td>
-                      <td><input type="number" value={item.qty} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, qty: Math.max(parseInt(event.target.value || '0', 10) || 0, 0) }))} /></td>
-                      <td><input type="number" value={item.customPallet ?? calculatePallet(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customPallet: parseNullableInteger(event.target.value) }))} /></td>
-                      <td><input type="number" value={item.customBox ?? calculateBox(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customBox: parseNullableInteger(event.target.value) }))} /></td>
-                      <td><input type="number" value={item.unitPrice} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, unitPrice: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
-                      <td><input type="number" value={item.supply} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, supply: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
-                      <td style={{ textAlign: 'center' }}><input type="checkbox" checked={item.vat} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, vat: event.target.checked }))} /></td>
-                      <td><textarea rows={2} value={item.itemNote} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, itemNote: event.target.value }))} /></td>
+            <section className="card">
+              <div className="card-header">
+                <div>
+                  <h2>공급자 정보</h2>
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  onClick={() => setSupplierSectionOpen((current) => !current)}
+                >
+                  {supplierSectionOpen ? '접기' : '펼치기'}
+                </button>
+              </div>
+
+              {supplierSectionOpen ? (
+                <div className="doc-form-grid">
+                  <label className="field"><span>등록번호</span><input value={draft.supplierBizNo} onChange={(event) => updateDraft('supplierBizNo', event.target.value)} /></label>
+                  <label className="field"><span>상호</span><input value={draft.supplierName} onChange={(event) => updateDraft('supplierName', event.target.value)} /></label>
+                  <label className="field"><span>성명</span><input value={draft.supplierOwner} onChange={(event) => updateDraft('supplierOwner', event.target.value)} /></label>
+                  <label className="field field-span-2"><span>사업장주소</span><textarea value={draft.supplierAddress} onChange={(event) => updateDraft('supplierAddress', event.target.value)} /></label>
+                  <label className="field"><span>업태</span><input value={draft.supplierBusinessType} onChange={(event) => updateDraft('supplierBusinessType', event.target.value)} /></label>
+                  <label className="field"><span>종목</span><input value={draft.supplierBusinessItem} onChange={(event) => updateDraft('supplierBusinessItem', event.target.value)} /></label>
+                </div>
+              ) : null}
+            </section>
+
+            <section className="card">
+              <div className="card-header">
+                <div>
+                  <h2>품목정보</h2>
+                </div>
+              </div>
+
+              <div className="table-wrap">
+                <table className="table doc-items-table wide">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 32, textAlign: 'center' }}>#</th>
+                      <th>품목명</th>
+                      <th style={{ width: 60, textAlign: 'center' }}>구분</th>
+                      <th style={{ width: 110 }}>발주일자</th>
+                      <th style={{ width: 110 }}>입고일자</th>
+                      <th style={{ width: 90 }}>수량(ea)</th>
+                      <th style={{ width: 70 }}>파렛트</th>
+                      <th style={{ width: 70 }}>BOX</th>
+                      <th style={{ width: 110 }}>단가</th>
+                      <th style={{ width: 110 }}>공급가액</th>
+                      <th style={{ width: 70, textAlign: 'center' }}>VAT</th>
+                      <th style={{ width: 140 }}>비고</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {draft.items.map((item, index) => (
+                      <tr key={item.id || `${draft.id}-${index}`}>
+                        <td style={{ textAlign: 'center' }}>{index + 1}</td>
+                        <td><input value={item.name1} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, name1: event.target.value }))} /></td>
+                        <td style={{ textAlign: 'center' }}>{item.gubun || '-'}</td>
+                        <td><input type="date" value={item.orderDate || draft.orderDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, orderDate: emptyToNull(event.target.value) }))} /></td>
+                        <td><input type="date" value={item.arriveDate || draft.arriveDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, arriveDate: emptyToNull(event.target.value) }))} /></td>
+                        <td><input type="number" value={item.qty} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, qty: Math.max(parseInt(event.target.value || '0', 10) || 0, 0) }))} /></td>
+                        <td><input type="number" value={item.customPallet ?? calculatePallet(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customPallet: parseNullableInteger(event.target.value) }))} /></td>
+                        <td><input type="number" value={item.customBox ?? calculateBox(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customBox: parseNullableInteger(event.target.value) }))} /></td>
+                        <td><input type="number" value={item.unitPrice} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, unitPrice: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
+                        <td><input type="number" value={item.supply} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, supply: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
+                        <td style={{ textAlign: 'center' }}><input type="checkbox" checked={item.vat} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, vat: event.target.checked }))} /></td>
+                        <td><textarea rows={2} value={item.itemNote} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, itemNote: event.target.value }))} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
             <div className="doc-totals-strip">
               <div className="doc-total-item"><span>공급가액</span><strong>{formatNumber(draft.totalSupply)}</strong></div>
@@ -372,6 +399,28 @@ function calculatePallet(item: DocumentHistoryItem) {
 
 function calculateBox(item: DocumentHistoryItem) {
   return item.eaPerB ? Math.ceil(item.qty / item.eaPerB) : '';
+}
+
+function sumItemQty(items: DocumentHistoryItem[]) {
+  return items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+}
+
+function sumItemPallet(items: DocumentHistoryItem[]) {
+  return items.reduce((sum, item) => sum + Number(item.customPallet ?? calculatePallet(item) ?? 0), 0);
+}
+
+function sumItemBox(items: DocumentHistoryItem[]) {
+  return items.reduce((sum, item) => sum + Number(item.customBox ?? calculateBox(item) ?? 0), 0);
+}
+
+function summarizeItemNames(items: DocumentHistoryItem[]) {
+  const names = items
+    .map((item) => item.name2 || item.name1)
+    .filter((name) => name && name.trim().length > 0);
+
+  if (names.length === 0) return '-';
+  if (names.length === 1) return names[0];
+  return `${names[0]} 외 ${names.length - 1}건`;
 }
 
 function getDocumentTotals(items: DocumentHistoryItem[]) {
@@ -443,6 +492,18 @@ function formatDateTime(value: string | null) {
   return value.slice(0, 16).replace('T', ' ');
 }
 
+function formatCompactDateTime(value: string | null) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const yy = String(date.getFullYear()).slice(-2);
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mi = String(date.getMinutes()).padStart(2, '0');
+  return `${yy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
 function emptyToNull(value: string) {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
@@ -452,6 +513,18 @@ function parseNullableInteger(value: string) {
   if (!value.trim()) return null;
   const parsed = parseInt(value, 10);
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+function getDateOneYearAgo(baseDate: string) {
+  const date = new Date(baseDate);
+  date.setFullYear(date.getFullYear() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function getDateOneYearLater(baseDate: string) {
+  const date = new Date(baseDate);
+  date.setFullYear(date.getFullYear() + 1);
+  return date.toISOString().slice(0, 10);
 }
 
 function escapeHtml(value: string) {
