@@ -22,12 +22,24 @@ export type DashboardRecentDocument = {
   receipt: string;
 };
 
+export type DashboardArrivalTrend = {
+  date: string;
+  label: string;
+  count: number;
+  documents: DashboardIncomingDocument[];
+};
+
 export type DashboardSummary = {
   todayIncomingCount: number;
   weekIncomingCount: number;
   incompleteCount: number;
+  completedCount: number;
+  trackedCount: number;
+  weekLabel: string;
+  todayLabel: string;
   todayIncomingDocuments: DashboardIncomingDocument[];
   weekIncomingDocuments: DashboardIncomingDocument[];
   incompleteDocuments: DashboardIncomingDocument[];
   recentDocuments: DashboardRecentDocument[];
+  weeklyArrivals: DashboardArrivalTrend[];
 };

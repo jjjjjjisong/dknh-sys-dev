@@ -3,7 +3,6 @@ import type { PropsWithChildren, ReactNode } from 'react';
 type SlidePanelProps = PropsWithChildren<{
   open: boolean;
   title: ReactNode;
-  description?: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
 }>;
@@ -11,7 +10,6 @@ type SlidePanelProps = PropsWithChildren<{
 export default function SlidePanel({
   open,
   title,
-  description,
   onClose,
   footer,
   children,
@@ -24,7 +22,6 @@ export default function SlidePanel({
         <div className="slide-panel-head">
           <div>
             <h2>{title}</h2>
-            {description ? <p>{description}</p> : null}
           </div>
         </div>
         <div className="slide-panel-body">

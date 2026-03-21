@@ -5,21 +5,27 @@ import PageHeader from '../components/PageHeader';
 import Badge from '../components/ui/Badge';
 import SlidePanel from '../components/ui/SlidePanel';
 import type {
+  DashboardArrivalTrend,
   DashboardIncomingDocument,
   DashboardRecentDocument,
   DashboardSummary,
 } from '../types/dashboard';
 
-type PanelType = 'today' | 'week' | 'incomplete' | null;
+type PanelType = 'today' | 'week' | 'incomplete' | 'trend' | null;
 
 const emptySummary: DashboardSummary = {
   todayIncomingCount: 0,
   weekIncomingCount: 0,
   incompleteCount: 0,
+  completedCount: 0,
+  trackedCount: 0,
+  weekLabel: '',
+  todayLabel: '',
   todayIncomingDocuments: [],
   weekIncomingDocuments: [],
   incompleteDocuments: [],
   recentDocuments: [],
+  weeklyArrivals: [],
 };
 
 export default function DashboardPage() {
@@ -28,6 +34,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [panelType, setPanelType] = useState<PanelType>(null);
+  const [selectedTrend, setSelectedTrend] = useState<DashboardArrivalTrend | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -52,6 +59,7 @@ export default function DashboardPage() {
     }
 
     void load();
+
     return () => {
       mounted = false;
     };
@@ -60,16 +68,14 @@ export default function DashboardPage() {
   const panelConfig = useMemo(() => {
     if (panelType === 'today') {
       return {
-        title: '금일 입고건수',
-        description: '오늘 입고 예정인 발급번호 목록입니다. 항목을 클릭하면 새 탭으로 상세 화면이 열립니다.',
+        title: `오늘의 할일${data.todayLabel ? ` (${data.todayLabel})` : ''}`,
         items: data.todayIncomingDocuments,
       };
     }
 
     if (panelType === 'week') {
       return {
-        title: '금주 입고 건수',
-        description: '이번 주 도래 예정 입고건 중 미완료된 항목입니다. 항목을 클릭하면 새 탭으로 상세 화면이 열립니다.',
+        title: `금주의 할일${data.weekLabel ? ` (${data.weekLabel})` : ''}`,
         items: data.weekIncomingDocuments,
       };
     }
@@ -77,13 +83,49 @@ export default function DashboardPage() {
     if (panelType === 'incomplete') {
       return {
         title: '미완료건수',
-        description: '수령 완료 처리되지 않은 입고건 목록입니다. 항목을 클릭하면 새 탭으로 상세 화면이 열립니다.',
         items: data.incompleteDocuments,
       };
     }
 
+    if (panelType === 'trend' && selectedTrend) {
+      return {
+        title: `${formatTrendTitleDate(selectedTrend.date)} 입고 예정 건수`,
+        items: selectedTrend.documents,
+      };
+    }
+
     return null;
-  }, [data.incompleteDocuments, data.todayIncomingDocuments, data.weekIncomingDocuments, panelType]);
+  }, [
+    data.incompleteDocuments,
+    data.todayIncomingDocuments,
+    data.todayLabel,
+    data.weekIncomingDocuments,
+    data.weekLabel,
+    panelType,
+    selectedTrend,
+  ]);
+
+  const donutStyle = useMemo(() => {
+    const total = Math.max(data.trackedCount, 1);
+    const completedRatio = (data.completedCount / total) * 100;
+    const incompleteRatio = (data.incompleteCount / total) * 100;
+    const weekRatio = Math.max((data.weekIncomingCount / total) * 100, 0);
+    const weekEnd = Math.min(completedRatio + incompleteRatio + weekRatio, 100);
+
+    return {
+      background: `conic-gradient(
+        #3b82f6 0 ${completedRatio}%,
+        #ef4444 ${completedRatio}% ${completedRatio + incompleteRatio}%,
+        #f59e0b ${completedRatio + incompleteRatio}% ${weekEnd}%,
+        #e5e7eb ${weekEnd}% 100%
+      )`,
+    };
+  }, [data.completedCount, data.incompleteCount, data.trackedCount, data.weekIncomingCount]);
+
+  function closePanel() {
+    setPanelType(null);
+    setSelectedTrend(null);
+  }
 
   function openDocumentInNewTab(documentId: string) {
     const target = `${window.location.origin}${window.location.pathname}#/doc-history/${documentId}`;
@@ -94,57 +136,103 @@ export default function DashboardPage() {
     navigate(`/doc-history/${documentId}`);
   }
 
+  function openTrendPanel(item: DashboardArrivalTrend) {
+    setSelectedTrend(item);
+    setPanelType('trend');
+  }
+
   return (
-    <div className="page-content">
-      <PageHeader
-        title="대시보드"
-        description="오늘 확인해야 할 입고 현황과 최근 등록 문서를 한눈에 확인합니다."
-      />
+    <div className="page-content dashboard-page">
+      <PageHeader title="대시보드" description="" />
 
       {error ? <div className="alert alert-error">{error}</div> : null}
 
-      <section className="stats-grid dashboard-stats-grid">
-        <button
-          type="button"
-          className="card stat-card dashboard-stat-button"
+      <section className="dashboard-top-grid">
+        <SummaryCard
+          label={`오늘의 할일${data.todayLabel ? ` (${data.todayLabel})` : ''}`}
+          value={loading ? '...' : data.todayIncomingCount.toLocaleString('ko-KR')}
+          meta="입고일자가 오늘인 항목"
           onClick={() => setPanelType('today')}
-        >
-          <div className="stat-label">금일 입고건수</div>
-          <div className="stat-value">{loading ? '...' : data.todayIncomingCount.toLocaleString('ko-KR')}</div>
-          <div className="dashboard-stat-meta">클릭 시 발급번호 리스트 보기</div>
-        </button>
-
-        <button
-          type="button"
-          className="card stat-card dashboard-stat-button"
+        />
+        <SummaryCard
+          label={`금주의 할일${data.weekLabel ? ` (${data.weekLabel})` : ''}`}
+          value={loading ? '...' : data.weekIncomingCount.toLocaleString('ko-KR')}
+          meta="일요일부터 토요일까지의 예정 항목"
           onClick={() => setPanelType('week')}
-        >
-          <div className="stat-label">금주 입고 건수</div>
-          <div className="stat-value">{loading ? '...' : data.weekIncomingCount.toLocaleString('ko-KR')}</div>
-          <div className="dashboard-stat-meta">이번 주 미완료 입고건 확인</div>
-        </button>
-
-        <button
-          type="button"
-          className="card stat-card dashboard-stat-button"
+        />
+        <SummaryCard
+          label="미완료건수"
+          value={loading ? '...' : data.incompleteCount.toLocaleString('ko-KR')}
+          meta="상태가 완료가 아닌 항목"
+          danger
           onClick={() => setPanelType('incomplete')}
-        >
-          <div className="stat-label">미완료건수</div>
-          <div className="stat-value">{loading ? '...' : data.incompleteCount.toLocaleString('ko-KR')}</div>
-          <div className="dashboard-stat-meta">전체 미완료 입고건 확인</div>
-        </button>
+        />
+      </section>
+
+      <section className="dashboard-middle-grid">
+        <article className="dashboard-chart-card">
+          <div className="dashboard-card-head">
+            <h2>진행 현황</h2>
+          </div>
+
+          <div className="dashboard-donut-wrap">
+            <div className="dashboard-donut-chart" style={donutStyle}>
+              <div className="dashboard-donut-center">
+                <strong>{loading ? '...' : data.trackedCount.toLocaleString('ko-KR')}</strong>
+                <span>전체</span>
+              </div>
+            </div>
+
+            <ul className="dashboard-legend">
+              <li>
+                <span className="dashboard-dot done"></span>
+                수령완료 {loading ? '...' : `${data.completedCount}건`}
+              </li>
+              <li>
+                <span className="dashboard-dot pending"></span>
+                미완료 {loading ? '...' : `${data.incompleteCount}건`}
+              </li>
+              <li>
+                <span className="dashboard-dot week"></span>
+                금주예정 {loading ? '...' : `${data.weekIncomingCount}건`}
+              </li>
+            </ul>
+          </div>
+        </article>
+
+        <article className="dashboard-chart-card">
+          <div className="dashboard-card-head">
+            <h2>최근 7일 입고 예정 건수</h2>
+            <span>{data.weekLabel}</span>
+          </div>
+
+          <div className="dashboard-bar-chart">
+            {(loading ? getEmptyTrendBars() : data.weeklyArrivals).map((item) => (
+              <TrendBar
+                key={item.date || item.label}
+                item={item}
+                max={getTrendMax(data.weeklyArrivals)}
+                loading={loading}
+                onClick={() => {
+                  if (!loading) {
+                    openTrendPanel(item);
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </article>
       </section>
 
       <section className="card">
         <div className="card-header">
           <div>
             <h2>최근 등록된 문서</h2>
-            <p>발행 이력과 같은 테이블 흐름으로 최근 문서를 확인하고 바로 상세로 이동할 수 있습니다.</p>
           </div>
         </div>
 
         {loading ? (
-          <div className="empty-state">대시보드 문서 목록을 불러오는 중입니다...</div>
+          <div className="empty-state">최근 등록된 문서를 불러오는 중입니다...</div>
         ) : data.recentDocuments.length === 0 ? (
           <div className="empty-state">최근 등록된 문서가 없습니다.</div>
         ) : (
@@ -179,43 +267,100 @@ export default function DashboardPage() {
       <SlidePanel
         open={Boolean(panelConfig)}
         title={panelConfig?.title ?? ''}
-        description={panelConfig?.description}
-        onClose={() => setPanelType(null)}
+        onClose={closePanel}
         footer={
-          <button type="button" className="btn btn-secondary" onClick={() => setPanelType(null)}>
+          <button type="button" className="btn btn-secondary" onClick={closePanel}>
             닫기
           </button>
         }
       >
-        {!panelConfig || panelConfig.items.length === 0 ? (
-          <div className="empty-state">표시할 항목이 없습니다.</div>
-        ) : (
-          <div className="table-wrap">
-            <table className="table dashboard-panel-table">
-              <thead>
+        <div className="table-wrap">
+          <table className="table dashboard-panel-table">
+            <thead>
+              <tr>
+                <th style={{ width: 88, textAlign: 'center' }}>발급번호</th>
+                <th style={{ width: 96, textAlign: 'center' }}>발주일자</th>
+                <th style={{ width: 96, textAlign: 'center' }}>입고일자</th>
+                <th style={{ textAlign: 'left' }}>납품처</th>
+                <th style={{ textAlign: 'left' }}>수신처</th>
+                <th style={{ width: 100, textAlign: 'center' }}>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              {!panelConfig || panelConfig.items.length === 0 ? (
                 <tr>
-                  <th style={{ width: 96, textAlign: 'center' }}>발급번호</th>
-                  <th style={{ width: 112, textAlign: 'center' }}>발주일자</th>
-                  <th style={{ width: 112, textAlign: 'center' }}>입고일자</th>
-                  <th style={{ textAlign: 'left' }}>납품처</th>
-                  <th style={{ textAlign: 'left' }}>수신처</th>
-                  <th style={{ width: 100, textAlign: 'center' }}>수령상태</th>
+                  <td colSpan={6}>
+                    <div className="dashboard-empty-state dashboard-panel-empty-state">
+                      <div>해당 기간에 예정된 할 일이 없습니다.</div>
+                      <div>새로운 입고 일정이 등록되면 이곳에 표시됩니다.</div>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {panelConfig.items.map((document) => (
+              ) : (
+                panelConfig.items.map((document) => (
                   <DashboardIncomingRow
                     key={`${panelType}-${document.id}`}
                     document={document}
                     onOpen={openDocumentInNewTab}
                   />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </SlidePanel>
     </div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  meta,
+  danger = false,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  meta: string;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" className="dashboard-summary-card-button" onClick={onClick}>
+      <span className="dashboard-summary-label">{label}</span>
+      <strong className={`dashboard-summary-number ${danger ? 'danger' : ''}`}>{value}</strong>
+      <span className="dashboard-summary-meta">{meta}</span>
+    </button>
+  );
+}
+
+function TrendBar({
+  item,
+  max,
+  loading,
+  onClick,
+}: {
+  item: DashboardArrivalTrend;
+  max: number;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  const height = max === 0 ? 16 : Math.max((item.count / max) * 100, item.count > 0 ? 16 : 10);
+
+  return (
+    <button
+      type="button"
+      className="dashboard-bar-item"
+      title={item.date ? `${item.date}: ${item.count}건` : undefined}
+      onClick={onClick}
+    >
+      <span className="dashboard-bar-label">{item.label}</span>
+      <div className="dashboard-bar-track">
+        <div className="dashboard-bar-fill" style={{ height: `${height}%` }} />
+      </div>
+      <strong className="dashboard-bar-value">{loading ? '...' : item.count}</strong>
+    </button>
   );
 }
 
@@ -269,6 +414,26 @@ function DashboardRecentDocumentRow({
       </td>
     </tr>
   );
+}
+
+function getTrendMax(items: DashboardArrivalTrend[]) {
+  return Math.max(...items.map((item) => item.count), 0);
+}
+
+function getEmptyTrendBars(): DashboardArrivalTrend[] {
+  return ['일', '월', '화', '수', '목', '금', '토'].map((label, index) => ({
+    date: `loading-${index}`,
+    label,
+    count: 0,
+    documents: [],
+  }));
+}
+
+function formatTrendTitleDate(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const weekday = date.toLocaleDateString('ko-KR', { weekday: 'short' });
+  return `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}(${weekday})`;
 }
 
 function formatDateTime(value: string) {

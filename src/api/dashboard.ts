@@ -1,5 +1,6 @@
 import { getSupabaseClient } from './supabase/client';
 import type {
+  DashboardArrivalTrend,
   DashboardIncomingDocument,
   DashboardRecentDocument,
   DashboardSummary,
@@ -18,7 +19,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
       .limit(200),
     supabase
       .from('order_book')
-      .select('issue_no, receipt, cancelled, from_doc')
+      .select('issue_no, receipt, cancelled, from_doc, created_at')
       .order('created_at', { ascending: false }),
   ]);
 
@@ -28,7 +29,6 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const today = new Date();
   const todayKey = toDateKey(today);
   const weekRange = getWeekRange(today);
-
   const receiptMap = new Map<string, string>();
 
   for (const row of orderBookResult.data ?? []) {
@@ -46,7 +46,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const mappedDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
     .filter((document: any) => !(document.cancelled ?? false))
     .map((document: any) => {
-      const issueNo = String(document.issue_no ?? '');
+      const issueNo = String(document.issue_no ?? '').trim();
       const receipt = receiptMap.get(issueNo) ?? '';
 
       return {
@@ -74,8 +74,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
       (document) =>
         Boolean(document.arriveDate) &&
         document.arriveDate >= weekRange.start &&
-        document.arriveDate <= weekRange.end &&
-        !isReceiptCompleted(document.receipt),
+        document.arriveDate <= weekRange.end,
     )
     .sort(compareIncomingDocuments)
     .map(mapIncomingDocument);
@@ -85,14 +84,22 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
     .sort(compareIncomingDocuments)
     .map(mapIncomingDocument);
 
+  const trackedCount = mappedDocuments.length;
+  const completedCount = Math.max(trackedCount - incompleteDocuments.length, 0);
+
   return {
     todayIncomingCount: todayIncomingDocuments.length,
     weekIncomingCount: weekIncomingDocuments.length,
     incompleteCount: incompleteDocuments.length,
+    completedCount,
+    trackedCount,
+    todayLabel: formatShortDate(todayKey),
+    weekLabel: `${formatShortDate(weekRange.start)} - ${formatShortDate(weekRange.end)}`,
     todayIncomingDocuments,
     weekIncomingDocuments,
     incompleteDocuments,
-    recentDocuments: mappedDocuments.slice(0, 8),
+    recentDocuments: mappedDocuments.slice(0, 3),
+    weeklyArrivals: buildWeeklyArrivals(weekRange, weekIncomingDocuments),
   };
 }
 
@@ -108,12 +115,27 @@ function mapIncomingDocument(document: DashboardRecentDocument): DashboardIncomi
   };
 }
 
-function compareIncomingDocuments(a: DashboardRecentDocument, b: DashboardRecentDocument) {
-  const arriveCompare = (a.arriveDate || '').localeCompare(b.arriveDate || '');
-  if (arriveCompare !== 0) {
-    return arriveCompare;
-  }
+function buildWeeklyArrivals(
+  weekRange: { dates: string[] },
+  documents: DashboardIncomingDocument[],
+): DashboardArrivalTrend[] {
+  return weekRange.dates.map((date) => {
+    const items = documents.filter((document) => document.arriveDate === date);
+    return {
+      date,
+      label: getWeekdayLabel(date),
+      count: items.length,
+      documents: items,
+    };
+  });
+}
 
+function compareIncomingDocuments(
+  a: DashboardRecentDocument | DashboardIncomingDocument,
+  b: DashboardRecentDocument | DashboardIncomingDocument,
+) {
+  const arriveCompare = (a.arriveDate || '').localeCompare(b.arriveDate || '');
+  if (arriveCompare !== 0) return arriveCompare;
   return (a.issueNo || '').localeCompare(b.issueNo || '');
 }
 
@@ -127,13 +149,28 @@ function getWeekRange(baseDate: Date) {
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - start.getDay());
 
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+  const dates = Array.from({ length: 7 }, (_, index) => {
+    const current = new Date(start);
+    current.setDate(start.getDate() + index);
+    return toDateKey(current);
+  });
 
   return {
-    start: toDateKey(start),
-    end: toDateKey(end),
+    start: dates[0],
+    end: dates[6],
+    dates,
   };
+}
+
+function getWeekdayLabel(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('ko-KR', { weekday: 'short' });
+}
+
+function formatShortDate(value: string) {
+  const [, month, day] = value.split('-').map(Number);
+  return `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
 }
 
 function isReceiptCompleted(receipt: string) {
