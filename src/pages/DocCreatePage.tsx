@@ -569,7 +569,7 @@ export default function DocCreatePage() {
               <label className="field"><span>담당자</span><input value={form.manager} onChange={(event) => updateForm('manager', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field"><span>담당자 연락처</span><input value={form.managerTel} onChange={(event) => updateForm('managerTel', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field"><span>수신처</span><input required value={form.receiver} onChange={(event) => updateForm('receiver', event.target.value)} /></label>
-              <label className="field field-span-2"><span>납품주소</span><textarea required value={form.deliveryAddr} onChange={(event) => updateForm('deliveryAddr', event.target.value)} /></label>
+              <label className="field field-span-2-cols"><span>납품주소</span><input required value={form.deliveryAddr} onChange={(event) => updateForm('deliveryAddr', event.target.value)} /></label>
               <label className="field field-span-2"><span>비고</span><textarea value={form.remark} onChange={(event) => updateForm('remark', event.target.value)} /></label>
               <label className="field field-span-2"><span>요청사항</span><textarea value={form.requestNote} onChange={(event) => updateForm('requestNote', event.target.value)} /></label>
             </div>

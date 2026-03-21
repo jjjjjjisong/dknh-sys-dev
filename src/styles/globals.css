@@ -1055,6 +1055,10 @@ a {
   grid-column: 1 / -1;
 }
 
+.field-span-2-cols {
+  grid-column: span 2;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
