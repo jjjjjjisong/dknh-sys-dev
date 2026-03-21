@@ -20,6 +20,16 @@ type DocumentItemRow = {
   del_yn: string | null;
 };
 
+type OrderBookRow = {
+  id: string;
+  issue_no: string | null;
+  product: string | null;
+  receipt: string | null;
+  status: string | null;
+  shipped_status: string | null;
+  del_yn: string | null;
+};
+
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const supabase = getSupabaseClient();
 
@@ -34,7 +44,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
       .limit(200),
     supabase
       .from('order_book')
-      .select('issue_no, receipt, del_yn')
+      .select('id, issue_no, product, receipt, status, shipped_status, del_yn')
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false }),
   ]);
@@ -42,30 +52,30 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   if (documentsResult.error) throw documentsResult.error;
   if (orderBookResult.error) throw orderBookResult.error;
 
+  const orderBookRows = (orderBookResult.data ?? []) as OrderBookRow[];
+  const orderBookMap = new Map<string, OrderBookRow>();
+
+  for (const row of orderBookRows) {
+    const key = getOrderBookKey(row.issue_no, row.product);
+    if (key) {
+      orderBookMap.set(key, row);
+    }
+  }
+
   const today = new Date();
   const todayKey = toDateKey(today);
   const weekRange = getWeekRange(today);
-  const receiptMap = new Map<string, string>();
-
-  for (const row of orderBookResult.data ?? []) {
-    const issueNo = String(row.issue_no ?? '').trim();
-    if (!issueNo) continue;
-
-    const current = receiptMap.get(issueNo) ?? '';
-    const next = String(row.receipt ?? '').trim();
-
-    if (!current || isReceiptCompleted(next)) {
-      receiptMap.set(issueNo, next);
-    }
-  }
 
   const recentDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
     .filter((document: any) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .map((document: any) => {
-      const issueNo = String(document.issue_no ?? '').trim();
+      const documentItems = ((document.document_items ?? []) as DocumentItemRow[]).filter((item) => (item.del_yn ?? 'N') === 'N');
+      const firstKey = getOrderBookKey(document.issue_no, documentItems[0]?.name1 ?? '');
+      const firstOrderBook = firstKey ? orderBookMap.get(firstKey) : undefined;
+
       return {
         id: String(document.id),
-        issueNo,
+        issueNo: String(document.issue_no ?? '').trim(),
         client: document.client ?? '',
         receiver: document.receiver ?? '',
         orderDate: document.order_date ?? '',
@@ -74,7 +84,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
         createdAt: document.created_at ?? '',
         updatedAt: document.updated_at ?? '',
         status: mapStatus(document.status, document.cancelled),
-        receipt: receiptMap.get(issueNo) ?? '',
+        receipt: firstOrderBook?.receipt ?? '',
       };
     })
     .slice(0, 3);
@@ -82,12 +92,9 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const incomingItems: DashboardIncomingDocument[] = (documentsResult.data ?? [])
     .filter((document: any) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .flatMap((document: any) => {
-      const issueNo = String(document.issue_no ?? '').trim();
-      const status = receiptMap.get(issueNo) ?? '';
-
       return ((document.document_items ?? []) as DocumentItemRow[])
         .filter((item) => (item.del_yn ?? 'N') === 'N')
-        .map((item) => mapIncomingItem(document, item, status));
+        .map((item) => mapIncomingItem(document, item, orderBookMap));
     })
     .sort(compareIncomingDocuments);
 
@@ -95,32 +102,36 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const weekIncomingDocuments = incomingItems.filter(
     (item) => item.arriveDate >= weekRange.start && item.arriveDate <= weekRange.end,
   );
-  const incompleteDocuments = incomingItems.filter((item) => !isReceiptCompleted(item.status));
+  const unshippedDocuments = incomingItems.filter(
+    (item) => item.status !== 'ST01' && item.shippedStatus === '미출고',
+  );
 
   return {
     todayIncomingCount: todayIncomingDocuments.length,
     weekIncomingCount: weekIncomingDocuments.length,
-    incompleteCount: incompleteDocuments.length,
-    completedCount: incomingItems.filter((item) => isReceiptCompleted(item.status)).length,
+    incompleteCount: unshippedDocuments.length,
+    completedCount: incomingItems.filter((item) => item.shippedStatus === '출고').length,
     trackedCount: incomingItems.length,
-    todayLabel: formatShortDate(todayKey),
     weekLabel: `${formatShortDate(weekRange.start)} - ${formatShortDate(weekRange.end)}`,
+    todayLabel: formatShortDate(todayKey),
     todayIncomingDocuments,
     weekIncomingDocuments,
-    incompleteDocuments,
+    incompleteDocuments: unshippedDocuments,
     recentDocuments,
     weeklyArrivals: buildWeeklyArrivals(weekRange, weekIncomingDocuments),
   };
 }
 
-function mapIncomingItem(document: any, item: DocumentItemRow, status: string): DashboardIncomingDocument {
+function mapIncomingItem(document: any, item: DocumentItemRow, orderBookMap: Map<string, OrderBookRow>): DashboardIncomingDocument {
   const qty = item.qty ?? 0;
   const arriveDate = item.arrive_date ?? document.arrive_date ?? '';
   const productName = item.name2?.trim() || item.name1?.trim() || '';
+  const orderBook = orderBookMap.get(getOrderBookKey(document.issue_no, item.name1 ?? ''));
 
   return {
     id: String(item.id ?? `${document.id}-${productName}-${qty}`),
     documentId: String(document.id),
+    orderBookId: orderBook?.id ?? null,
     issueNo: String(document.issue_no ?? ''),
     arriveDate,
     productName,
@@ -129,7 +140,8 @@ function mapIncomingItem(document: any, item: DocumentItemRow, status: string): 
     qty,
     pallet: calculatePallet(item, qty),
     box: calculateBox(item, qty),
-    status,
+    status: mapStatus(orderBook?.status ?? document.status, document.cancelled),
+    shippedStatus: mapShippedStatus(orderBook?.shipped_status),
   };
 }
 
@@ -171,6 +183,12 @@ function compareIncomingDocuments(a: DashboardIncomingDocument, b: DashboardInco
   return (a.issueNo || '').localeCompare(b.issueNo || '');
 }
 
+function getOrderBookKey(issueNo: string | null | undefined, product: string | null | undefined) {
+  const normalizedIssueNo = String(issueNo ?? '').trim();
+  const normalizedProduct = String(product ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  return normalizedIssueNo && normalizedProduct ? `${normalizedIssueNo}::${normalizedProduct}` : '';
+}
+
 function toDateKey(date: Date) {
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
@@ -205,11 +223,12 @@ function formatShortDate(value: string) {
   return `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
 }
 
-function isReceiptCompleted(receipt: string) {
-  return receipt.trim().includes('완료');
-}
 function mapStatus(status: string | null | undefined, cancelled?: boolean | null) {
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
   return cancelled ? 'ST01' : 'ST00';
+}
+
+function mapShippedStatus(value: string | null | undefined) {
+  return value === '출고' ? '출고' : '미출고';
 }

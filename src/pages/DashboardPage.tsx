@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardSummary } from '../api/dashboard';
+import { updateManyOrderBookShippedStatus, updateOrderBookShippedStatus } from '../api/order-book';
 import PageHeader from '../components/PageHeader';
 import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
 import SlidePanel from '../components/ui/SlidePanel';
 import type {
   DashboardArrivalTrend,
@@ -10,8 +12,9 @@ import type {
   DashboardRecentDocument,
   DashboardSummary,
 } from '../types/dashboard';
+import type { OrderBookShippingStatus } from '../types/order-book';
 
-type PanelType = 'today' | 'week' | 'incomplete' | 'trend' | null;
+type PanelType = 'today' | 'week' | 'unshipped' | 'trend' | null;
 
 const emptySummary: DashboardSummary = {
   todayIncomingCount: 0,
@@ -35,6 +38,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [panelType, setPanelType] = useState<PanelType>(null);
   const [selectedTrend, setSelectedTrend] = useState<DashboardArrivalTrend | null>(null);
+  const [selectedOrderBookIds, setSelectedOrderBookIds] = useState<string[]>([]);
+  const [batchUpdating, setBatchUpdating] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -64,6 +69,10 @@ export default function DashboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    setSelectedOrderBookIds([]);
+  }, [panelType, selectedTrend]);
+
   const panelConfig = useMemo(() => {
     if (panelType === 'today') {
       return {
@@ -79,9 +88,9 @@ export default function DashboardPage() {
       };
     }
 
-    if (panelType === 'incomplete') {
+    if (panelType === 'unshipped') {
       return {
-        title: '미완료건수',
+        title: '미출고 건수',
         items: data.incompleteDocuments,
       };
     }
@@ -107,19 +116,24 @@ export default function DashboardPage() {
   const donutStyle = useMemo(() => {
     const total = Math.max(data.trackedCount, 1);
     const completedRatio = (data.completedCount / total) * 100;
-    const incompleteRatio = (data.incompleteCount / total) * 100;
+    const unshippedRatio = (data.incompleteCount / total) * 100;
     const weekRatio = Math.max((data.weekIncomingCount / total) * 100, 0);
-    const weekEnd = Math.min(completedRatio + incompleteRatio + weekRatio, 100);
+    const weekEnd = Math.min(completedRatio + unshippedRatio + weekRatio, 100);
 
     return {
       background: `conic-gradient(
         #3b82f6 0 ${completedRatio}%,
-        #ef4444 ${completedRatio}% ${completedRatio + incompleteRatio}%,
-        #f59e0b ${completedRatio + incompleteRatio}% ${weekEnd}%,
+        #ef4444 ${completedRatio}% ${completedRatio + unshippedRatio}%,
+        #f59e0b ${completedRatio + unshippedRatio}% ${weekEnd}%,
         #e5e7eb ${weekEnd}% 100%
       )`,
     };
   }, [data.completedCount, data.incompleteCount, data.trackedCount, data.weekIncomingCount]);
+
+  const canBatchShip =
+    panelType === 'unshipped' &&
+    selectedOrderBookIds.length > 0 &&
+    panelConfig?.items.some((item) => selectedOrderBookIds.includes(item.orderBookId ?? ''));
 
   function closePanel() {
     setPanelType(null);
@@ -135,6 +149,57 @@ export default function DashboardPage() {
     navigate(`/doc-history/${documentId}`);
   }
 
+  function toggleSelectAll(checked: boolean) {
+    if (!panelConfig || panelType !== 'unshipped') return;
+    const ids = panelConfig.items.map((item) => item.orderBookId).filter((value): value is string => Boolean(value));
+    setSelectedOrderBookIds(checked ? ids : []);
+  }
+
+  function toggleSelectOne(id: string, checked: boolean) {
+    setSelectedOrderBookIds((current) => {
+      if (checked) return Array.from(new Set([...current, id]));
+      return current.filter((item) => item !== id);
+    });
+  }
+
+  async function handleShippedStatusChange(document: DashboardIncomingDocument, shippedStatus: OrderBookShippingStatus) {
+    if (!document.orderBookId) return;
+
+    try {
+      await updateOrderBookShippedStatus(document.orderBookId, shippedStatus);
+      setData((current) => applyShippedStatusToSummary(current, [document.orderBookId!], shippedStatus));
+      window.alert(
+        shippedStatus === '출고'
+          ? '출고상태로 변경되었습니다.'
+          : '미출고상태로 변경되었습니다.',
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '출고상태 변경에 실패했습니다.');
+    }
+  }
+
+  async function handleBatchShip() {
+    if (!canBatchShip) return;
+
+    try {
+      setBatchUpdating(true);
+      await updateManyOrderBookShippedStatus(selectedOrderBookIds, '출고');
+      setData((current) => applyShippedStatusToSummary(current, selectedOrderBookIds, '출고'));
+      setSelectedOrderBookIds([]);
+      window.alert('선택한 품목들이 출고상태로 변경되었습니다.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '일괄 출고처리에 실패했습니다.');
+    } finally {
+      setBatchUpdating(false);
+    }
+  }
+
+  const allChecked =
+    panelType === 'unshipped' &&
+    panelConfig &&
+    panelConfig.items.length > 0 &&
+    panelConfig.items.every((item) => item.orderBookId && selectedOrderBookIds.includes(item.orderBookId));
+
   return (
     <div className="page-content dashboard-page">
       <PageHeader title="대시보드" description="" />
@@ -145,21 +210,21 @@ export default function DashboardPage() {
         <SummaryCard
           label={`오늘의 할일${data.todayLabel ? ` (${data.todayLabel})` : ''}`}
           value={loading ? '...' : data.todayIncomingCount.toLocaleString('ko-KR')}
-          meta="입고일자가 오늘인 항목"
+          meta="입고일자가 오늘인 품목"
           onClick={() => setPanelType('today')}
         />
         <SummaryCard
           label={`금주의 할일${data.weekLabel ? ` (${data.weekLabel})` : ''}`}
           value={loading ? '...' : data.weekIncomingCount.toLocaleString('ko-KR')}
-          meta="일요일부터 토요일까지의 예정 항목"
+          meta="일요일부터 토요일까지 입고 예정 품목"
           onClick={() => setPanelType('week')}
         />
         <SummaryCard
-          label="미완료건수"
+          label="미출고 건수"
           value={loading ? '...' : data.incompleteCount.toLocaleString('ko-KR')}
-          meta="상태가 완료가 아닌 항목"
+          meta="거래취소가 아니고 미출고 처리된 품목"
           danger
-          onClick={() => setPanelType('incomplete')}
+          onClick={() => setPanelType('unshipped')}
         />
       </section>
 
@@ -180,11 +245,11 @@ export default function DashboardPage() {
             <ul className="dashboard-legend">
               <li>
                 <span className="dashboard-dot done"></span>
-                수령완료 {loading ? '...' : `${data.completedCount}건`}
+                출고 {loading ? '...' : `${data.completedCount}건`}
               </li>
               <li>
                 <span className="dashboard-dot pending"></span>
-                미완료 {loading ? '...' : `${data.incompleteCount}건`}
+                미출고 {loading ? '...' : `${data.incompleteCount}건`}
               </li>
               <li>
                 <span className="dashboard-dot week"></span>
@@ -269,10 +334,28 @@ export default function DashboardPage() {
           </button>
         }
       >
+        {panelType === 'unshipped' ? (
+          <div className="history-toolbar">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => void handleBatchShip()}
+              disabled={!canBatchShip || batchUpdating}
+            >
+              {batchUpdating ? '처리 중...' : '일괄 출고처리'}
+            </Button>
+          </div>
+        ) : null}
+
         <div className="table-wrap">
           <table className="table dashboard-panel-table">
             <thead>
               <tr>
+                {panelType === 'unshipped' ? (
+                  <th style={{ width: 42, textAlign: 'center' }}>
+                    <input type="checkbox" checked={Boolean(allChecked)} onChange={(event) => toggleSelectAll(event.target.checked)} />
+                  </th>
+                ) : null}
                 <th style={{ width: 88, textAlign: 'center' }}>발급번호</th>
                 <th style={{ width: 96, textAlign: 'center' }}>입고일자</th>
                 <th style={{ textAlign: 'left' }}>납품처</th>
@@ -281,13 +364,15 @@ export default function DashboardPage() {
                 <th style={{ width: 88, textAlign: 'center' }}>수량</th>
                 <th style={{ width: 88, textAlign: 'center' }}>파렛트</th>
                 <th style={{ width: 88, textAlign: 'center' }}>박스</th>
-                <th style={{ width: 100, textAlign: 'center' }}>상태</th>
+                <th style={{ width: 110, textAlign: 'center' }}>
+                  {panelType === 'unshipped' ? '출고상태' : '상태'}
+                </th>
               </tr>
             </thead>
             <tbody>
               {!panelConfig || panelConfig.items.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>
+                  <td colSpan={panelType === 'unshipped' ? 10 : 9}>
                     <div className="dashboard-empty-state dashboard-panel-empty-state">
                       <div>해당 기간에 예정된 할 일이 없습니다.</div>
                       <div>새로운 입고 일정이 등록되면 이곳에 표시됩니다.</div>
@@ -299,7 +384,16 @@ export default function DashboardPage() {
                   <DashboardIncomingRow
                     key={`${panelType}-${document.id}`}
                     document={document}
+                    showSelection={panelType === 'unshipped'}
+                    checked={document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false}
+                    showShippedStatus={panelType === 'unshipped'}
+                    onToggleSelect={(checked) => {
+                      if (document.orderBookId) {
+                        toggleSelectOne(document.orderBookId, checked);
+                      }
+                    }}
                     onOpen={openDocumentInNewTab}
+                    onChangeShippedStatus={(shippedStatus) => void handleShippedStatusChange(document, shippedStatus)}
                   />
                 ))
               )}
@@ -364,13 +458,28 @@ function TrendBar({
 
 function DashboardIncomingRow({
   document,
+  checked,
+  showSelection,
+  showShippedStatus,
+  onToggleSelect,
   onOpen,
+  onChangeShippedStatus,
 }: {
   document: DashboardIncomingDocument;
+  checked?: boolean;
+  showSelection?: boolean;
+  showShippedStatus?: boolean;
+  onToggleSelect?: (checked: boolean) => void;
   onOpen: (documentId: string) => void;
+  onChangeShippedStatus?: (shippedStatus: OrderBookShippingStatus) => void;
 }) {
   return (
     <tr className="dashboard-clickable-row" onClick={() => onOpen(document.documentId)}>
+      {showSelection ? (
+        <td style={{ textAlign: 'center' }} onClick={(event) => event.stopPropagation()}>
+          <input type="checkbox" checked={checked} onChange={(event) => onToggleSelect?.(event.target.checked)} />
+        </td>
+      ) : null}
       <td style={{ textAlign: 'center' }}>{document.issueNo || '-'}</td>
       <td style={{ textAlign: 'center' }}>{document.arriveDate || '-'}</td>
       <td className="table-primary dashboard-ellipsis-cell" title={document.client || '-'}>
@@ -385,8 +494,21 @@ function DashboardIncomingRow({
       <td style={{ textAlign: 'center' }}>{formatInteger(document.qty)}</td>
       <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.pallet)}</td>
       <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.box)}</td>
-      <td style={{ textAlign: 'center' }}>
-        {document.status ? <Badge variant="muted-blue">{document.status}</Badge> : <span>-</span>}
+      <td style={{ textAlign: 'center' }} onClick={(event) => showShippedStatus && event.stopPropagation()}>
+        {showShippedStatus ? (
+          <select
+            className="history-filter-select"
+            value={document.shippedStatus}
+            onChange={(event) => onChangeShippedStatus?.(event.target.value as OrderBookShippingStatus)}
+          >
+            <option value="미출고">미출고</option>
+            <option value="출고">출고</option>
+          </select>
+        ) : document.status === 'ST01' ? (
+          <Badge variant="cancel">거래취소</Badge>
+        ) : (
+          <span>-</span>
+        )}
       </td>
     </tr>
   );
@@ -417,6 +539,48 @@ function DashboardRecentDocumentRow({
       </td>
     </tr>
   );
+}
+
+function applyShippedStatusToSummary(
+  summary: DashboardSummary,
+  orderBookIds: string[],
+  shippedStatus: OrderBookShippingStatus,
+): DashboardSummary {
+  const updateItems = (items: DashboardIncomingDocument[]) =>
+    items.map((item) =>
+      item.orderBookId && orderBookIds.includes(item.orderBookId)
+        ? { ...item, shippedStatus }
+        : item,
+    );
+
+  const todayIncomingDocuments = updateItems(summary.todayIncomingDocuments);
+  const weekIncomingDocuments = updateItems(summary.weekIncomingDocuments);
+  const weeklyArrivals = summary.weeklyArrivals.map((trend) => ({
+    ...trend,
+    documents: updateItems(trend.documents),
+  }));
+  const incompleteDocuments = updateItems(summary.incompleteDocuments).filter(
+    (item) => item.status !== 'ST01' && item.shippedStatus === '미출고',
+  );
+  const trackedItems = updateItems([...summary.todayIncomingDocuments, ...summary.weekIncomingDocuments]);
+
+  const uniqueTrackedIds = new Map<string, DashboardIncomingDocument>();
+  for (const item of trackedItems) {
+    uniqueTrackedIds.set(item.id, item);
+  }
+  const trackedCount = uniqueTrackedIds.size;
+  const completedCount = Array.from(uniqueTrackedIds.values()).filter((item) => item.shippedStatus === '출고').length;
+
+  return {
+    ...summary,
+    todayIncomingDocuments,
+    weekIncomingDocuments,
+    weeklyArrivals,
+    incompleteDocuments,
+    incompleteCount: incompleteDocuments.length,
+    completedCount,
+    trackedCount,
+  };
 }
 
 function getTrendMax(items: DashboardArrivalTrend[]) {

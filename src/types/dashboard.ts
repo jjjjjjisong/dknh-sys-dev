@@ -1,6 +1,7 @@
 export type DashboardIncomingDocument = {
   id: string;
   documentId: string;
+  orderBookId: string | null;
   issueNo: string;
   arriveDate: string;
   productName: string;
@@ -10,6 +11,7 @@ export type DashboardIncomingDocument = {
   pallet: number | null;
   box: number | null;
   status: string;
+  shippedStatus: '미출고' | '출고';
 };
 
 export type DashboardRecentDocument = {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import * as XLSX from 'xlsx';
 import {
   createOrderBookEntry,
   fetchOrderBook,
@@ -162,6 +163,34 @@ export default function OrderBookPage() {
     }
   }
 
+  function handleDownloadExcel() {
+    if (filteredEntries.length === 0) {
+      window.alert('다운로드할 데이터가 없습니다.');
+      return;
+    }
+
+    const rows = filteredEntries.map((entry) => ({
+      발급번호: entry.issueNo || '',
+      발주일자: formatDateForExport(entry.date),
+      입고일자: formatDateForExport(entry.deadline),
+      납품처: entry.client || '',
+      수신처: entry.receiver || '',
+      품목명: entry.product || '',
+      수량: entry.qty ?? '',
+      파렛트: entry.pallet ?? '',
+      박스: entry.box ?? '',
+      상태: entry.status === 'ST01' ? '거래취소' : '',
+      출고상태: entry.shippedStatus,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '수주대장');
+
+    const stamp = formatFileStamp(new Date());
+    XLSX.writeFile(workbook, `수주대장_${stamp}.xlsx`);
+  }
+
   async function handleShippedStatusChange(entry: OrderBookEntry, shippedStatus: OrderBookShippingStatus) {
     try {
       const updated = await updateOrderBookShippedStatus(entry.id, shippedStatus);
@@ -296,6 +325,9 @@ export default function OrderBookPage() {
 
       <section className="card">
         <div className="history-toolbar">
+          <Button type="button" variant="secondary" className="excel-download-button" onClick={handleDownloadExcel}>
+            엑셀다운
+          </Button>
           <Button type="button" variant="primary" onClick={() => void handleBatchShip()} disabled={selectedIds.length === 0 || batchUpdating}>
             {batchUpdating ? '처리 중...' : '일괄 출고처리'}
           </Button>
@@ -503,4 +535,17 @@ function parseNonNegativeInteger(value: string) {
   const parsed = parseInt(value || '0', 10);
   if (Number.isNaN(parsed) || parsed < 0) return 0;
   return parsed;
+}
+
+function formatDateForExport(value: string | null) {
+  return value || '';
+}
+
+function formatFileStamp(date: Date) {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${year}${month}${day}_${hour}${minute}`;
 }

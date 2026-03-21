@@ -104,3 +104,22 @@
 [2mPM 9:49:08[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
 [2mPM 9:51:49[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
 [2mPM 9:57:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mPM 10:00:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mPM 10:00:58[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mPM 10:29:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mPM 10:29:05[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mxlsx[32m[39m
+[2mPM 10:29:05[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2mPM 10:30:42[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/OrderBookPage.tsx[22m
+[2mPM 10:30:49[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mPM 10:34:16[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx[22m
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/app/router.tsx[22m
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/app/router.tsx[22m Could not Fast Refresh. Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/app/App.tsx[22m
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/app/router.tsx[22m Could not Fast Refresh. Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/app/App.tsx[22m
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/app/router.tsx[22m Could not Fast Refresh. Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2mPM 10:35:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/app/App.tsx[22m
+[2mPM 10:35:11[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx[22m
+[2mPM 10:37:01[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx[22m
+[2mPM 10:37:11[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/styles/globals.css[22m
+[2mPM 10:39:11[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx[22m

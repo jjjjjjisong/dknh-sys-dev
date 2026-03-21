@@ -867,3 +867,60 @@ C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocHistoryP
       at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
       at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
       at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 10:34:16[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/dashboard" from "src\pages\DashboardPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DashboardPage.tsx[39m:3:38
+[33m  18 |  import { useEffect, useMemo, useState } from "react";
+  19 |  import { useNavigate } from "react-router-dom";
+  20 |  import { fetchDashboardSummary } from "../api/dashboard";
+     |                                         ^
+  21 |  import PageHeader from "../components/PageHeader";
+  22 |  import Badge from "../components/ui/Badge";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 5)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 10:34:16[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/dashboard" from "src\pages\DashboardPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DashboardPage.tsx[39m:3:38
+[33m  18 |  import { useEffect, useMemo, useState } from "react";
+  19 |  import { useNavigate } from "react-router-dom";
+  20 |  import { fetchDashboardSummary } from "../api/dashboard";
+     |                                         ^
+  21 |  import PageHeader from "../components/PageHeader";
+  22 |  import Badge from "../components/ui/Badge";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 5)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)
+[2mPM 10:34:17[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../api/dashboard" from "src\pages\DashboardPage.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DashboardPage.tsx[39m:3:38
+[33m  18 |  import { useEffect, useMemo, useState } from "react";
+  19 |  import { useNavigate } from "react-router-dom";
+  20 |  import { fetchDashboardSummary } from "../api/dashboard";
+     |                                         ^
+  21 |  import PageHeader from "../components/PageHeader";
+  22 |  import Badge from "../components/ui/Badge";[39m
+      at formatError (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44062:46)
+      at TransformContext.error (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44058:19)
+      at normalizeUrl (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41844:33)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41998:47
+      at async Promise.all (index 5)
+      at async TransformContext.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:41914:13)
+      at async Object.transform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:44352:30)
+      at async loadAndTransform (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:55026:29)
+      at async viteTransformMiddleware (file:///C:/Users/soose/OneDrive/%EB%B0%94%ED%83%95%20%ED%99%94%EB%A9%B4/Project/dknh-sys-dev/node_modules/vite/dist/node/chunks/dep-b2890f90.js:64434:32)

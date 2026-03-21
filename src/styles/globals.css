@@ -1336,6 +1336,12 @@ a {
   padding-top: 12px;
 }
 
+.dashboard-panel-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .dashboard-panel-table {
   min-width: 0;
 }
@@ -1348,6 +1354,12 @@ a {
 .dashboard-panel-table th:nth-child(1),
 .dashboard-panel-table td:nth-child(1) {
   width: 88px;
+}
+
+.dashboard-panel-table th:first-child input[type='checkbox'],
+.dashboard-panel-table td:first-child input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
 }
 
 .dashboard-panel-table th:nth-child(2),
@@ -1422,7 +1434,20 @@ a {
 .history-toolbar {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
   margin-bottom: 12px;
+}
+
+.excel-download-button {
+  border-color: #1f8f4d !important;
+  background: #e7f7ee !important;
+  color: #166534 !important;
+}
+
+.excel-download-button:hover {
+  border-color: #17733e !important;
+  background: #d7f0e1 !important;
+  color: #14532d !important;
 }
 
 .history-row-cancelled td {
