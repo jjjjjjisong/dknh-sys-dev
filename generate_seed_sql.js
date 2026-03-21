@@ -1,10 +1,12 @@
 // Generate SQL INSERT statements from SEED data
-// Run: node generate_seed_sql.js > seed_data.sql
+// Run: node generate_seed_sql.js
 
-const fs = require('fs');
+import fs from 'fs';
+import path from 'path';
 
 // Read the HTML file
-const html = fs.readFileSync('C:\\Users\\sjji\\Desktop\\개인의것\\2. DKnH\\2. DKnH\\DKH_업무관리시스템_v3.8.html', 'utf8');
+const htmlPath = path.join(process.cwd(), 'legacy-index.html');
+const html = fs.readFileSync(htmlPath, 'utf8');
 
 // Extract SEED_CLIENTS
 const clientsMatch = html.match(/const SEED_CLIENTS\s*=\s*(\[[\s\S]*?\]);/);
@@ -18,11 +20,18 @@ if (!clientsMatch || !productsMatch) {
 const clients = eval(clientsMatch[1]);
 const products = eval(productsMatch[1]);
 
-function esc(val) {
-  if (val === null || val === undefined || val === '') return 'NULL';
-  if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
-  if (typeof val === 'number') return val;
+function escStr(val) {
+  if (val === null || val === undefined || val === '') return "''";
   return "'" + String(val).replace(/'/g, "''") + "'";
+}
+
+function escNum(val) {
+  if (val === null || val === undefined || val === '') return 'NULL';
+  return val;
+}
+
+function escBool(val) {
+  return val ? 'TRUE' : 'FALSE';
 }
 
 let sql = '';
@@ -31,7 +40,7 @@ let sql = '';
 sql += `-- ═══════════════════════════════════════
 --  계정 시드 데이터
 -- ═══════════════════════════════════════
-INSERT INTO accounts (login_id, pw_hash, name, rank, tel, email, role) VALUES
+INSERT INTO accounts (id, password, name, rank, tel, email, role) VALUES
   ('admin', 'dkh2025!', '관리자', '', '', '', 'admin'),
   ('user1', 'dkh1234', '사용자1', '', '', '', 'user'),
   ('user2', 'dkh1234', '사용자2', '', '', '', 'user'),
@@ -45,7 +54,7 @@ sql += `-- ═══════════════════════
 -- ═══════════════════════════════════════
 INSERT INTO clients (name, manager, tel, addr, time, lunch, note, active) VALUES\n`;
 const clientRows = clients.map(c => 
-  `  (${esc(c.name)}, ${esc(c.manager)}, ${esc(c.tel)}, ${esc(c.addr)}, ${esc(c.time)}, ${esc(c.lunch)}, ${esc(c.note)}, ${c.active ? 'TRUE' : 'FALSE'})`
+  `  (${escStr(c.name)}, ${escStr(c.manager)}, ${escStr(c.tel)}, ${escStr(c.addr)}, ${escStr(c.time)}, ${escStr(c.lunch)}, ${escStr(c.note)}, ${escBool(c.active)})`
 );
 sql += clientRows.join(',\n') + ';\n\n';
 
@@ -55,11 +64,11 @@ sql += `-- ═══════════════════════
 -- ═══════════════════════════════════════
 INSERT INTO products (no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck) VALUES\n`;
 const productRows = products.map(p =>
-  `  (${esc(p.no)}, ${esc(p.gubun)}, ${esc(p.client)}, ${esc(p.name1)}, ${esc(p.name2)}, ${esc(p.supplier)}, ${esc(p.cost_price)}, ${esc(p.sell_price)}, ${esc(p.ea_per_b)}, ${esc(p.box_per_p)}, ${esc(p.ea_per_p)}, ${esc(p.pallets_per_truck)})`
+  `  (${escNum(p.no)}, ${escStr(p.gubun)}, ${escStr(p.client)}, ${escStr(p.name1)}, ${escStr(p.name2)}, ${escStr(p.supplier)}, ${escNum(p.cost_price)}, ${escNum(p.sell_price)}, ${escNum(p.ea_per_b)}, ${escNum(p.box_per_p)}, ${escNum(p.ea_per_p)}, ${escNum(p.pallets_per_truck)})`
 );
 sql += productRows.join(',\n') + ';\n';
 
-const outPath = __dirname + '\\seed_data.sql';
+const outPath = path.join(process.cwd(), 'seed_data.sql');
 fs.writeFileSync(outPath, sql, 'utf8');
 console.log('Generated seed_data.sql with', clients.length, 'clients and', products.length, 'products');
 console.log('Output:', outPath);
