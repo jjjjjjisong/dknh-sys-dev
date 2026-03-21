@@ -465,9 +465,6 @@ export default function DocCreatePage() {
 
       await saveDocument(payload);
       window.localStorage.setItem('dkh_issueno', previewData.issueNo);
-      setForm(createInitialForm());
-      setItems([createEmptyItem(today, '')]);
-      setPreviewType(null);
       window.alert('문서 저장이 완료되었습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '문서 저장에 실패했습니다.');
