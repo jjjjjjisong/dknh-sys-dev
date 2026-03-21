@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './supabase/client';
+import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import type { Account, AccountInput } from '../types/account';
 import type { UserSession } from '../types/user';
 
@@ -6,7 +7,8 @@ export async function fetchAccounts(): Promise<Account[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('accounts')
-    .select('id, password, name, rank, tel, email, role')
+    .select('id, password, name, rank, tel, email, role, del_yn, updated_at, updated_by')
+    .eq('del_yn', 'N')
     .order('id');
 
   if (error) {
@@ -23,6 +25,7 @@ export async function authenticateAccount(id: string, password: string): Promise
     .select('id, name, rank, role')
     .eq('id', id.trim())
     .eq('password', password)
+    .eq('del_yn', 'N')
     .maybeSingle();
 
   if (error) {
@@ -47,8 +50,8 @@ export async function createAccount(input: AccountInput): Promise<Account> {
 
   const { data, error } = await supabase
     .from('accounts')
-    .insert(payload)
-    .select('id, password, name, rank, tel, email, role')
+    .insert({ ...payload, ...getActiveAuditFields() })
+    .select('id, password, name, rank, tel, email, role, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -73,9 +76,9 @@ export async function updateAccount(originalId: string, input: AccountInput): Pr
 
   const { data, error } = await supabase
     .from('accounts')
-    .update(payload)
+    .update({ ...payload, ...getActiveAuditFields() })
     .eq('id', originalId)
-    .select('id, password, name, rank, tel, email, role')
+    .select('id, password, name, rank, tel, email, role, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -87,7 +90,7 @@ export async function updateAccount(originalId: string, input: AccountInput): Pr
 
 export async function removeAccount(id: string) {
   const supabase = getSupabaseClient();
-  const { error } = await supabase.from('accounts').delete().eq('id', id);
+  const { error } = await supabase.from('accounts').update(getDeletedAuditFields()).eq('id', id);
 
   if (error) {
     throw error;
@@ -103,9 +106,9 @@ export async function resetAccountPassword(id: string, password: string): Promis
 
   const { data, error } = await supabase
     .from('accounts')
-    .update({ password: nextPassword })
+    .update({ password: nextPassword, ...getActiveAuditFields() })
     .eq('id', id)
-    .select('id, password, name, rank, tel, email, role')
+    .select('id, password, name, rank, tel, email, role, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -119,8 +122,9 @@ export async function fetchAccountById(id: string): Promise<Account | null> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('accounts')
-    .select('id, password, name, rank, tel, email, role')
+    .select('id, password, name, rank, tel, email, role, del_yn, updated_at, updated_by')
     .eq('id', id)
+    .eq('del_yn', 'N')
     .maybeSingle();
 
   if (error) {
@@ -159,6 +163,9 @@ function mapAccountRow(row: {
   tel: string | null;
   email: string | null;
   role: string | null;
+  del_yn?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
 }): Account {
   return {
     id: row.id ?? '',
@@ -168,5 +175,8 @@ function mapAccountRow(row: {
     tel: row.tel ?? '',
     email: row.email ?? '',
     role: (row.role ?? 'user') as Account['role'],
+    delYn: (row.del_yn ?? 'N') as Account['delYn'],
+    updatedAt: row.updated_at ?? null,
+    updatedBy: row.updated_by ?? '',
   };
 }

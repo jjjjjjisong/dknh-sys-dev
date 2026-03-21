@@ -1,11 +1,13 @@
 import { getSupabaseClient } from './supabase/client';
+import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import type { OrderBookEntry, OrderBookInput } from '../types/order-book';
 
 export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('order_book')
-    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at')
+    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
+    .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -44,8 +46,9 @@ export async function createOrderBookEntry(payload: OrderBookInput) {
       receipt: payload.receipt,
       cancelled: payload.cancelled,
       from_doc: false,
+      ...getActiveAuditFields(),
     })
-    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at')
+    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -69,9 +72,10 @@ export async function updateOrderBookEntry(id: string, payload: OrderBookInput) 
       note: payload.note,
       receipt: payload.receipt,
       cancelled: payload.cancelled,
+      ...getActiveAuditFields(),
     })
     .eq('id', id)
-    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at')
+    .select('id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, cancelled, from_doc, created_at, del_yn, updated_at, updated_by')
     .single();
 
   if (error) {
@@ -83,7 +87,7 @@ export async function updateOrderBookEntry(id: string, payload: OrderBookInput) 
 
 export async function removeOrderBookEntry(id: string) {
   const supabase = getSupabaseClient();
-  const { error } = await supabase.from('order_book').delete().eq('id', id);
+  const { error } = await supabase.from('order_book').update(getDeletedAuditFields()).eq('id', id);
 
   if (error) {
     throw error;
@@ -105,5 +109,8 @@ function mapOrderBookRow(row: any): OrderBookEntry {
     cancelled: row.cancelled ?? false,
     fromDoc: row.from_doc ?? false,
     createdAt: row.created_at ?? null,
+    delYn: (row.del_yn ?? 'N') as OrderBookEntry['delYn'],
+    updatedAt: row.updated_at ?? null,
+    updatedBy: row.updated_by ?? '',
   };
 }

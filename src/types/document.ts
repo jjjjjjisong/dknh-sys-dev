@@ -51,6 +51,9 @@ export type DocumentHistoryItem = {
   boxPerP: number | null;
   customPallet: number | null;
   customBox: number | null;
+  delYn: 'Y' | 'N';
+  updatedAt: string | null;
+  updatedBy: string;
 };
 
 export type DocumentHistory = {
@@ -72,5 +75,7 @@ export type DocumentHistory = {
   cancelled: boolean;
   createdAt: string | null;
   updatedAt: string | null;
+  updatedBy: string;
+  delYn: 'Y' | 'N';
   items: DocumentHistoryItem[];
 };

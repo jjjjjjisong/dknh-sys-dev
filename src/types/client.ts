@@ -8,6 +8,9 @@ export type Client = {
   lunch: string;
   note: string;
   active: boolean;
+  delYn: 'Y' | 'N';
+  updatedAt: string | null;
+  updatedBy: string;
 };
 
 export type ClientInput = {

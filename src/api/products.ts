@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './supabase/client';
+import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import type { Product, ProductInput } from '../types/product';
 
 export async function fetchProducts(): Promise<Product[]> {
@@ -6,8 +7,9 @@ export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from('products')
     .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck',
+      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
     )
+    .eq('del_yn', 'N')
     .order('no');
 
   if (error) {
@@ -36,6 +38,7 @@ export async function createProduct(input: ProductInput): Promise<Product> {
   const { data: maxRows, error: maxError } = await supabase
     .from('products')
     .select('no')
+    .eq('del_yn', 'N')
     .order('no', { ascending: false })
     .limit(1);
 
@@ -50,9 +53,10 @@ export async function createProduct(input: ProductInput): Promise<Product> {
     .insert({
       no: nextNo,
       ...input,
+      ...getActiveAuditFields(),
     })
     .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck',
+      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
     )
     .single();
 
@@ -70,10 +74,11 @@ export async function updateProduct(id: string, currentNo: number | null, input:
     .update({
       no: currentNo,
       ...input,
+      ...getActiveAuditFields(),
     })
     .eq('id', id)
     .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck',
+      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
     )
     .single();
 
@@ -86,7 +91,7 @@ export async function updateProduct(id: string, currentNo: number | null, input:
 
 export async function removeProduct(id: string) {
   const supabase = getSupabaseClient();
-  const { error } = await supabase.from('products').delete().eq('id', id);
+  const { error } = await supabase.from('products').update(getDeletedAuditFields()).eq('id', id);
 
   if (error) {
     throw error;
@@ -107,6 +112,9 @@ function mapProductRow(product: {
   box_per_p: number | null;
   ea_per_p: number | null;
   pallets_per_truck: number | null;
+  del_yn?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
 }): Product {
   return {
     id: String(product.id),
@@ -122,5 +130,8 @@ function mapProductRow(product: {
     box_per_p: product.box_per_p ?? null,
     ea_per_p: product.ea_per_p ?? null,
     pallets_per_truck: product.pallets_per_truck ?? null,
+    delYn: (product.del_yn ?? 'N') as Product['delYn'],
+    updatedAt: product.updated_at ?? null,
+    updatedBy: product.updated_by ?? '',
   };
 }

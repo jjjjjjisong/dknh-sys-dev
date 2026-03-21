@@ -12,6 +12,9 @@ export type OrderBookEntry = {
   cancelled: boolean;
   fromDoc: boolean;
   createdAt: string | null;
+  delYn: 'Y' | 'N';
+  updatedAt: string | null;
+  updatedBy: string;
 };
 
 export type OrderBookInput = {

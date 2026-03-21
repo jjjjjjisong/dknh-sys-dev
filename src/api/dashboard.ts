@@ -13,13 +13,15 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
     supabase
       .from('documents')
       .select(
-        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, cancelled',
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, cancelled, del_yn',
       )
+      .eq('del_yn', 'N')
       .order('created_at', { ascending: false })
       .limit(200),
     supabase
       .from('order_book')
-      .select('issue_no, receipt, cancelled, from_doc, created_at')
+      .select('issue_no, receipt, cancelled, from_doc, created_at, del_yn')
+      .eq('del_yn', 'N')
       .order('created_at', { ascending: false }),
   ]);
 
@@ -44,7 +46,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   }
 
   const mappedDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
-    .filter((document: any) => !(document.cancelled ?? false))
+    .filter((document: any) => !(document.cancelled ?? false) && (document.del_yn ?? 'N') === 'N')
     .map((document: any) => {
       const issueNo = String(document.issue_no ?? '').trim();
       const receipt = receiptMap.get(issueNo) ?? '';

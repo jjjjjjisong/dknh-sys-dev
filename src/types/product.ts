@@ -12,6 +12,9 @@ export type Product = {
   box_per_p: number | null;
   ea_per_p: number | null;
   pallets_per_truck: number | null;
+  delYn: 'Y' | 'N';
+  updatedAt: string | null;
+  updatedBy: string;
 };
 
 export type ProductInput = {

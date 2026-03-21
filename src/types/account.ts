@@ -8,6 +8,9 @@ export type Account = {
   tel: string;
   email: string;
   role: AccountRole;
+  delYn: 'Y' | 'N';
+  updatedAt: string | null;
+  updatedBy: string;
 };
 
 export type AccountInput = {

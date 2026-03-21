@@ -413,6 +413,7 @@ a {
   border: 0;
   background: transparent;
   cursor: pointer;
+  transition: transform 0.18s ease;
 }
 
 .dashboard-bar-label,
@@ -426,6 +427,10 @@ a {
 
 .dashboard-bar-item:hover .dashboard-bar-fill {
   filter: brightness(1.03);
+}
+
+.dashboard-bar-item:hover {
+  transform: translateY(-4px);
 }
 
 .dashboard-empty-state {
@@ -458,6 +463,15 @@ a {
   border-radius: 12px 12px 0 0;
   background: linear-gradient(180deg, #6d9aff 0%, #3b6fe8 100%);
   box-shadow: none;
+  transition:
+    height 0.2s ease,
+    filter 0.18s ease,
+    transform 0.18s ease;
+  transform-origin: bottom center;
+}
+
+.dashboard-bar-item:hover .dashboard-bar-fill {
+  transform: scaleY(1.04);
 }
 
 .stat-label {

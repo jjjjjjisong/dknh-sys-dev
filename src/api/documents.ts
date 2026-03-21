@@ -1,8 +1,11 @@
 import { getSupabaseClient } from './supabase/client';
+import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import type { DocumentHistory, DocumentPayload } from '../types/document';
 
 export async function saveDocument(payload: DocumentPayload) {
   const supabase = getSupabaseClient();
+  const auditFields = getActiveAuditFields();
+  const deletedAuditFields = getDeletedAuditFields();
 
   const { data: documentRow, error: documentError } = await supabase
     .from('documents')
@@ -22,6 +25,7 @@ export async function saveDocument(payload: DocumentPayload) {
       total_amount: payload.totalAmount,
       author: payload.author,
       cancelled: false,
+      ...auditFields,
     })
     .select('id')
     .single();
@@ -48,6 +52,7 @@ export async function saveDocument(payload: DocumentPayload) {
       box_per_p: item.boxPerP,
       custom_pallet: item.customPallet,
       custom_box: item.customBox,
+      ...auditFields,
     }));
 
     const { error: itemError } = await supabase.from('document_items').insert(itemRows);
@@ -69,6 +74,7 @@ export async function saveDocument(payload: DocumentPayload) {
         receipt: '',
         cancelled: false,
         from_doc: true,
+        ...auditFields,
       })),
     );
 
@@ -84,7 +90,8 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('documents')
-    .select('id, issue_no, client, manager, manager_tel, receiver, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, cancelled, created_at, updated_at, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box)')
+    .select('id, issue_no, client, manager, manager_tel, receiver, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)')
+    .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -110,7 +117,10 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
     cancelled: row.cancelled ?? false,
     createdAt: row.created_at ?? null,
     updatedAt: row.updated_at ?? null,
+    updatedBy: row.updated_by ?? '',
+    delYn: (row.del_yn ?? 'N') as DocumentHistory['delYn'],
     items: (row.document_items ?? [])
+      .filter((item: any) => (item.del_yn ?? 'N') === 'N')
       .sort((a: any, b: any) => (a.seq ?? 0) - (b.seq ?? 0))
       .map((item: any) => ({
         id: String(item.id),
@@ -129,12 +139,17 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
         boxPerP: item.box_per_p ?? null,
         customPallet: item.custom_pallet ?? null,
         customBox: item.custom_box ?? null,
+        updatedAt: item.updated_at ?? null,
+        updatedBy: item.updated_by ?? '',
+        delYn: (item.del_yn ?? 'N') as DocumentHistory['delYn'],
       })),
   }));
 }
 
 export async function updateDocument(document: DocumentHistory) {
   const supabase = getSupabaseClient();
+  const auditFields = getActiveAuditFields();
+  const deletedAuditFields = getDeletedAuditFields();
 
   const { error: docError } = await supabase
     .from('documents')
@@ -153,7 +168,7 @@ export async function updateDocument(document: DocumentHistory) {
       total_vat: document.totalVat,
       total_amount: document.totalAmount,
       cancelled: document.cancelled,
-      updated_at: new Date().toISOString(),
+      ...auditFields,
     })
     .eq('id', document.id);
 
@@ -163,7 +178,7 @@ export async function updateDocument(document: DocumentHistory) {
 
   const { error: deleteItemError } = await supabase
     .from('document_items')
-    .delete()
+    .update(deletedAuditFields)
     .eq('document_id', document.id);
 
   if (deleteItemError) {
@@ -189,6 +204,7 @@ export async function updateDocument(document: DocumentHistory) {
         box_per_p: item.boxPerP,
         custom_pallet: item.customPallet,
         custom_box: item.customBox,
+        ...auditFields,
       })),
     );
 
@@ -199,7 +215,7 @@ export async function updateDocument(document: DocumentHistory) {
 
   const { error: deleteOrderBookError } = await supabase
     .from('order_book')
-    .delete()
+    .update(deletedAuditFields)
     .eq('doc_id', document.id);
 
   if (deleteOrderBookError) {
@@ -220,6 +236,7 @@ export async function updateDocument(document: DocumentHistory) {
         receipt: '',
         cancelled: document.cancelled,
         from_doc: true,
+        ...auditFields,
       })),
     );
 
@@ -231,10 +248,11 @@ export async function updateDocument(document: DocumentHistory) {
 
 export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
   const supabase = getSupabaseClient();
+  const auditFields = getActiveAuditFields();
 
   const { error: docError } = await supabase
     .from('documents')
-    .update({ cancelled, updated_at: new Date().toISOString() })
+    .update({ cancelled, ...auditFields })
     .eq('id', id);
 
   if (docError) {
@@ -243,8 +261,9 @@ export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
 
   const { error: orderBookError } = await supabase
     .from('order_book')
-    .update({ cancelled })
-    .eq('doc_id', id);
+    .update({ cancelled, ...auditFields })
+    .eq('doc_id', id)
+    .eq('del_yn', 'N');
 
   if (orderBookError) {
     throw orderBookError;
