@@ -15,7 +15,7 @@ export default function PageHeader({
     <div className="page-header">
       <div>
         <h1 className="page-title">{title}</h1>
-        <p className="page-description">{description}</p>
+        {description ? <p className="page-description">{description}</p> : null}
       </div>
       {action ? <div>{action}</div> : null}
     </div>

@@ -6,6 +6,20 @@ import type {
   DashboardSummary,
 } from '../types/dashboard';
 
+type DocumentItemRow = {
+  id: string | number | null;
+  name1: string | null;
+  name2: string | null;
+  qty: number | null;
+  order_date: string | null;
+  arrive_date: string | null;
+  ea_per_b: number | null;
+  box_per_p: number | null;
+  custom_pallet: number | null;
+  custom_box: number | null;
+  del_yn: string | null;
+};
+
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
   const supabase = getSupabaseClient();
 
@@ -13,14 +27,14 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
     supabase
       .from('documents')
       .select(
-        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, cancelled, del_yn',
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, cancelled, del_yn, document_items(id, name1, name2, qty, order_date, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
       )
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false })
       .limit(200),
     supabase
       .from('order_book')
-      .select('issue_no, receipt, cancelled, from_doc, created_at, del_yn')
+      .select('issue_no, receipt, del_yn')
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false }),
   ]);
@@ -45,12 +59,10 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
     }
   }
 
-  const mappedDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
+  const recentDocuments: DashboardRecentDocument[] = (documentsResult.data ?? [])
     .filter((document: any) => !(document.cancelled ?? false) && (document.del_yn ?? 'N') === 'N')
     .map((document: any) => {
       const issueNo = String(document.issue_no ?? '').trim();
-      const receipt = receiptMap.get(issueNo) ?? '';
-
       return {
         id: String(document.id),
         issueNo,
@@ -62,58 +74,62 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
         createdAt: document.created_at ?? '',
         updatedAt: document.updated_at ?? '',
         cancelled: document.cancelled ?? false,
-        receipt,
+        receipt: receiptMap.get(issueNo) ?? '',
       };
-    });
+    })
+    .slice(0, 3);
 
-  const todayIncomingDocuments = mappedDocuments
-    .filter((document) => document.arriveDate === todayKey)
-    .sort(compareIncomingDocuments)
-    .map(mapIncomingDocument);
+  const incomingItems: DashboardIncomingDocument[] = (documentsResult.data ?? [])
+    .filter((document: any) => !(document.cancelled ?? false) && (document.del_yn ?? 'N') === 'N')
+    .flatMap((document: any) => {
+      const issueNo = String(document.issue_no ?? '').trim();
+      const status = receiptMap.get(issueNo) ?? '';
 
-  const weekIncomingDocuments = mappedDocuments
-    .filter(
-      (document) =>
-        Boolean(document.arriveDate) &&
-        document.arriveDate >= weekRange.start &&
-        document.arriveDate <= weekRange.end,
-    )
-    .sort(compareIncomingDocuments)
-    .map(mapIncomingDocument);
+      return ((document.document_items ?? []) as DocumentItemRow[])
+        .filter((item) => (item.del_yn ?? 'N') === 'N')
+        .map((item) => mapIncomingItem(document, item, status));
+    })
+    .sort(compareIncomingDocuments);
 
-  const incompleteDocuments = mappedDocuments
-    .filter((document) => !isReceiptCompleted(document.receipt))
-    .sort(compareIncomingDocuments)
-    .map(mapIncomingDocument);
-
-  const trackedCount = mappedDocuments.length;
-  const completedCount = Math.max(trackedCount - incompleteDocuments.length, 0);
+  const todayIncomingDocuments = incomingItems.filter((item) => item.arriveDate === todayKey);
+  const weekIncomingDocuments = incomingItems.filter(
+    (item) => item.arriveDate >= weekRange.start && item.arriveDate <= weekRange.end,
+  );
+  const incompleteDocuments = incomingItems.filter((item) => !isReceiptCompleted(item.status));
 
   return {
     todayIncomingCount: todayIncomingDocuments.length,
     weekIncomingCount: weekIncomingDocuments.length,
     incompleteCount: incompleteDocuments.length,
-    completedCount,
-    trackedCount,
+    completedCount: incomingItems.filter((item) => isReceiptCompleted(item.status)).length,
+    trackedCount: incomingItems.length,
     todayLabel: formatShortDate(todayKey),
     weekLabel: `${formatShortDate(weekRange.start)} - ${formatShortDate(weekRange.end)}`,
     todayIncomingDocuments,
     weekIncomingDocuments,
     incompleteDocuments,
-    recentDocuments: mappedDocuments.slice(0, 3),
+    recentDocuments,
     weeklyArrivals: buildWeeklyArrivals(weekRange, weekIncomingDocuments),
   };
 }
 
-function mapIncomingDocument(document: DashboardRecentDocument): DashboardIncomingDocument {
+function mapIncomingItem(document: any, item: DocumentItemRow, status: string): DashboardIncomingDocument {
+  const qty = item.qty ?? 0;
+  const arriveDate = item.arrive_date ?? document.arrive_date ?? '';
+  const productName = item.name2?.trim() || item.name1?.trim() || '';
+
   return {
-    id: document.id,
-    issueNo: document.issueNo,
-    orderDate: document.orderDate,
-    arriveDate: document.arriveDate,
-    client: document.client,
-    receiver: document.receiver,
-    receipt: document.receipt,
+    id: String(item.id ?? `${document.id}-${productName}-${qty}`),
+    documentId: String(document.id),
+    issueNo: String(document.issue_no ?? ''),
+    arriveDate,
+    productName,
+    client: document.client ?? '',
+    receiver: document.receiver ?? '',
+    qty,
+    pallet: calculatePallet(item, qty),
+    box: calculateBox(item, qty),
+    status,
   };
 }
 
@@ -132,10 +148,24 @@ function buildWeeklyArrivals(
   });
 }
 
-function compareIncomingDocuments(
-  a: DashboardRecentDocument | DashboardIncomingDocument,
-  b: DashboardRecentDocument | DashboardIncomingDocument,
-) {
+function calculatePallet(item: DocumentItemRow, qty: number) {
+  if (item.custom_pallet !== null && item.custom_pallet !== undefined) {
+    return item.custom_pallet;
+  }
+
+  const eaPerP = item.ea_per_b && item.box_per_p ? item.ea_per_b * item.box_per_p : null;
+  return eaPerP ? Math.ceil(qty / eaPerP) : null;
+}
+
+function calculateBox(item: DocumentItemRow, qty: number) {
+  if (item.custom_box !== null && item.custom_box !== undefined) {
+    return item.custom_box;
+  }
+
+  return item.ea_per_b ? Math.ceil(qty / item.ea_per_b) : null;
+}
+
+function compareIncomingDocuments(a: DashboardIncomingDocument, b: DashboardIncomingDocument) {
   const arriveCompare = (a.arriveDate || '').localeCompare(b.arriveDate || '');
   if (arriveCompare !== 0) return arriveCompare;
   return (a.issueNo || '').localeCompare(b.issueNo || '');

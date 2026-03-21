@@ -22,6 +22,12 @@ export type DocumentPayload = {
   manager: string;
   managerTel: string;
   receiver: string;
+  supplierBizNo: string;
+  supplierName: string;
+  supplierOwner: string;
+  supplierAddress: string;
+  supplierBusinessType: string;
+  supplierBusinessItem: string;
   orderDate: string | null;
   arriveDate: string | null;
   deliveryAddr: string;
@@ -63,6 +69,12 @@ export type DocumentHistory = {
   manager: string;
   managerTel: string;
   receiver: string;
+  supplierBizNo: string;
+  supplierName: string;
+  supplierOwner: string;
+  supplierAddress: string;
+  supplierBusinessType: string;
+  supplierBusinessItem: string;
   orderDate: string | null;
   arriveDate: string | null;
   deliveryAddr: string;

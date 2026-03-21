@@ -1,11 +1,15 @@
 export type DashboardIncomingDocument = {
   id: string;
+  documentId: string;
   issueNo: string;
-  orderDate: string;
   arriveDate: string;
+  productName: string;
   client: string;
   receiver: string;
-  receipt: string;
+  qty: number;
+  pallet: number | null;
+  box: number | null;
+  status: string;
 };
 
 export type DashboardRecentDocument = {

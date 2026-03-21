@@ -42,6 +42,12 @@ type DocForm = {
   deliveryAddr: string;
   remark: string;
   requestNote: string;
+  supplierBizNo: string;
+  supplierName: string;
+  supplierOwner: string;
+  supplierAddress: string;
+  supplierBusinessType: string;
+  supplierBusinessItem: string;
 };
 
 type PreviewItem = {
@@ -67,6 +73,12 @@ type PreviewData = {
   manager: string;
   managerTel: string;
   receiver: string;
+  supplierBizNo: string;
+  supplierName: string;
+  supplierOwner: string;
+  supplierAddress: string;
+  supplierBusinessType: string;
+  supplierBusinessItem: string;
   orderDate: string | null;
   arriveDate: string | null;
   deliveryAddr: string;
@@ -93,6 +105,12 @@ function createInitialForm(): DocForm {
     deliveryAddr: '',
     remark: '',
     requestNote: '',
+    supplierBizNo: '113 - 88 - 02729',
+    supplierName: '디케이앤에이치',
+    supplierOwner: '김 주 영',
+    supplierAddress: '서울 동대문구 천호대로 21, 5층 507호',
+    supplierBusinessType: '도매 및 소매업',
+    supplierBusinessItem: '식품용기류(플라스틱용기)',
   };
 }
 
@@ -215,6 +233,12 @@ export default function DocCreatePage() {
       manager: form.manager.trim(),
       managerTel: form.managerTel.trim(),
       receiver: form.receiver.trim(),
+      supplierBizNo: form.supplierBizNo.trim(),
+      supplierName: form.supplierName.trim(),
+      supplierOwner: form.supplierOwner.trim(),
+      supplierAddress: form.supplierAddress.trim(),
+      supplierBusinessType: form.supplierBusinessType.trim(),
+      supplierBusinessItem: form.supplierBusinessItem.trim(),
       orderDate: emptyToNull(form.orderDate),
       arriveDate: emptyToNull(form.arriveDate),
       deliveryAddr: form.deliveryAddr.trim(),
@@ -310,6 +334,12 @@ export default function DocCreatePage() {
         manager: previewData.manager,
         managerTel: previewData.managerTel,
         receiver: previewData.receiver,
+        supplierBizNo: previewData.supplierBizNo,
+        supplierName: previewData.supplierName,
+        supplierOwner: previewData.supplierOwner,
+        supplierAddress: previewData.supplierAddress,
+        supplierBusinessType: previewData.supplierBusinessType,
+        supplierBusinessItem: previewData.supplierBusinessItem,
         orderDate: previewData.orderDate,
         arriveDate: previewData.arriveDate,
         deliveryAddr: previewData.deliveryAddr,
@@ -381,7 +411,7 @@ export default function DocCreatePage() {
 
   return (
     <div className="page-content">
-      <PageHeader title="문서 작성" description="기존 문서 작성 흐름을 기준으로 입력, 계산, 저장까지 먼저 연결했습니다." />
+      <PageHeader title="문서 작성" description="" />
 
       {error ? <div className="alert alert-error">{error}</div> : null}
 
@@ -390,7 +420,6 @@ export default function DocCreatePage() {
           <div className="card-header">
             <div>
               <h2>기본 정보</h2>
-              <p>납품처와 기본 문서 정보를 먼저 입력한 뒤 하단 품목 표를 채워 주세요.</p>
             </div>
           </div>
 
@@ -398,20 +427,20 @@ export default function DocCreatePage() {
             <div className="empty-state">기본 데이터를 불러오는 중입니다...</div>
           ) : (
             <div className="doc-form-grid">
-              <label className="field"><span>발주일자</span><input type="date" value={form.orderDate} onChange={(event) => updateForm('orderDate', event.target.value)} /></label>
-              <label className="field"><span>입고일자</span><input type="date" value={form.arriveDate} onChange={(event) => updateForm('arriveDate', event.target.value)} /></label>
+              <label className="field"><span>발주일 *</span><input required type="date" value={form.orderDate} onChange={(event) => updateForm('orderDate', event.target.value)} /></label>
+              <label className="field"><span>입고일 *</span><input required type="date" value={form.arriveDate} onChange={(event) => updateForm('arriveDate', event.target.value)} /></label>
               <label className="field"><span>발급번호</span><input value={form.issueNo} onChange={(event) => updateForm('issueNo', event.target.value)} /></label>
               <label className="field">
-                <span>납품처</span>
-                <select className="search-input" value={form.client} onChange={(event) => handleClientChange(event.target.value)}>
+                <span>납품처 *</span>
+                <select required className="search-input" value={form.client} onChange={(event) => handleClientChange(event.target.value)}>
                   <option value="">납품처 선택</option>
                   {clients.map((client) => <option key={client.id} value={client.name}>{client.name}</option>)}
                 </select>
               </label>
               <label className="field"><span>담당자</span><input value={form.manager} onChange={(event) => updateForm('manager', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field"><span>담당자 연락처</span><input value={form.managerTel} onChange={(event) => updateForm('managerTel', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
-              <label className="field"><span>수신처</span><input value={form.receiver} onChange={(event) => updateForm('receiver', event.target.value)} placeholder="예: 물류센터" /></label>
-              <label className="field field-span-2"><span>납품주소</span><textarea value={form.deliveryAddr} onChange={(event) => updateForm('deliveryAddr', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
+              <label className="field"><span>수신처 *</span><input required value={form.receiver} onChange={(event) => updateForm('receiver', event.target.value)} placeholder="예: 물류센터" /></label>
+              <label className="field field-span-2"><span>납품주소 *</span><textarea required value={form.deliveryAddr} onChange={(event) => updateForm('deliveryAddr', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field field-span-2"><span>공통 메모</span><textarea value={form.remark} onChange={(event) => updateForm('remark', event.target.value)} placeholder="예: 입고시간 / 점심시간 안내" /></label>
               <label className="field field-span-2"><span>추가 요청사항</span><textarea value={form.requestNote} onChange={(event) => updateForm('requestNote', event.target.value)} placeholder="문서에 함께 관리할 요청사항을 적어 주세요." /></label>
             </div>
@@ -421,8 +450,42 @@ export default function DocCreatePage() {
         <section className="card">
           <div className="card-header">
             <div>
+              <h2>공급자 정보</h2>
+            </div>
+          </div>
+
+          <div className="doc-form-grid">
+            <label className="field">
+              <span>등록번호</span>
+              <input value={form.supplierBizNo} onChange={(event) => updateForm('supplierBizNo', event.target.value)} />
+            </label>
+            <label className="field">
+              <span>상호</span>
+              <input value={form.supplierName} onChange={(event) => updateForm('supplierName', event.target.value)} />
+            </label>
+            <label className="field">
+              <span>성명</span>
+              <input value={form.supplierOwner} onChange={(event) => updateForm('supplierOwner', event.target.value)} />
+            </label>
+            <label className="field field-span-2">
+              <span>사업장주소</span>
+              <textarea value={form.supplierAddress} onChange={(event) => updateForm('supplierAddress', event.target.value)} />
+            </label>
+            <label className="field">
+              <span>업태</span>
+              <input value={form.supplierBusinessType} onChange={(event) => updateForm('supplierBusinessType', event.target.value)} />
+            </label>
+            <label className="field">
+              <span>종목</span>
+              <input value={form.supplierBusinessItem} onChange={(event) => updateForm('supplierBusinessItem', event.target.value)} />
+            </label>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="card-header">
+            <div>
               <h2>품목 입력</h2>
-              <p>기존 HTML 표 구조를 최대한 유지하면서 직접입력 품목과 공급가액 수동 조정도 넣었습니다.</p>
             </div>
             <button className="btn btn-primary" onClick={addItem}>+ 품목 추가</button>
           </div>
@@ -430,7 +493,7 @@ export default function DocCreatePage() {
           <div className="table-wrap">
             <table className="table doc-items-table wide">
               <thead>
-                <tr><th>#</th><th>품목명(출고의뢰서)</th><th>구분</th><th>발주일자</th><th>입고일자</th><th>수량(ea)</th><th>파렛트</th><th>BOX</th><th>단가</th><th>공급가액</th><th>VAT</th><th>비고</th><th>관리</th></tr>
+                <tr><th>#</th><th className="doc-item-name-cell">품목명</th><th>구분</th><th>발주일자</th><th>입고일자</th><th>수량(ea)</th><th>파렛트</th><th>BOX</th><th>단가</th><th>공급가액</th><th>VAT</th><th>비고</th><th>관리</th></tr>
               </thead>
               <tbody>
                 {items.map((item, index) => {
@@ -507,8 +570,7 @@ export default function DocCreatePage() {
         <section className="card">
           <div className="card-header">
             <div>
-              <h2>미리보기와 저장</h2>
-              <p>저장과 초기화 버튼을 미리보기 버튼과 같은 줄로 옮겼습니다.</p>
+              <h2>미리보기 및 저장</h2>
             </div>
           </div>
           <div className="doc-action-stack inline">
@@ -632,7 +694,7 @@ function buildReleasePreviewHtml(data: PreviewData) {
       ${data.remark ? `<tr><td class="lbl">비고</td><td>${escapeHtml(data.remark)}</td></tr>` : ''}
     </table>
     ${data.requestNote ? `<div class="request-box"><strong>요청사항</strong>${escapeHtml(data.requestNote).replace(/\n/g, '<br>')}</div>` : ''}
-    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>㈜ 디케이앤에이치</strong></div>
+    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>㈜ ${escapeHtml(data.supplierName || '디케이앤에이치')}</strong></div>
   </div>`;
 }
 
@@ -672,10 +734,10 @@ function buildInvoicePreviewHtml(data: PreviewData) {
         </td>
         <td class="seller-cell">
           <table class="inner-table">
-            <tr><td rowspan="4" class="vertical">공<br>급<br>자</td><td class="c label">등록<br>번호</td><td colspan="3" class="c strong">113 - 88 - 02729</td></tr>
-            <tr><td class="c label">상호</td><td class="c strong">디케이앤에이치</td><td class="c label narrow">성명</td><td class="c">김 주 영</td></tr>
-            <tr><td class="c label">사업장<br>주소</td><td colspan="3" class="c">서울 동대문구 천호대로 21, 5층 507호</td></tr>
-            <tr><td class="c label">업태</td><td class="c">도매 및 소매업</td><td class="c label narrow">종목</td><td class="c">식품용기류(플라스틱용기)</td></tr>
+            <tr><td rowspan="4" class="vertical">공<br>급<br>자</td><td class="c label">등록<br>번호</td><td colspan="3" class="c strong">${escapeHtml(data.supplierBizNo || '113 - 88 - 02729')}</td></tr>
+            <tr><td class="c label">상호</td><td class="c strong">${escapeHtml(data.supplierName || '디케이앤에이치')}</td><td class="c label narrow">성명</td><td class="c">${escapeHtml(data.supplierOwner || '김 주 영')}</td></tr>
+            <tr><td class="c label">사업장<br>주소</td><td colspan="3" class="c">${escapeHtml(data.supplierAddress || '서울 동대문구 천호대로 21, 5층 507호')}</td></tr>
+            <tr><td class="c label">업태</td><td class="c">${escapeHtml(data.supplierBusinessType || '도매 및 소매업')}</td><td class="c label narrow">종목</td><td class="c">${escapeHtml(data.supplierBusinessItem || '식품용기류(플라스틱용기)')}</td></tr>
           </table>
         </td>
       </tr>

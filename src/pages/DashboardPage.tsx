@@ -59,7 +59,6 @@ export default function DashboardPage() {
     }
 
     void load();
-
     return () => {
       mounted = false;
     };
@@ -136,11 +135,6 @@ export default function DashboardPage() {
     navigate(`/doc-history/${documentId}`);
   }
 
-  function openTrendPanel(item: DashboardArrivalTrend) {
-    setSelectedTrend(item);
-    setPanelType('trend');
-  }
-
   return (
     <div className="page-content dashboard-page">
       <PageHeader title="대시보드" description="" />
@@ -215,7 +209,8 @@ export default function DashboardPage() {
                 loading={loading}
                 onClick={() => {
                   if (!loading) {
-                    openTrendPanel(item);
+                    setSelectedTrend(item);
+                    setPanelType('trend');
                   }
                 }}
               />
@@ -279,17 +274,20 @@ export default function DashboardPage() {
             <thead>
               <tr>
                 <th style={{ width: 88, textAlign: 'center' }}>발급번호</th>
-                <th style={{ width: 96, textAlign: 'center' }}>발주일자</th>
                 <th style={{ width: 96, textAlign: 'center' }}>입고일자</th>
                 <th style={{ textAlign: 'left' }}>납품처</th>
                 <th style={{ textAlign: 'left' }}>수신처</th>
+                <th style={{ textAlign: 'left' }}>품목명</th>
+                <th style={{ width: 88, textAlign: 'center' }}>수량</th>
+                <th style={{ width: 88, textAlign: 'center' }}>파렛트</th>
+                <th style={{ width: 88, textAlign: 'center' }}>박스</th>
                 <th style={{ width: 100, textAlign: 'center' }}>상태</th>
               </tr>
             </thead>
             <tbody>
               {!panelConfig || panelConfig.items.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={9}>
                     <div className="dashboard-empty-state dashboard-panel-empty-state">
                       <div>해당 기간에 예정된 할 일이 없습니다.</div>
                       <div>새로운 입고 일정이 등록되면 이곳에 표시됩니다.</div>
@@ -372,9 +370,8 @@ function DashboardIncomingRow({
   onOpen: (documentId: string) => void;
 }) {
   return (
-    <tr className="dashboard-clickable-row" onClick={() => onOpen(document.id)}>
+    <tr className="dashboard-clickable-row" onClick={() => onOpen(document.documentId)}>
       <td style={{ textAlign: 'center' }}>{document.issueNo || '-'}</td>
-      <td style={{ textAlign: 'center' }}>{document.orderDate || '-'}</td>
       <td style={{ textAlign: 'center' }}>{document.arriveDate || '-'}</td>
       <td className="table-primary dashboard-ellipsis-cell" title={document.client || '-'}>
         {document.client || '-'}
@@ -382,8 +379,14 @@ function DashboardIncomingRow({
       <td className="dashboard-ellipsis-cell" title={document.receiver || '-'}>
         {document.receiver || '-'}
       </td>
+      <td className="dashboard-ellipsis-cell" title={document.productName || '-'}>
+        {document.productName || '-'}
+      </td>
+      <td style={{ textAlign: 'center' }}>{formatInteger(document.qty)}</td>
+      <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.pallet)}</td>
+      <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.box)}</td>
       <td style={{ textAlign: 'center' }}>
-        {document.receipt ? <Badge variant="muted-blue">{document.receipt}</Badge> : <span>-</span>}
+        {document.status ? <Badge variant="muted-blue">{document.status}</Badge> : <span>-</span>}
       </td>
     </tr>
   );
@@ -439,4 +442,12 @@ function formatTrendTitleDate(value: string) {
 function formatDateTime(value: string) {
   if (!value) return '-';
   return value.slice(0, 16).replace('T', ' ');
+}
+
+function formatMaybeNumber(value: number | null) {
+  return value === null || value === undefined ? '-' : value.toLocaleString('ko-KR');
+}
+
+function formatInteger(value: number) {
+  return value.toLocaleString('ko-KR');
 }

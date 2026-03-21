@@ -15,6 +15,12 @@ export async function saveDocument(payload: DocumentPayload) {
       manager: payload.manager,
       manager_tel: payload.managerTel,
       receiver: payload.receiver,
+      supplier_biz_no: payload.supplierBizNo,
+      supplier_name: payload.supplierName,
+      supplier_owner: payload.supplierOwner,
+      supplier_address: payload.supplierAddress,
+      supplier_business_type: payload.supplierBusinessType,
+      supplier_business_item: payload.supplierBusinessItem,
       order_date: payload.orderDate,
       arrive_date: payload.arriveDate,
       delivery_addr: payload.deliveryAddr,
@@ -90,7 +96,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('documents')
-    .select('id, issue_no, client, manager, manager_tel, receiver, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)')
+    .select('id, issue_no, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)')
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
@@ -105,6 +111,12 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
     manager: row.manager ?? '',
     managerTel: row.manager_tel ?? '',
     receiver: row.receiver ?? '',
+    supplierBizNo: row.supplier_biz_no ?? '',
+    supplierName: row.supplier_name ?? '',
+    supplierOwner: row.supplier_owner ?? '',
+    supplierAddress: row.supplier_address ?? '',
+    supplierBusinessType: row.supplier_business_type ?? '',
+    supplierBusinessItem: row.supplier_business_item ?? '',
     orderDate: row.order_date ?? null,
     arriveDate: row.arrive_date ?? null,
     deliveryAddr: row.delivery_addr ?? '',
@@ -159,6 +171,12 @@ export async function updateDocument(document: DocumentHistory) {
       manager: document.manager,
       manager_tel: document.managerTel,
       receiver: document.receiver,
+      supplier_biz_no: document.supplierBizNo,
+      supplier_name: document.supplierName,
+      supplier_owner: document.supplierOwner,
+      supplier_address: document.supplierAddress,
+      supplier_business_type: document.supplierBusinessType,
+      supplier_business_item: document.supplierBusinessItem,
       order_date: document.orderDate,
       arrive_date: document.arriveDate,
       delivery_addr: document.deliveryAddr,
