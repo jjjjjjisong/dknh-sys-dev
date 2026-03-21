@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import * as XLSX from 'xlsx';
 import {
-  createOrderBookEntry,
   fetchOrderBook,
   removeOrderBookEntry,
   updateManyOrderBookShippedStatus,
@@ -16,19 +15,6 @@ import Modal from '../components/ui/Modal';
 import type { OrderBookEntry, OrderBookInput, OrderBookShippingStatus } from '../types/order-book';
 
 const today = new Date();
-
-const emptyForm: OrderBookInput = {
-  issueNo: '',
-  date: today.toISOString().slice(0, 10),
-  deadline: null,
-  client: '',
-  product: '',
-  qty: 0,
-  note: '',
-  receipt: '',
-  status: 'ST00',
-  shippedStatus: '미출고',
-};
 
 type FilterType = 'all' | 'client' | 'product' | 'issueNo' | 'receipt';
 
@@ -53,12 +39,23 @@ export default function OrderBookPage() {
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [keyword, setKeyword] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<OrderBookEntry | null>(null);
-  const [form, setForm] = useState<OrderBookInput>(emptyForm);
+  const [modalOpen, setModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [batchUpdating, setBatchUpdating] = useState(false);
+  const [form, setForm] = useState<OrderBookInput>({
+    issueNo: '',
+    date: today.toISOString().slice(0, 10),
+    deadline: null,
+    client: '',
+    product: '',
+    qty: 0,
+    note: '',
+    receipt: '',
+    status: 'ST00',
+    shippedStatus: '미출고',
+  });
 
   useEffect(() => {
     void loadEntries();
@@ -89,9 +86,9 @@ export default function OrderBookPage() {
       if (filterType === 'client') return entry.client.toLowerCase().includes(search);
       if (filterType === 'product') return entry.product.toLowerCase().includes(search);
       if (filterType === 'issueNo') return entry.issueNo.toLowerCase().includes(search);
-      if (filterType === 'receipt') return entry.receipt.toLowerCase().includes(search);
+      if (filterType === 'receipt') return entry.status.toLowerCase().includes(search);
 
-      return [entry.issueNo, entry.client, entry.receiver, entry.product, entry.receipt, entry.author]
+      return [entry.issueNo, entry.client, entry.receiver, entry.product, entry.note]
         .join(' ')
         .toLowerCase()
         .includes(search);
@@ -171,8 +168,8 @@ export default function OrderBookPage() {
 
     const rows = filteredEntries.map((entry) => ({
       발급번호: entry.issueNo || '',
-      발주일자: formatDateForExport(entry.date),
-      입고일자: formatDateForExport(entry.deadline),
+      발주일자: entry.date || '',
+      입고일자: entry.deadline || '',
       납품처: entry.client || '',
       수신처: entry.receiver || '',
       품목명: entry.product || '',
@@ -186,9 +183,7 @@ export default function OrderBookPage() {
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, '수주대장');
-
-    const stamp = formatFileStamp(new Date());
-    XLSX.writeFile(workbook, `수주대장_${stamp}.xlsx`);
+    XLSX.writeFile(workbook, `수주대장_${formatFileStamp(new Date())}.xlsx`);
   }
 
   async function handleShippedStatusChange(entry: OrderBookEntry, shippedStatus: OrderBookShippingStatus) {
@@ -207,21 +202,7 @@ export default function OrderBookPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-
-    if (!editingEntry && !form.client.trim()) {
-      setFormError('납품처를 입력해주세요.');
-      return;
-    }
-
-    if (!editingEntry && !form.product.trim()) {
-      setFormError('품목명을 입력해주세요.');
-      return;
-    }
-
-    if (!editingEntry && form.qty <= 0) {
-      setFormError('수량은 1 이상이어야 합니다.');
-      return;
-    }
+    if (!editingEntry) return;
 
     try {
       setSaving(true);
@@ -235,19 +216,13 @@ export default function OrderBookPage() {
         product: form.product.trim(),
         qty: form.qty,
         note: form.note.trim(),
-        receipt: form.receipt.trim(),
+        receipt: form.receipt,
         status: form.status,
         shippedStatus: form.shippedStatus,
       };
 
-      if (editingEntry) {
-        const saved = await updateOrderBookEntry(editingEntry.id, payload);
-        setEntries((current) => current.map((entry) => (entry.id === editingEntry.id ? saved : entry)));
-      } else {
-        const saved = await createOrderBookEntry(payload);
-        setEntries((current) => [saved, ...current]);
-      }
-
+      const saved = await updateOrderBookEntry(editingEntry.id, payload);
+      setEntries((current) => current.map((entry) => (entry.id === editingEntry.id ? saved : entry)));
       setModalOpen(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : '수주대장 저장에 실패했습니다.');
@@ -264,6 +239,7 @@ export default function OrderBookPage() {
       await removeOrderBookEntry(entry.id);
       setEntries((current) => current.filter((item) => item.id !== entry.id));
       setSelectedIds((current) => current.filter((item) => item !== entry.id));
+      setModalOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : '수주대장 삭제에 실패했습니다.');
     }
@@ -328,7 +304,12 @@ export default function OrderBookPage() {
           <Button type="button" variant="secondary" className="excel-download-button" onClick={handleDownloadExcel}>
             엑셀다운
           </Button>
-          <Button type="button" variant="primary" onClick={() => void handleBatchShip()} disabled={selectedIds.length === 0 || batchUpdating}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => void handleBatchShip()}
+            disabled={selectedIds.length === 0 || batchUpdating}
+          >
             {batchUpdating ? '처리 중...' : '일괄 출고처리'}
           </Button>
         </div>
@@ -388,8 +369,8 @@ export default function OrderBookPage() {
                       />
                     </td>
                     <td>{entry.issueNo || '-'}</td>
-                    <td style={{ textAlign: 'center' }}>{formatDate(entry.date)}</td>
-                    <td style={{ textAlign: 'center' }}>{formatDate(entry.deadline)}</td>
+                    <td style={{ textAlign: 'center' }}>{entry.date || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>{entry.deadline || '-'}</td>
                     <td>{entry.client || '-'}</td>
                     <td>{entry.receiver || '-'}</td>
                     <td>{entry.product || '-'}</td>
@@ -496,10 +477,6 @@ export default function OrderBookPage() {
               </select>
             </FormField>
 
-            <FormField label="수령상태">
-              <input value={form.receipt} onChange={(event) => updateForm('receipt', event.target.value)} />
-            </FormField>
-
             <FormField label="비고" className="field-span-2">
               <textarea value={form.note} onChange={(event) => updateForm('note', event.target.value)} />
             </FormField>
@@ -510,10 +487,6 @@ export default function OrderBookPage() {
       </Modal>
     </div>
   );
-}
-
-function formatDate(value: string | null) {
-  return value || '-';
 }
 
 function formatNumber(value: number) {
@@ -535,10 +508,6 @@ function parseNonNegativeInteger(value: string) {
   const parsed = parseInt(value || '0', 10);
   if (Number.isNaN(parsed) || parsed < 0) return 0;
   return parsed;
-}
-
-function formatDateForExport(value: string | null) {
-  return value || '';
 }
 
 function formatFileStamp(date: Date) {

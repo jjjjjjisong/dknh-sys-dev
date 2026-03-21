@@ -17,7 +17,7 @@ export default function Modal({
   onClose,
   footer,
   cardClassName = '',
-  closeOnOverlayClick = true,
+  closeOnOverlayClick = false,
   children,
 }: ModalProps) {
   if (!open) return null;
