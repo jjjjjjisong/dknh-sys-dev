@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { fetchClients } from '../api/clients';
 import { saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
@@ -18,10 +18,7 @@ type DocItem = {
   id: string;
   productId: string;
   manualName: string;
-  manualName2: string;
   manualGubun: string;
-  manualEaPerB: number | null;
-  manualBoxPerP: number | null;
   orderDate: string;
   arriveDate: string;
   qty: number | null;
@@ -137,10 +134,7 @@ function createEmptyItem(baseOrderDate = today, baseArriveDate = ''): DocItem {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     productId: '',
     manualName: '',
-    manualName2: '',
     manualGubun: DEFAULT_GUBUN_OPTIONS[0],
-    manualEaPerB: null,
-    manualBoxPerP: null,
     orderDate: baseOrderDate,
     arriveDate: baseArriveDate,
     qty: 0,
@@ -238,10 +232,10 @@ export default function DocCreatePage() {
         const product = clientProducts.find((row) => row.id === item.productId) ?? null;
         const manualMode = item.productId === MANUAL_PRODUCT_ID;
         const name1 = manualMode ? item.manualName.trim() : product?.name1 ?? '';
-        const name2 = manualMode ? item.manualName2.trim() : product?.name2 ?? '';
+        const name2 = manualMode ? item.manualName.trim() : product?.name2 ?? '';
         const gubun = manualMode ? item.manualGubun : product?.gubun ?? '';
-        const eaPerB = manualMode ? item.manualEaPerB : product?.ea_per_b ?? null;
-        const boxPerP = manualMode ? item.manualBoxPerP : product?.box_per_p ?? null;
+        const eaPerB = manualMode ? null : product?.ea_per_b ?? null;
+        const boxPerP = manualMode ? null : product?.box_per_p ?? null;
         const eaPerP = eaPerB && boxPerP ? eaPerB * boxPerP : product?.ea_per_p ?? null;
         const qty = item.qty ?? 0;
         const unitPrice = item.unitPrice ?? product?.sell_price ?? 0;
@@ -681,7 +675,6 @@ export default function DocCreatePage() {
                               productId: nextId,
                               manualGubun: DEFAULT_GUBUN_OPTIONS[0],
                               manualName: nextId === MANUAL_PRODUCT_ID ? current.manualName : '',
-                              manualName2: nextId === MANUAL_PRODUCT_ID ? current.manualName2 : '',
                               unitPrice: nextId === MANUAL_PRODUCT_ID ? current.unitPrice : selected?.sell_price ?? null,
                               customSupply: null,
                             }));
@@ -691,24 +684,15 @@ export default function DocCreatePage() {
                             <option value={MANUAL_PRODUCT_ID}>직접입력</option>
                           </select>
                           {manualMode ? (
-                            <div className="doc-subgrid">
-                              <input className="doc-cell-control doc-item-name-input" value={item.manualName} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualName: event.target.value }))} placeholder="품목명" />
-                              <input className="doc-cell-control doc-item-name-input" value={item.manualName2} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualName2: event.target.value }))} placeholder="품목명(거래명세서)" />
-                            </div>
+                            <input className="doc-cell-control doc-item-name-input" value={item.manualName} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualName: event.target.value }))} placeholder="품목명" />
                           ) : null}
                         </div>
                       </td>
                       <td className="doc-gubun-cell">
                         {manualMode ? (
-                          <div className="doc-inline-stack">
-                            <select className="doc-cell-control" value={item.manualGubun} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))}>
-                              {DEFAULT_GUBUN_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                            </select>
-                            <div className="doc-subgrid">
-                              <input className="doc-cell-control" type="number" value={item.manualEaPerB ?? ''} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualEaPerB: parseNullableInteger(event.target.value) }))} placeholder="1BOX=ea" />
-                              <input className="doc-cell-control" type="number" value={item.manualBoxPerP ?? ''} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualBoxPerP: parseNullableInteger(event.target.value) }))} placeholder="1P=BOX" />
-                            </div>
-                          </div>
+                          <select className="doc-cell-control" value={item.manualGubun} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))}>
+                            {DEFAULT_GUBUN_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
                         ) : summary.gubun || '-'}
                       </td>
                       <td><input className="doc-cell-control" type="date" value={item.orderDate} onChange={(event) => updateItem(item.id, (current) => ({ ...current, orderDate: event.target.value }))} /></td>

@@ -351,3 +351,405 @@ C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocHistoryP
  [90m 340 |[39m
  [90m 341 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"doc-totals-strip"[39m[33m>[39m
  [90m 342 |[39m               [33m<[39m[33mdiv[39m className[33m=[39m[32m"doc-total-item"[39m[33m>[39m[33m<[39m[33mspan[39m[33m>[39m공급가액[33m<[39m[33m/[39m[33mspan[39m[33m>[39m[33m<[39m[33mstrong[39m[33m>[39m{formatNumber(draft[33m.[39mtotalSupply)}[33m<[39m[33m/[39m[33mstrong[39m[33m>[39m[33m<[39m[33m/[39m[33mdiv[39m[33m>[39m[0m
+[2mPM 8:29:00[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocCreatePage.tsx: Unexpected token, expected "," (12:37)
+
+[0m [90m 10 |[31m
+ [90m 11 |[31m [36mconst[31m [33mMANUAL_PRODUCT_ID[31m [33m=[31m [32m'__manual__'[31m[33m;[31m
+[31m[1m>[22m[31m[90m 12 |[31m [36mconst[31m [33mDEFAULT_GUBUN_OPTIONS[31m [33m=[31m [[32m'�?, '[31m컵뚜�[33m?[31m[33m,[31m [32m'?�링'[31m[33m,[31m [32m'?�트로우'[31m[33m,[31m [32m'기�?'[31m][33m;[31m
+ [90m    |[31m                                      [31m[1m^[22m[31m
+ [90m 13 |[31m [36mconst[31m today [33m=[31m [36mnew[31m [33mDate[31m()[33m.[31mtoISOString()[33m.[31mslice([35m0[31m[33m,[31m [35m10[31m)[33m;[31m
+ [90m 14 |[31m
+ [90m 15 |[31m type [33mPreviewType[31m [33m=[31m [32m'release'[31m [33m|[31m [32m'invoice'[31m [33m|[31m [36mnull[31m[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx[39m:12:37
+[33m  10 |  
+  11 |  const MANUAL_PRODUCT_ID = '__manual__';
+  12 |  const DEFAULT_GUBUN_OPTIONS = ['�?, '컵뚜�?, '?�링', '?�트로우', '기�?'];
+     |                                                  ^
+  13 |  const today = new Date().toISOString().slice(0, 10);
+  14 |  [39m
+      at constructor (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6599:19)
+      at TypeScriptParserMixin.unexpected (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6619:16)
+      at TypeScriptParserMixin.expect (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6899:12)
+      at TypeScriptParserMixin.parseExprList (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12141:14)
+      at TypeScriptParserMixin.parseArrayLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12057:26)
+      at TypeScriptParserMixin.parseArrayLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9193:24)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11335:23)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9786:20)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10800:39
+      at TypeScriptParserMixin.allowInAnd (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12421:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10800:17)
+      at TypeScriptParserMixin.parseVar (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13384:91)
+      at TypeScriptParserMixin.parseVarStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13230:10)
+      at TypeScriptParserMixin.parseVarStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12851:23)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12612:25)
+      at TypeScriptParserMixin.parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:14488:25)
+      at TypeScriptParserMixin.parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10126:18)
+      at parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:261:32)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:223:11)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:189:28
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:113:33
+      at step (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:287:14)
+[2mPM 8:29:00[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocCreatePage.tsx: Unexpected token, expected "," (12:37)
+
+[0m [90m 10 |[31m
+ [90m 11 |[31m [36mconst[31m [33mMANUAL_PRODUCT_ID[31m [33m=[31m [32m'__manual__'[31m[33m;[31m
+[31m[1m>[22m[31m[90m 12 |[31m [36mconst[31m [33mDEFAULT_GUBUN_OPTIONS[31m [33m=[31m [[32m'�?, '[31m컵뚜�[33m?[31m[33m,[31m [32m'?�링'[31m[33m,[31m [32m'?�트로우'[31m[33m,[31m [32m'기�?'[31m][33m;[31m
+ [90m    |[31m                                      [31m[1m^[22m[31m
+ [90m 13 |[31m [36mconst[31m today [33m=[31m [36mnew[31m [33mDate[31m()[33m.[31mtoISOString()[33m.[31mslice([35m0[31m[33m,[31m [35m10[31m)[33m;[31m
+ [90m 14 |[31m
+ [90m 15 |[31m type [33mPreviewType[31m [33m=[31m [32m'release'[31m [33m|[31m [32m'invoice'[31m [33m|[31m [36mnull[31m[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx[39m:12:37
+[33m  10 |  
+  11 |  const MANUAL_PRODUCT_ID = '__manual__';
+  12 |  const DEFAULT_GUBUN_OPTIONS = ['�?, '컵뚜�?, '?�링', '?�트로우', '기�?'];
+     |                                                  ^
+  13 |  const today = new Date().toISOString().slice(0, 10);
+  14 |  [39m
+      at constructor (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6599:19)
+      at TypeScriptParserMixin.unexpected (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6619:16)
+      at TypeScriptParserMixin.expect (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6899:12)
+      at TypeScriptParserMixin.parseExprList (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12141:14)
+      at TypeScriptParserMixin.parseArrayLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12057:26)
+      at TypeScriptParserMixin.parseArrayLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9193:24)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11335:23)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9786:20)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10800:39
+      at TypeScriptParserMixin.allowInAnd (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12421:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10800:17)
+      at TypeScriptParserMixin.parseVar (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13384:91)
+      at TypeScriptParserMixin.parseVarStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13230:10)
+      at TypeScriptParserMixin.parseVarStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12851:23)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12612:25)
+      at TypeScriptParserMixin.parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:14488:25)
+      at TypeScriptParserMixin.parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10126:18)
+      at parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:261:32)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:223:11)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:189:28
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:113:33
+      at step (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:287:14)
+[2mPM 8:29:00[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocCreatePage.tsx: Unexpected token, expected "," (12:37)
+
+[0m [90m 10 |[31m
+ [90m 11 |[31m [36mconst[31m [33mMANUAL_PRODUCT_ID[31m [33m=[31m [32m'__manual__'[31m[33m;[31m
+[31m[1m>[22m[31m[90m 12 |[31m [36mconst[31m [33mDEFAULT_GUBUN_OPTIONS[31m [33m=[31m [[32m'�?, '[31m컵뚜�[33m?[31m[33m,[31m [32m'?�링'[31m[33m,[31m [32m'?�트로우'[31m[33m,[31m [32m'기�?'[31m][33m;[31m
+ [90m    |[31m                                      [31m[1m^[22m[31m
+ [90m 13 |[31m [36mconst[31m today [33m=[31m [36mnew[31m [33mDate[31m()[33m.[31mtoISOString()[33m.[31mslice([35m0[31m[33m,[31m [35m10[31m)[33m;[31m
+ [90m 14 |[31m
+ [90m 15 |[31m type [33mPreviewType[31m [33m=[31m [32m'release'[31m [33m|[31m [32m'invoice'[31m [33m|[31m [36mnull[31m[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx[39m:12:37
+[33m  10 |  
+  11 |  const MANUAL_PRODUCT_ID = '__manual__';
+  12 |  const DEFAULT_GUBUN_OPTIONS = ['�?, '컵뚜�?, '?�링', '?�트로우', '기�?'];
+     |                                                  ^
+  13 |  const today = new Date().toISOString().slice(0, 10);
+  14 |  [39m
+      at constructor (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6599:19)
+      at TypeScriptParserMixin.unexpected (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6619:16)
+      at TypeScriptParserMixin.expect (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6899:12)
+      at TypeScriptParserMixin.parseExprList (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12141:14)
+      at TypeScriptParserMixin.parseArrayLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12057:26)
+      at TypeScriptParserMixin.parseArrayLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9193:24)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11335:23)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9786:20)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10800:39
+      at TypeScriptParserMixin.allowInAnd (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12421:16)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10800:17)
+      at TypeScriptParserMixin.parseVar (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13384:91)
+      at TypeScriptParserMixin.parseVarStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13230:10)
+      at TypeScriptParserMixin.parseVarStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9408:31)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12851:23)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13316:36)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13309:10)
+      at TypeScriptParserMixin.parseProgram (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12622:10)
+      at TypeScriptParserMixin.parseTopLevel (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12612:25)
+      at TypeScriptParserMixin.parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:14488:25)
+      at TypeScriptParserMixin.parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10126:18)
+      at parse (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:14522:38)
+      at parser (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\parser\index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transformation\normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transformation\index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:261:32)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:273:13
+      at async.call.result.err.err (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:223:11)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:189:28
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\core\lib\gensync-utils\async.js:67:7
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:113:33
+      at step (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\gensync\index.js:287:14)
+[2mPM 8:30:00[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocCreatePage.tsx: Unterminated string constant. (124:18)
+
+[0m [90m 122 |[31m     requestNote[33m:[31m [32m''[31m[33m,[31m
+ [90m 123 |[31m     supplierBizNo[33m:[31m [32m'113 - 88 - 02729'[31m[33m,[31m
+[31m[1m>[22m[31m[90m 124 |[31m     supplierName[33m:[31m [32m'?붿??댁븻?먯씠移?,[31m
+ [90m     |[31m                   [31m[1m^[22m[31m
+ [90m 125 |[31m     supplierOwner[33m:[31m [32m'源 二???,[31m
+ [90m 126 |[31m     supplierAddress[33m:[31m [32m'?쒖슱 ?숇?臾멸뎄 泥쒗샇?濡?21, 5痢?507??,[31m
+ [90m 127 |[31m     supplierBusinessType[33m:[31m [32m'?꾨ℓ 諛??뚮ℓ??,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx[39m:124:18
+[33m  125|      supplierOwner: '源 二???,
+  126|      supplierAddress: '?쒖슱 ?숇?臾멸뎄 泥쒗샇?濡?21, 5痢?507??,
+  127|      supplierBusinessType: '?꾨ℓ 諛??뚮ℓ??,
+     |                            ^
+  128|      supplierBusinessItem: '?앺뭹?⑷린瑜??뚮씪?ㅽ떛?⑷린)',
+  129|    };[39m
+      at constructor (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6599:19)
+      at Object.unterminated (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5664:20)
+      at readStringContents (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5406:16)
+      at TypeScriptParserMixin.readString (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6498:9)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6258:14)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4797:11)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9987:11)
+      at TypeScriptParserMixin.nextToken (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5782:10)
+      at TypeScriptParserMixin.next (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5692:10)
+      at TypeScriptParserMixin.eat (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5696:12)
+      at TypeScriptParserMixin.parseObjectProperty (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11949:14)
+      at TypeScriptParserMixin.parseObjPropValue (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11978:100)
+      at TypeScriptParserMixin.parseObjPropValue (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9744:18)
+      at TypeScriptParserMixin.parsePropertyDefinition (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11915:17)
+      at TypeScriptParserMixin.parseObjectLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11832:21)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11339:23)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9786:20)
+      at TypeScriptParserMixin.parseExpressionBase (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10780:39
+      at TypeScriptParserMixin.allowInAnd (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12421:16)
+      at TypeScriptParserMixin.parseExpression (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10780:17)
+      at TypeScriptParserMixin.parseReturnStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13142:28)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12798:21)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseStatementListItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12747:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13316:61)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13309:10)
+      at TypeScriptParserMixin.parseBlock (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13297:10)
+      at TypeScriptParserMixin.parseFunctionBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12100:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12086:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9172:18)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13445:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12403:14)
+      at TypeScriptParserMixin.parseFunction (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13444:10)
+      at TypeScriptParserMixin.parseFunctionStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13125:17)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12791:21)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
+[2mPM 8:30:00[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocCreatePage.tsx: Unterminated string constant. (124:18)
+
+[0m [90m 122 |[31m     requestNote[33m:[31m [32m''[31m[33m,[31m
+ [90m 123 |[31m     supplierBizNo[33m:[31m [32m'113 - 88 - 02729'[31m[33m,[31m
+[31m[1m>[22m[31m[90m 124 |[31m     supplierName[33m:[31m [32m'?붿??댁븻?먯씠移?,[31m
+ [90m     |[31m                   [31m[1m^[22m[31m
+ [90m 125 |[31m     supplierOwner[33m:[31m [32m'源 二???,[31m
+ [90m 126 |[31m     supplierAddress[33m:[31m [32m'?쒖슱 ?숇?臾멸뎄 泥쒗샇?濡?21, 5痢?507??,[31m
+ [90m 127 |[31m     supplierBusinessType[33m:[31m [32m'?꾨ℓ 諛??뚮ℓ??,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx[39m:124:18
+[33m  125|      supplierOwner: '源 二???,
+  126|      supplierAddress: '?쒖슱 ?숇?臾멸뎄 泥쒗샇?濡?21, 5痢?507??,
+  127|      supplierBusinessType: '?꾨ℓ 諛??뚮ℓ??,
+     |                            ^
+  128|      supplierBusinessItem: '?앺뭹?⑷린瑜??뚮씪?ㅽ떛?⑷린)',
+  129|    };[39m
+      at constructor (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6599:19)
+      at Object.unterminated (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5664:20)
+      at readStringContents (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5406:16)
+      at TypeScriptParserMixin.readString (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6498:9)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6258:14)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4797:11)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9987:11)
+      at TypeScriptParserMixin.nextToken (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5782:10)
+      at TypeScriptParserMixin.next (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5692:10)
+      at TypeScriptParserMixin.eat (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5696:12)
+      at TypeScriptParserMixin.parseObjectProperty (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11949:14)
+      at TypeScriptParserMixin.parseObjPropValue (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11978:100)
+      at TypeScriptParserMixin.parseObjPropValue (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9744:18)
+      at TypeScriptParserMixin.parsePropertyDefinition (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11915:17)
+      at TypeScriptParserMixin.parseObjectLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11832:21)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11339:23)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9786:20)
+      at TypeScriptParserMixin.parseExpressionBase (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10780:39
+      at TypeScriptParserMixin.allowInAnd (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12421:16)
+      at TypeScriptParserMixin.parseExpression (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10780:17)
+      at TypeScriptParserMixin.parseReturnStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13142:28)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12798:21)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseStatementListItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12747:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13316:61)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13309:10)
+      at TypeScriptParserMixin.parseBlock (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13297:10)
+      at TypeScriptParserMixin.parseFunctionBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12100:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12086:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9172:18)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13445:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12403:14)
+      at TypeScriptParserMixin.parseFunction (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13444:10)
+      at TypeScriptParserMixin.parseFunctionStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13125:17)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12791:21)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
+[2mPM 8:30:00[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\src\pages\DocCreatePage.tsx: Unterminated string constant. (124:18)
+
+[0m [90m 122 |[31m     requestNote[33m:[31m [32m''[31m[33m,[31m
+ [90m 123 |[31m     supplierBizNo[33m:[31m [32m'113 - 88 - 02729'[31m[33m,[31m
+[31m[1m>[22m[31m[90m 124 |[31m     supplierName[33m:[31m [32m'?붿??댁븻?먯씠移?,[31m
+ [90m     |[31m                   [31m[1m^[22m[31m
+ [90m 125 |[31m     supplierOwner[33m:[31m [32m'源 二???,[31m
+ [90m 126 |[31m     supplierAddress[33m:[31m [32m'?쒖슱 ?숇?臾멸뎄 泥쒗샇?濡?21, 5痢?507??,[31m
+ [90m 127 |[31m     supplierBusinessType[33m:[31m [32m'?꾨ℓ 諛??뚮ℓ??,[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/soose/OneDrive/바탕 화면/Project/dknh-sys-dev/src/pages/DocCreatePage.tsx[39m:124:18
+[33m  125|      supplierOwner: '源 二???,
+  126|      supplierAddress: '?쒖슱 ?숇?臾멸뎄 泥쒗샇?濡?21, 5痢?507??,
+  127|      supplierBusinessType: '?꾨ℓ 諛??뚮ℓ??,
+     |                            ^
+  128|      supplierBusinessItem: '?앺뭹?⑷린瑜??뚮씪?ㅽ떛?⑷린)',
+  129|    };[39m
+      at constructor (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6599:19)
+      at Object.unterminated (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5664:20)
+      at readStringContents (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5406:16)
+      at TypeScriptParserMixin.readString (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6498:9)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:6258:14)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4797:11)
+      at TypeScriptParserMixin.getTokenFromCode (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9987:11)
+      at TypeScriptParserMixin.nextToken (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5782:10)
+      at TypeScriptParserMixin.next (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5692:10)
+      at TypeScriptParserMixin.eat (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:5696:12)
+      at TypeScriptParserMixin.parseObjectProperty (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11949:14)
+      at TypeScriptParserMixin.parseObjPropValue (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11978:100)
+      at TypeScriptParserMixin.parseObjPropValue (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9744:18)
+      at TypeScriptParserMixin.parsePropertyDefinition (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11915:17)
+      at TypeScriptParserMixin.parseObjectLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11832:21)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11339:23)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:4764:20)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11081:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11066:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:11046:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9837:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10899:61)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10904:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10881:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10831:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9786:20)
+      at TypeScriptParserMixin.parseExpressionBase (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10780:39
+      at TypeScriptParserMixin.allowInAnd (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12421:16)
+      at TypeScriptParserMixin.parseExpression (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:10780:17)
+      at TypeScriptParserMixin.parseReturnStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13142:28)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12798:21)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseStatementListItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12747:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13316:61)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13309:10)
+      at TypeScriptParserMixin.parseBlock (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13297:10)
+      at TypeScriptParserMixin.parseFunctionBody (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12100:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12086:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9172:18)
+      at C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13445:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12403:14)
+      at TypeScriptParserMixin.parseFunction (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13444:10)
+      at TypeScriptParserMixin.parseFunctionStatement (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:13125:17)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12791:21)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:9508:18)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12767:17)
+      at TypeScriptParserMixin.parseModuleItem (C:\Users\soose\OneDrive\바탕 화면\Project\dknh-sys-dev\node_modules\@babel\parser\lib\index.js:12744:17)
