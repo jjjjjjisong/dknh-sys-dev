@@ -163,6 +163,7 @@ export default function DocCreatePage() {
   const [previewType, setPreviewType] = useState<PreviewType>(null);
   const [error, setError] = useState<string | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -225,6 +226,11 @@ export default function DocCreatePage() {
   }, [form.arriveDate]);
 
   const clientProducts = useMemo(() => products, [products]);
+  const filteredClients = useMemo(() => {
+    const keyword = form.client.trim().toLowerCase();
+    if (!keyword) return clients;
+    return clients.filter((client) => client.name.toLowerCase().includes(keyword));
+  }, [clients, form.client]);
 
   const itemSummaries = useMemo<ItemSummary[]>(
     () =>
@@ -559,10 +565,41 @@ export default function DocCreatePage() {
               <label className="field"><span>발급번호</span><input value={form.issueNo} onChange={(event) => updateForm('issueNo', event.target.value)} /></label>
               <label className="field">
                 <span>납품처</span>
-                <select className="search-input" required value={form.client} onChange={(event) => handleClientChange(event.target.value)}>
-                  <option value="">납품처 선택</option>
-                  {clients.map((client) => <option key={client.id} value={client.name}>{client.name}</option>)}
-                </select>
+                <div className="client-search-box">
+                  <input
+                    className="search-input"
+                    required
+                    value={form.client}
+                    onChange={(event) => {
+                      handleClientChange(event.target.value);
+                      setClientDropdownOpen(true);
+                    }}
+                    onFocus={() => setClientDropdownOpen(true)}
+                    onBlur={() => window.setTimeout(() => setClientDropdownOpen(false), 120)}
+                    placeholder="납품처 검색 또는 선택"
+                  />
+                  <span className="client-search-caret" aria-hidden="true">
+                    ▾
+                  </span>
+                  {clientDropdownOpen && filteredClients.length > 0 ? (
+                    <div className="client-search-dropdown">
+                      {filteredClients.map((client) => (
+                        <button
+                          key={client.id}
+                          type="button"
+                          className="client-search-option"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            handleClientChange(client.name);
+                            setClientDropdownOpen(false);
+                          }}
+                        >
+                          {client.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </label>
               <label className="field"><span>담당자</span><input value={form.manager} onChange={(event) => updateForm('manager', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field"><span>담당자 연락처</span><input value={form.managerTel} onChange={(event) => updateForm('managerTel', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
