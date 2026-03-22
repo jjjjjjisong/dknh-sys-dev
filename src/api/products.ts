@@ -1,136 +1,8 @@
-import { getSupabaseClient } from './supabase/client';
 import { getActiveAuditFields, getDeletedAuditFields } from './audit';
+import { getSupabaseClient } from './supabase/client';
 import type { Product, ProductInput } from '../types/product';
 
-export async function fetchProducts(): Promise<Product[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
-    )
-    .eq('del_yn', 'N')
-    .order('no');
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []).map((product: {
-    id: number | string;
-    no: number | null;
-    gubun: string | null;
-    client: string | null;
-    name1: string | null;
-    name2: string | null;
-    supplier: string | null;
-    cost_price: number | null;
-    sell_price: number | null;
-    ea_per_b: number | null;
-    box_per_p: number | null;
-    ea_per_p: number | null;
-    pallets_per_truck: number | null;
-  }) => mapProductRow(product));
-}
-
-export async function fetchProductsByClient(clientName: string): Promise<Product[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
-    )
-    .eq('del_yn', 'N')
-    .eq('client', clientName)
-    .order('no');
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []).map((product: {
-    id: number | string;
-    no: number | null;
-    gubun: string | null;
-    client: string | null;
-    name1: string | null;
-    name2: string | null;
-    supplier: string | null;
-    cost_price: number | null;
-    sell_price: number | null;
-    ea_per_b: number | null;
-    box_per_p: number | null;
-    ea_per_p: number | null;
-    pallets_per_truck: number | null;
-  }) => mapProductRow(product));
-}
-
-export async function createProduct(input: ProductInput): Promise<Product> {
-  const supabase = getSupabaseClient();
-  const { data: maxRows, error: maxError } = await supabase
-    .from('products')
-    .select('no')
-    .eq('del_yn', 'N')
-    .order('no', { ascending: false })
-    .limit(1);
-
-  if (maxError) {
-    throw maxError;
-  }
-
-  const nextNo = (maxRows?.[0]?.no ?? 0) + 1;
-
-  const { data, error } = await supabase
-    .from('products')
-    .insert({
-      no: nextNo,
-      ...input,
-      ...getActiveAuditFields(),
-    })
-    .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
-    )
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return mapProductRow(data);
-}
-
-export async function updateProduct(id: string, currentNo: number | null, input: ProductInput): Promise<Product> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('products')
-    .update({
-      no: currentNo,
-      ...input,
-      ...getActiveAuditFields(),
-    })
-    .eq('id', id)
-    .select(
-      'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by',
-    )
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return mapProductRow(data);
-}
-
-export async function removeProduct(id: string) {
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.from('products').update(getDeletedAuditFields()).eq('id', id);
-
-  if (error) {
-    throw error;
-  }
-}
-
-function mapProductRow(product: {
+type ProductRow = {
   id: number | string;
   no: number | null;
   gubun: string | null;
@@ -147,7 +19,153 @@ function mapProductRow(product: {
   del_yn?: string | null;
   updated_at?: string | null;
   updated_by?: string | null;
-}): Product {
+};
+
+const productSelectColumns =
+  'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by';
+
+export async function fetchProducts(): Promise<Product[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select(productSelectColumns)
+    .eq('del_yn', 'N')
+    .order('no');
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  return (data ?? []).map((product: ProductRow) => mapProductRow(product));
+}
+
+export async function fetchProductsByClient(clientName: string): Promise<Product[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select(productSelectColumns)
+    .eq('del_yn', 'N')
+    .eq('client', clientName)
+    .order('no');
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  return (data ?? []).map((product: ProductRow) => mapProductRow(product));
+}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const supabase = getSupabaseClient();
+
+  const nextNo = await fetchNextProductNo();
+  const payload = {
+    no: nextNo,
+    ...input,
+    ...getActiveAuditFields(),
+  };
+
+  const { data, error } = await supabase
+    .from('products')
+    .insert(payload)
+    .select(productSelectColumns)
+    .single();
+
+  if (!error && data) {
+    return mapProductRow(data);
+  }
+
+  if (isProductsPrimaryKeyError(error)) {
+    const nextId = await fetchNextProductId();
+    const retry = await supabase
+      .from('products')
+      .insert({
+        id: nextId,
+        ...payload,
+      })
+      .select(productSelectColumns)
+      .single();
+
+    if (!retry.error && retry.data) {
+      return mapProductRow(retry.data);
+    }
+
+    throw toReadableError(retry.error);
+  }
+
+  throw toReadableError(error);
+}
+
+export async function updateProduct(id: string, currentNo: number | null, input: ProductInput): Promise<Product> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .update({
+      no: currentNo,
+      ...input,
+      ...getActiveAuditFields(),
+    })
+    .eq('id', id)
+    .select(productSelectColumns)
+    .single();
+
+  if (error || !data) {
+    throw toReadableError(error);
+  }
+
+  return mapProductRow(data);
+}
+
+export async function removeProduct(id: string) {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from('products').update(getDeletedAuditFields()).eq('id', id);
+
+  if (error) {
+    throw toReadableError(error);
+  }
+}
+
+async function fetchNextProductNo() {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select('no')
+    .eq('del_yn', 'N')
+    .order('no', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  return (data?.no ?? 0) + 1;
+}
+
+async function fetchNextProductId() {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select('id')
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  return Number(data?.id ?? 0) + 1;
+}
+
+function isProductsPrimaryKeyError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+
+  const maybeError = error as { code?: string; message?: string };
+  return maybeError.code === '23505' && String(maybeError.message ?? '').includes('products_pkey');
+}
+
+function mapProductRow(product: ProductRow): Product {
   return {
     id: String(product.id),
     no: product.no ?? null,
@@ -166,4 +184,16 @@ function mapProductRow(product: {
     updatedAt: product.updated_at ?? null,
     updatedBy: product.updated_by ?? '',
   };
+}
+
+function toReadableError(error: unknown) {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    return new Error(String(error.message));
+  }
+
+  return new Error('품목 저장 중 알 수 없는 오류가 발생했습니다.');
 }

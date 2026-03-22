@@ -8,6 +8,7 @@ import {
   updateOrderBookShippedStatus,
 } from '../api/order-book';
 import PageHeader from '../components/PageHeader';
+import Pagination from '../components/Pagination';
 import Alert from '../components/ui/Alert';
 import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
@@ -17,6 +18,7 @@ import type { OrderBookEntry, OrderBookInput, OrderBookShippingStatus } from '..
 const today = new Date();
 
 type FilterType = 'all' | 'client' | 'product' | 'issueNo' | 'receipt';
+const PAGE_SIZE = 20;
 
 function getDefaultDateRange() {
   const toDate = new Date();
@@ -44,6 +46,7 @@ export default function OrderBookPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [batchUpdating, setBatchUpdating] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState<OrderBookInput>({
     issueNo: '',
     date: today.toISOString().slice(0, 10),
@@ -94,8 +97,23 @@ export default function OrderBookPage() {
         .includes(search);
     });
   }, [dateFrom, dateTo, entries, filterType, keyword]);
+  const pagedEntries = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredEntries.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredEntries]);
 
-  const allChecked = filteredEntries.length > 0 && filteredEntries.every((entry) => selectedIds.includes(entry.id));
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFrom, dateTo, filterType, keyword]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, filteredEntries.length]);
+
+  const allChecked = pagedEntries.length > 0 && pagedEntries.every((entry) => selectedIds.includes(entry.id));
 
   function openEditModal(entry: OrderBookEntry) {
     setEditingEntry(entry);
@@ -127,10 +145,10 @@ export default function OrderBookPage() {
 
   function toggleSelectAll(checked: boolean) {
     if (checked) {
-      setSelectedIds(filteredEntries.map((entry) => entry.id));
+      setSelectedIds((current) => Array.from(new Set([...current, ...pagedEntries.map((entry) => entry.id)])));
       return;
     }
-    setSelectedIds([]);
+    setSelectedIds((current) => current.filter((id) => !pagedEntries.some((entry) => entry.id === id)));
   }
 
   function toggleSelectOne(id: string, checked: boolean) {
@@ -353,7 +371,7 @@ export default function OrderBookPage() {
                   </td>
                 </tr>
               ) : (
-                filteredEntries.map((entry) => (
+                pagedEntries.map((entry) => (
                   <tr
                     key={entry.id}
                     className={entry.status === 'ST01' ? 'history-row-cancelled history-clickable-row' : 'history-clickable-row'}
@@ -396,6 +414,13 @@ export default function OrderBookPage() {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredEntries.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       <Modal

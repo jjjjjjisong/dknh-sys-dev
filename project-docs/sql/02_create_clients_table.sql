@@ -15,7 +15,20 @@ create table if not exists public.clients (
   constraint clients_del_yn_check check (del_yn in ('Y', 'N'))
 );
 
+create sequence if not exists public.clients_id_seq;
+
+alter sequence public.clients_id_seq owned by public.clients.id;
+
+alter table public.clients
+  alter column id set default nextval('public.clients_id_seq');
+
 create index if not exists idx_clients_name on public.clients (name);
 create index if not exists idx_clients_active on public.clients (active);
 create index if not exists idx_clients_del_yn on public.clients (del_yn);
 create index if not exists idx_clients_updated_at on public.clients (updated_at desc);
+
+select setval(
+  'public.clients_id_seq',
+  coalesce((select max(id) from public.clients), 0) + 1,
+  false
+);

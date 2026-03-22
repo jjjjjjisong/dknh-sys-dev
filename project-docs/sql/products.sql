@@ -18,6 +18,13 @@ create table if not exists public.products (
   updated_by text not null default ''
 );
 
+create sequence if not exists public.products_id_seq;
+
+alter sequence public.products_id_seq owned by public.products.id;
+
+alter table public.products
+  alter column id set default nextval('public.products_id_seq');
+
 alter table public.products add column if not exists created_at timestamptz not null default now();
 alter table public.products add column if not exists updated_at timestamptz not null default now();
 alter table public.products add column if not exists no integer;
@@ -81,6 +88,12 @@ create index if not exists idx_products_client on public.products (client);
 create index if not exists idx_products_gubun on public.products (gubun);
 create index if not exists idx_products_del_yn on public.products (del_yn);
 create index if not exists idx_products_updated_at on public.products (updated_at desc);
+
+select setval(
+  'public.products_id_seq',
+  coalesce((select max(id) from public.products), 0) + 1,
+  false
+);
 
 alter table public.products enable row level security;
 

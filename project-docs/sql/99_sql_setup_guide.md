@@ -16,20 +16,26 @@
 ## 3. 공통 정책
 - `90_common_policies.sql`
 
-## 4. 기존 DB에만 추가로 실행할 파일
+## 4. 기존 DB 업그레이드용 마이그레이션
 
-아래는 새 서버 초기 생성에는 보통 필요 없고, 기존 DB 업그레이드 시 사용합니다.
+아래 파일들은 이미 운영/개발 DB가 있는 상태에서 추가 적용할 때 사용합니다.
 
 - `20260321_soft_delete_audit_columns.sql`
-  - `del_yn`, `updated_at`, `updated_by` 추가
+  - 공통 `del_yn`, `updated_at`, `updated_by` 컬럼 추가
 - `20260321_document_supplier_fields.sql`
   - 문서 공급자 정보 컬럼 추가
 - `20260321_document_status_migration.sql`
-  - `documents`, `order_book` 상태 컬럼 `status` 추가 및 기존 `cancelled` 데이터 마이그레이션
+  - `documents`, `order_book` 상태 컬럼 `status` 추가 및 기존 `cancelled` 데이터 이관
 - `20260321_documents_update_policies.sql`
-  - 기존 환경에 `documents`, `document_items` update 정책만 별도 추가
+  - `documents`, `document_items` update 정책 추가
+- `20260321_order_book_shipped_status.sql`
+  - `order_book` 출고상태 컬럼 추가
+- `20260322_clients_identity_sync.sql`
+  - `clients.id` 자동 생성(identity) 보정 및 시퀀스 재동기화
+- `20260322_products_identity_sync.sql`
+  - `products.id` 자동 생성 보정 및 시퀀스 재동기화
 
 ## 참고
 
-- 기존 통합형 파일(`accounts.sql`, `clients.sql`, `products.sql`, `documents.sql`, `order_book.sql`)도 그대로 유지됩니다.
-- 앞으로 운영 초기 세팅은 이 정리본 기준으로 진행하면 됩니다.
+- 통합형 파일(`accounts.sql`, `clients.sql`, `products.sql`, `documents.sql`, `order_book.sql`)도 유지하고 있습니다.
+- 신규 운영 서버는 `01~06` + `90` 순서로 세팅하면 되고, 기존 서버는 필요한 마이그레이션만 추가로 실행하면 됩니다.

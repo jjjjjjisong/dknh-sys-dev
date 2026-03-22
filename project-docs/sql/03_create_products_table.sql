@@ -19,8 +19,21 @@ create table if not exists public.products (
   constraint products_del_yn_check check (del_yn in ('Y', 'N'))
 );
 
+create sequence if not exists public.products_id_seq;
+
+alter sequence public.products_id_seq owned by public.products.id;
+
+alter table public.products
+  alter column id set default nextval('public.products_id_seq');
+
 create index if not exists idx_products_no on public.products (no);
 create index if not exists idx_products_client on public.products (client);
 create index if not exists idx_products_gubun on public.products (gubun);
 create index if not exists idx_products_del_yn on public.products (del_yn);
 create index if not exists idx_products_updated_at on public.products (updated_at desc);
+
+select setval(
+  'public.products_id_seq',
+  coalesce((select max(id) from public.products), 0) + 1,
+  false
+);

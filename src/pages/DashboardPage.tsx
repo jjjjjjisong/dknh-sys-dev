@@ -78,7 +78,9 @@ export default function DashboardPage() {
 
     async function loadTrend() {
       try {
-        setTrendLoading(true);
+        if (trendWeeklyArrivals.length === 0) {
+          setTrendLoading(true);
+        }
         const result = await fetchDashboardWeeklyArrivals(getShiftedWeekDate(weekOffset));
         if (mounted) {
           setTrendWeekLabel(result.weekLabel);
@@ -308,7 +310,7 @@ export default function DashboardPage() {
               >
                 ‹
               </button>
-              <span>{trendWeekLabel}</span>
+              <span style={{ fontSize: '1rem', fontWeight: 600, padding: '0 8px' }}>{trendWeekLabel}</span>
               <button
                 type="button"
                 className="dashboard-week-nav-button"
@@ -323,7 +325,7 @@ export default function DashboardPage() {
           <div className="dashboard-bar-chart">
             {(trendLoading ? getEmptyTrendBars() : trendWeeklyArrivals).map((item, index) => (
               <TrendBar
-                key={item.date || item.label}
+                key={index}
                 item={item}
                 max={getTrendMax(trendWeeklyArrivals)}
                 loading={trendLoading}

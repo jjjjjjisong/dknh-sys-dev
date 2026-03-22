@@ -1,13 +1,16 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
 import PageHeader from '../components/PageHeader';
+import Pagination from '../components/Pagination';
+import { exportInvoiceToExcel } from '../utils/excelExport';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { Product } from '../types/product';
 
 type PreviewType = 'release' | 'invoice' | null;
 const MANUAL_PRODUCT_ID = '__manual__';
+const PAGE_SIZE = 20;
 
 const today = new Date().toISOString().slice(0, 10);
 const oneYearAgo = getDateOneYearAgo(today);
@@ -29,6 +32,7 @@ export default function DocHistoryPage() {
   const [previewType, setPreviewType] = useState<PreviewType>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     void reload();
@@ -102,6 +106,22 @@ export default function DocHistoryPage() {
         .includes(search);
     });
   }, [dateFrom, dateTo, documents, filterType, keyword]);
+
+  const pagedDocuments = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredDocuments.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredDocuments]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFrom, dateTo, filterType, keyword]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, filteredDocuments.length]);
 
   const previewHtml = useMemo(() => {
     if (!draft || !previewType) return '';
@@ -245,6 +265,15 @@ export default function DocHistoryPage() {
     win.print();
   }
 
+  async function exportToExcel() {
+    if (!draft) return;
+    try {
+      await exportInvoiceToExcel(draft as any);
+    } catch (err) {
+      window.alert('엑셀 파일 생성 중 오류가 발생했습니다.');
+    }
+  }
+
   return (
     <div className="page-content">
       <PageHeader
@@ -311,7 +340,7 @@ export default function DocHistoryPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredDocuments.map((doc) => (
+                      pagedDocuments.map((doc) => (
                         <tr
                           key={doc.id}
                           onClick={() => openDocument(doc)}
@@ -336,6 +365,13 @@ export default function DocHistoryPage() {
                 </table>
               </div>
             )}
+
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredDocuments.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
           </section>
         </>
       ) : (
@@ -506,6 +542,7 @@ export default function DocHistoryPage() {
               </button>
               <button className="btn btn-secondary" onClick={() => setPreviewType('release')}>출고의뢰서</button>
               <button className="btn btn-primary" onClick={() => setPreviewType('invoice')}>거래명세서</button>
+              <button className="btn btn-secondary" style={{ backgroundColor: '#217346', color: 'white', borderColor: '#217346' }} onClick={exportToExcel}>엑셀 다운로드</button>
             </div>
           </div>
         </section>

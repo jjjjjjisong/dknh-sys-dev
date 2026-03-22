@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import PageHeader from '../components/PageHeader';
+import Pagination from '../components/Pagination';
 import Alert from '../components/ui/Alert';
 import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
@@ -19,6 +20,8 @@ const emptyForm: ClientInput = {
   active: true,
 };
 
+const PAGE_SIZE = 15;
+
 export default function MasterClientPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [query, setQuery] = useState('');
@@ -29,6 +32,7 @@ export default function MasterClientPage() {
   const [form, setForm] = useState<ClientInput>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     void loadClients();
@@ -43,6 +47,22 @@ export default function MasterClientPage() {
         .some((value) => value.toLowerCase().includes(keyword));
     });
   }, [clients, query]);
+
+  const pagedClients = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredClients.slice(start, start + PAGE_SIZE);
+  }, [currentPage, filteredClients]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredClients.length / PAGE_SIZE));
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, filteredClients.length]);
 
   async function loadClients() {
     try {
@@ -114,13 +134,12 @@ export default function MasterClientPage() {
       };
 
       if (editingClientId) {
-        const savedClient = await updateClient(editingClientId, payload);
-        setClients((current) => current.map((client) => (client.id === editingClientId ? savedClient : client)));
+        await updateClient(editingClientId, payload);
       } else {
-        const savedClient = await createClient(payload);
-        setClients((current) => [...current, savedClient]);
+        await createClient(payload);
       }
 
+      await loadClients();
       setModalOpen(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : '납품처 저장에 실패했습니다.');
@@ -190,9 +209,9 @@ export default function MasterClientPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredClients.map((client, index) => (
+                  pagedClients.map((client, index) => (
                     <tr key={client.id} className="history-clickable-row" onClick={() => openEditModal(client)}>
-                      <td>{index + 1}</td>
+                      <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
                       <td>
                         <div className="table-primary">{client.name}</div>
                       </td>
@@ -221,6 +240,13 @@ export default function MasterClientPage() {
             </table>
           </div>
         )}
+
+        <Pagination
+          currentPage={currentPage}
+          totalItems={filteredClients.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       <Modal

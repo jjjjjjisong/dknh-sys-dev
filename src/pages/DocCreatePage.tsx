@@ -1,9 +1,10 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fetchClients } from '../api/clients';
 import { saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
+import { exportInvoiceToExcel } from '../utils/excelExport';
 import type { Client } from '../types/client';
 import type { DocumentPayload } from '../types/document';
 import type { Product } from '../types/product';
@@ -145,6 +146,18 @@ function createEmptyItem(baseOrderDate = today, baseArriveDate = ''): DocItem {
     vat: true,
     itemNote: '',
   };
+}
+
+function buildClientRemark(client: Client | null) {
+  if (!client) return '';
+
+  const parts = [
+    client.time ? `입고시간 : ${client.time}` : '',
+    client.lunch ? `점심시간 : ${client.lunch}` : '',
+    client.note ? client.note : '',
+  ].filter(Boolean);
+
+  return parts.join(' / ');
 }
 
 export default function DocCreatePage() {
@@ -369,6 +382,11 @@ export default function DocCreatePage() {
           : item,
       ),
     );
+
+    setForm((current) => ({
+      ...current,
+      remark: buildClientRemark(client),
+    }));
   }
 
   function addItem() {
@@ -529,6 +547,26 @@ export default function DocCreatePage() {
         document.body.removeChild(iframe);
       }, 500);
     };
+  }
+
+  async function exportToExcel() {
+    const validationMessage = validateForm();
+    if (validationMessage && validationMessage !== '저장할 품목을 한 줄 이상 입력해 주세요.') {
+      window.alert(validationMessage);
+      return;
+    }
+
+    if (!previewData) {
+      window.alert('엑셀로 내보낼 품목을 먼저 입력해 주세요.');
+      return;
+    }
+
+    try {
+      await exportInvoiceToExcel(previewData as any);
+    } catch (err) {
+      console.error(err);
+      window.alert('엑셀 파일 생성 중 오류가 발생했습니다.');
+    }
   }
 
   const previewTitle =
@@ -725,6 +763,7 @@ export default function DocCreatePage() {
         <div className="doc-action-stack inline doc-action-stack-sticky">
           <button className="btn btn-secondary doc-sticky-action-button" onClick={() => openPreview('release')}>출고의뢰서 미리보기</button>
           <button className="btn btn-secondary doc-sticky-action-button" onClick={() => openPreview('invoice')}>거래명세서 미리보기</button>
+          <button className="btn btn-secondary doc-sticky-action-button" style={{ backgroundColor: '#217346', color: 'white', borderColor: '#217346' }} onClick={exportToExcel}>엑셀 다운로드</button>
           <button className="btn btn-primary doc-sticky-action-button" disabled={saving || loading} onClick={handleSave}>{saving ? '저장 중...' : '저장'}</button>
         </div>
       </div>
