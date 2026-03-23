@@ -8,3 +8,20 @@ vite.config.d.ts
 .env
 .env.*
 !.env.example
+
+# GitHub Pages custom domains are managed in repository settings.
+CNAME
+public/CNAME
+
+# Local logs and scratch files
+*.log
+error.log
+vite-dev.log
+vite-dev.err.log
+ts_errors.log
+ts_errors.txt
+ts_errors_history.txt
+old_DocCreatePage.txt
+
+# Local backup files
+*.bak

@@ -1,5 +1,0 @@
-﻿src/pages/DocHistoryPage.tsx(15,10): error TS2440: Import declaration conflicts with local declaration of 'emptyToNull'.
-src/pages/DocHistoryPage.tsx(15,23): error TS2440: Import declaration conflicts with local declaration of 'parseNullableInteger'.
-src/pages/DocHistoryPage.tsx(15,45): error TS2440: Import declaration conflicts with local declaration of 'formatNumber'.
-src/pages/DocHistoryPage.tsx(28,108): error TS2448: Block-scoped variable 'products' used before its declaration.
-src/pages/DocHistoryPage.tsx(28,108): error TS2454: Variable 'products' is used before being assigned.
