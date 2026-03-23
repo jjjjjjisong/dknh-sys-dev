@@ -729,6 +729,12 @@ a {
   color: var(--text-3);
 }
 
+.table td.history-empty-cell {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-3);
+}
+
 .pagination {
   display: flex;
   align-items: center;

@@ -20,7 +20,6 @@ type OrderBookRow = {
   receipt: string | null;
   status: string | null;
   shipped_status: string | null;
-  cancelled?: boolean | null;
   from_doc: boolean | null;
   created_at: string | null;
   del_yn: 'Y' | 'N' | null;
@@ -52,7 +51,7 @@ type DocumentItemLookupRow = {
 };
 
 const ORDER_BOOK_SELECT =
-  'id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, cancelled, from_doc, created_at, del_yn, updated_at, updated_by';
+  'id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
 
 export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   const supabase = getSupabaseClient();
@@ -229,7 +228,7 @@ function mapOrderBookRow(
     box: getBoxValue(matchedItem),
     note: row.note ?? '',
     receipt: row.receipt ?? '',
-    status: mapOrderBookStatus(row.status, row.cancelled),
+    status: mapOrderBookStatus(row.status),
     shippedStatus: mapOrderBookShippingStatus(row.shipped_status),
     fromDoc: row.from_doc ?? false,
     author: document?.author ?? row.updated_by ?? '',
@@ -273,8 +272,8 @@ function mapOrderBookShippingStatus(shippedStatus: string | null | undefined): O
   return shippedStatus === '출고' ? '출고' : '미출고';
 }
 
-function mapOrderBookStatus(status: string | null | undefined, cancelled?: boolean | null): OrderBookStatus {
+function mapOrderBookStatus(status: string | null | undefined): OrderBookStatus {
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
-  return cancelled ? 'ST01' : 'ST00';
+  return 'ST00';
 }
