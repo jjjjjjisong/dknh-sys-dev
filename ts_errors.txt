@@ -1,0 +1,6 @@
+﻿src/pages/DocHistoryPage.tsx(331,63): error TS2304: Cannot find name 'formatNumber'.
+src/pages/DocHistoryPage.tsx(332,63): error TS2304: Cannot find name 'formatNumber'.
+src/pages/DocHistoryPage.tsx(333,63): error TS2304: Cannot find name 'formatNumber'.
+src/pages/DocHistoryPage.tsx(509,73): error TS2304: Cannot find name 'formatNumber'.
+src/pages/DocHistoryPage.tsx(510,72): error TS2304: Cannot find name 'formatNumber'.
+src/pages/DocHistoryPage.tsx(511,79): error TS2304: Cannot find name 'formatNumber'.
