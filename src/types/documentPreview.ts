@@ -1,0 +1,40 @@
+export type SharedPreviewItem = {
+  seq: number;
+  name1: string;
+  name2: string;
+  gubun: string;
+  qty: number;
+  unitPrice: number;
+  supply: number;
+  vat: boolean;
+  orderDate: string | null;
+  arriveDate: string | null;
+  itemNote: string;
+  eaPerB: number | null;
+  boxPerP: number | null;
+  pallet: number | null;
+  box: number | null;
+};
+
+export type SharedPreviewData = {
+  issueNo: string;
+  client: string;
+  manager: string;
+  managerTel: string;
+  receiver: string;
+  supplierBizNo: string;
+  supplierName: string;
+  supplierOwner: string;
+  supplierAddress: string;
+  supplierBusinessType: string;
+  supplierBusinessItem: string;
+  orderDate: string | null;
+  arriveDate: string | null;
+  deliveryAddr: string;
+  remark: string;
+  requestNote: string;
+  totalSupply: number;
+  totalVat: number;
+  totalAmount: number;
+  items: SharedPreviewItem[];
+};
