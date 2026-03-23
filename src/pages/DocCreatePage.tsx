@@ -6,30 +6,16 @@ import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
 import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
+import DocumentItemTable, { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
+import type { SharedItemRow as DocItem, ItemSummary } from '../components/ui/DocumentItemTable';
+import { useDocumentItems, createEmptySharedItem } from '../hooks/useDocumentItems';
 import type { Client } from '../types/client';
 import type { DocumentPayload } from '../types/document';
 import type { Product } from '../types/product';
 import type { SharedPreviewData as PreviewData, SharedPreviewItem as PreviewItem } from '../types/documentPreview';
+import { emptyToNull, formatIntegerInput, parseNullableInteger, stripNonNumeric, formatNumber } from '../utils/formatters';
 
-const MANUAL_PRODUCT_ID = '__manual__';
-const DEFAULT_GUBUN_OPTIONS = ['컵', '컵뚜껑', '실링', '스트로우', '기타'];
 const today = new Date().toISOString().slice(0, 10);
-
-type DocItem = {
-  id: string;
-  productId: string;
-  manualName: string;
-  manualGubun: string;
-  orderDate: string;
-  arriveDate: string;
-  qty: number | null;
-  customPallet: number | null;
-  customBox: number | null;
-  unitPrice: number | null;
-  customSupply: number | null;
-  vat: boolean;
-  itemNote: string;
-};
 
 type DocForm = {
   issueNo: string;
@@ -51,20 +37,6 @@ type DocForm = {
 };
 
 
-
-type ItemSummary = {
-  name1: string;
-  name2: string;
-  gubun: string;
-  qty: number;
-  unitPrice: number;
-  supply: number;
-  vatAmount: number;
-  pallet: number | null;
-  box: number | null;
-  eaPerB: number | null;
-  boxPerP: number | null;
-};
 
 function createInitialForm(): DocForm {
   const nextIssueNo = String(
@@ -91,24 +63,6 @@ function createInitialForm(): DocForm {
   };
 }
 
-function createEmptyItem(baseOrderDate = today, baseArriveDate = ''): DocItem {
-  return {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    productId: '',
-    manualName: '',
-    manualGubun: DEFAULT_GUBUN_OPTIONS[0],
-    orderDate: baseOrderDate,
-    arriveDate: baseArriveDate,
-    qty: 0,
-    customPallet: null,
-    customBox: null,
-    unitPrice: null,
-    customSupply: null,
-    vat: true,
-    itemNote: '',
-  };
-}
-
 function buildClientRemark(client: Client | null) {
   if (!client) return '';
 
@@ -125,7 +79,8 @@ export default function DocCreatePage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<DocForm>(createInitialForm);
-  const [items, setItems] = useState<DocItem[]>([createEmptyItem()]);
+  const clientProducts = useMemo(() => products, [products]);
+  const { items, setItems, itemSummaries, totals, addItem: _addItem, removeItem, updateItem } = useDocumentItems([createEmptySharedItem(today, '')], clientProducts);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewType, setPreviewType] = useState<PreviewType | null>(null);
@@ -193,69 +148,11 @@ export default function DocCreatePage() {
     );
   }, [form.arriveDate]);
 
-  const clientProducts = useMemo(() => products, [products]);
   const filteredClients = useMemo(() => {
     const keyword = form.client.trim().toLowerCase();
     if (!keyword) return clients;
     return clients.filter((client) => client.name.toLowerCase().includes(keyword));
   }, [clients, form.client]);
-
-  const itemSummaries = useMemo<ItemSummary[]>(
-    () =>
-      items.map((item) => {
-        const product = clientProducts.find((row) => row.id === item.productId) ?? null;
-        const manualMode = item.productId === MANUAL_PRODUCT_ID;
-        const name1 = manualMode ? item.manualName.trim() : product?.name1 ?? '';
-        const name2 = manualMode ? item.manualName.trim() : product?.name2 ?? '';
-        const gubun = manualMode ? item.manualGubun : product?.gubun ?? '';
-        const eaPerB = manualMode ? null : product?.ea_per_b ?? null;
-        const boxPerP = manualMode ? null : product?.box_per_p ?? null;
-        const eaPerP = eaPerB && boxPerP ? eaPerB * boxPerP : product?.ea_per_p ?? null;
-        const qty = item.qty ?? 0;
-        const unitPrice = item.unitPrice ?? product?.sell_price ?? 0;
-        const computedSupply = Math.round(unitPrice * qty);
-        const supply = item.customSupply ?? computedSupply;
-        const vatAmount = item.vat ? Math.round(supply * 0.1) : 0;
-
-        return {
-          name1,
-          name2,
-          gubun,
-          qty,
-          unitPrice,
-          supply,
-          vatAmount,
-          pallet:
-            item.customPallet !== null
-              ? item.customPallet
-              : eaPerP
-                ? Math.ceil(qty / eaPerP)
-                : null,
-          box:
-            item.customBox !== null
-              ? item.customBox
-              : eaPerB
-                ? Math.ceil(qty / eaPerB)
-                : null,
-          eaPerB,
-          boxPerP,
-        };
-      }),
-    [clientProducts, items],
-  );
-
-  const totals = useMemo(
-    () =>
-      itemSummaries.reduce(
-        (acc, item) => ({
-          supply: acc.supply + item.supply,
-          vat: acc.vat + item.vatAmount,
-          total: acc.total + item.supply + item.vatAmount,
-        }),
-        { supply: 0, vat: 0, total: 0 },
-      ),
-    [itemSummaries],
-  );
 
   const previewData = useMemo<PreviewData | null>(() => {
     const validItems: PreviewItem[] = itemSummaries
@@ -348,29 +245,7 @@ export default function DocCreatePage() {
       window.alert('먼저 납품처를 선택해 주세요.');
       return;
     }
-
-    setItems((current) => [...current, createEmptyItem(form.orderDate, form.arriveDate)]);
-  }
-
-  function removeItem(id: string) {
-    setItems((current) => (current.length === 1 ? current : current.filter((item) => item.id !== id)));
-  }
-
-  function updateItem(id: string, updater: (item: DocItem) => DocItem) {
-    setItems((current) => current.map((item) => (item.id === id ? updater(item) : item)));
-  }
-
-  function handleNumericFocus(
-    id: string,
-    key: 'qty' | 'customPallet' | 'customBox' | 'unitPrice' | 'customSupply',
-  ) {
-    updateItem(id, (current) => {
-      const value = current[key];
-      if (value === 0) {
-        return { ...current, [key]: null };
-      }
-      return current;
-    });
+    _addItem(form.orderDate, form.arriveDate);
   }
 
   function validateForm() {
@@ -580,94 +455,15 @@ export default function DocCreatePage() {
           ) : null}
         </section>
 
-        <section className="card">
-          <div className="card-header">
-            <div>
-              <h2>품목 입력</h2>
-            </div>
-            <button className="btn btn-primary" onClick={addItem}>+ 품목 추가</button>
-          </div>
-
-          <div className="table-wrap">
-            <table className="table doc-items-table wide">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th className="doc-item-name-cell">품목명</th>
-                  <th className="doc-gubun-col">구분</th>
-                  <th>발주일자</th>
-                  <th>입고일자</th>
-                  <th>수량(ea)</th>
-                  <th className="doc-pallet-col">파렛트</th>
-                  <th className="doc-box-col">BOX</th>
-                  <th>단가</th>
-                  <th>공급가액</th>
-                  <th>VAT</th>
-                  <th className="doc-note-col">비고</th>
-                  <th>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => {
-                  const summary = itemSummaries[index];
-                  const manualMode = item.productId === MANUAL_PRODUCT_ID;
-
-                  return (
-                    <tr key={item.id}>
-                      <td>{index + 1}</td>
-                      <td className="doc-item-name-cell">
-                        <div className="doc-inline-stack">
-                          <select className="doc-cell-control" value={item.productId} onChange={(event) => {
-                            const nextId = event.target.value;
-                            const selected = clientProducts.find((row) => row.id === nextId);
-                            updateItem(item.id, (current) => ({
-                              ...current,
-                              productId: nextId,
-                              manualGubun: DEFAULT_GUBUN_OPTIONS[0],
-                              manualName: nextId === MANUAL_PRODUCT_ID ? current.manualName : '',
-                              unitPrice: nextId === MANUAL_PRODUCT_ID ? current.unitPrice : selected?.sell_price ?? null,
-                              customSupply: null,
-                            }));
-                          }}>
-                            <option value="">품목 선택</option>
-                            {clientProducts.map((product) => <option key={product.id} value={product.id}>{product.name1}</option>)}
-                            <option value={MANUAL_PRODUCT_ID}>직접입력</option>
-                          </select>
-                          {manualMode ? (
-                            <input className="doc-cell-control doc-item-name-input" value={item.manualName} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualName: event.target.value }))} placeholder="품목명" />
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="doc-gubun-cell">
-                        {manualMode ? (
-                          <select className="doc-cell-control" value={item.manualGubun} onChange={(event) => updateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))}>
-                            {DEFAULT_GUBUN_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                          </select>
-                        ) : summary.gubun || '-'}
-                      </td>
-                      <td><input className="doc-cell-control" type="date" value={item.orderDate} onChange={(event) => updateItem(item.id, (current) => ({ ...current, orderDate: event.target.value }))} /></td>
-                      <td><input className="doc-cell-control" type="date" value={item.arriveDate} onChange={(event) => updateItem(item.id, (current) => ({ ...current, arriveDate: event.target.value }))} /></td>
-                      <td><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.qty)} onFocus={() => handleNumericFocus(item.id, 'qty')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, qty: parseNullableInteger(stripNonNumeric(event.target.value)), customPallet: null, customBox: null, customSupply: null }))} /></td>
-                      <td className="doc-pallet-col"><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.customPallet)} onFocus={() => handleNumericFocus(item.id, 'customPallet')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customPallet: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={summary.pallet !== null ? String(summary.pallet) : '자동'} /></td>
-                      <td className="doc-box-col"><input className="doc-cell-control doc-number-input-sm" type="text" inputMode="numeric" value={formatIntegerInput(item.customBox)} onFocus={() => handleNumericFocus(item.id, 'customBox')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customBox: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={summary.box !== null ? String(summary.box) : '자동'} /></td>
-                      <td><input className="doc-cell-control doc-number-input-price" type="text" inputMode="decimal" value={formatDecimalInput(item.unitPrice)} onFocus={() => handleNumericFocus(item.id, 'unitPrice')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, unitPrice: parseNullableDecimal(event.target.value), customSupply: null }))} placeholder="단가" /></td>
-                      <td><input className="doc-cell-control doc-number-input-price" type="text" inputMode="numeric" value={formatIntegerInput(item.customSupply)} onFocus={() => handleNumericFocus(item.id, 'customSupply')} onChange={(event) => updateItem(item.id, (current) => ({ ...current, customSupply: parseNullableInteger(stripNonNumeric(event.target.value)) }))} placeholder={formatNumber(summary.supply)} /></td>
-                      <td><label className="inline-check"><input type="checkbox" checked={item.vat} onChange={(event) => updateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))} />포함</label></td>
-                      <td className="doc-note-col"><textarea className="doc-cell-control doc-item-note" rows={1} value={item.itemNote} onChange={(event) => updateItem(item.id, (current) => ({ ...current, itemNote: event.target.value }))} placeholder="비고" /></td>
-                      <td><button className="btn btn-danger doc-delete-button" onClick={() => removeItem(item.id)}>삭제</button></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="doc-totals-strip">
-            <div className="doc-total-item"><span>공급가액 합계</span><strong>{formatNumber(totals.supply)}</strong></div>
-            <div className="doc-total-item"><span>부가세 합계</span><strong>{formatNumber(totals.vat)}</strong></div>
-            <div className="doc-total-item total"><span>합계금액</span><strong>{formatNumber(totals.total)}</strong></div>
-          </div>
-        </section>
+        <DocumentItemTable
+          items={items}
+          clientProducts={clientProducts}
+          itemSummaries={itemSummaries}
+          totals={totals}
+          onUpdateItem={updateItem}
+          onRemoveItem={removeItem}
+          onAddItem={addItem}
+        />
       </section>
 
       <div className="doc-sticky-actions">
@@ -688,39 +484,4 @@ export default function DocCreatePage() {
       ) : null}
     </div>
   );
-}
-
-function emptyToNull(value: string) {
-  return value.trim() ? value : null;
-}
-
-function formatNumber(value: number | null | undefined) {
-  if (value == null) return '';
-  return value.toLocaleString('ko-KR');
-}
-
-function formatIntegerInput(value: number | null) {
-  if (value == null) return '';
-  return formatNumber(value);
-}
-
-function formatDecimalInput(value: number | null) {
-  if (value == null) return '';
-  return value.toString();
-}
-
-function parseNullableInteger(value: string) {
-  if (!value) return null;
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? null : parsed;
-}
-
-function parseNullableDecimal(value: string) {
-  if (!value) return null;
-  const parsed = parseFloat(value);
-  return isNaN(parsed) ? null : parsed;
-}
-
-function stripNonNumeric(value: string) {
-  return value.replace(/[^0-9]/g, '');
 }

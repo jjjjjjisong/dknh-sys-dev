@@ -6,10 +6,14 @@ import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
 import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
+import DocumentItemTable, { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
+import type { SharedItemRow, ItemSummary } from '../components/ui/DocumentItemTable';
+import { useDocumentItems } from '../hooks/useDocumentItems';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
 import type { Product } from '../types/product';
-const MANUAL_PRODUCT_ID = '__manual__';
+import { emptyToNull, parseNullableInteger, formatNumber } from '../utils/formatters';
+
 const PAGE_SIZE = 20;
 
 const today = new Date().toISOString().slice(0, 10);
@@ -21,6 +25,8 @@ export default function DocHistoryPage() {
   const { documentId } = useParams();
   const [documents, setDocuments] = useState<DocumentHistory[]>([]);
   const [draft, setDraft] = useState<DocumentHistory | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const { items, setItems, itemSummaries, totals, addItem, removeItem, updateItem } = useDocumentItems([], products);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +37,6 @@ export default function DocHistoryPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<PreviewType | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -76,6 +81,28 @@ export default function DocHistoryPage() {
         const rows = await fetchProductsByClient(draft.client);
         if (!mounted) return;
         setProducts(rows);
+        if (draft) {
+          const mappedItems: SharedItemRow[] = draft.items.map((item) => {
+            const matched = rows.find((p) => p.name1 === item.name1);
+            const pId = matched ? matched.id : (item.name1 ? MANUAL_PRODUCT_ID : '');
+            return {
+              id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              productId: pId,
+              manualName: pId === MANUAL_PRODUCT_ID ? item.name1 : '',
+              manualGubun: pId === MANUAL_PRODUCT_ID ? (item.gubun || '기타') : '',
+              orderDate: item.orderDate || draft.orderDate || '',
+              arriveDate: item.arriveDate || draft.arriveDate || '',
+              qty: item.qty || 0,
+              customPallet: item.customPallet ?? null,
+              customBox: item.customBox ?? null,
+              unitPrice: item.unitPrice ?? null,
+              customSupply: item.supply ?? null,
+              vat: typeof item.vat === 'boolean' ? item.vat : true,
+              itemNote: item.itemNote || '',
+            };
+          });
+          setItems(mappedItems);
+        }
       } catch (err) {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : '품목 목록을 불러오지 못했습니다.');
@@ -123,11 +150,6 @@ export default function DocHistoryPage() {
     }
   }, [currentPage, filteredDocuments.length]);
 
-  const productOptions = useMemo(
-    () => [{ id: MANUAL_PRODUCT_ID, label: '직접입력' }, ...products.map((product) => ({ id: product.id, label: product.name1 }))],
-    [products],
-  );
-
   function openDocument(document: DocumentHistory) {
     navigate(`/doc-history/${document.id}`);
   }
@@ -137,66 +159,61 @@ export default function DocHistoryPage() {
     navigate('/doc-history');
   }
 
+  const previewData = useMemo<PreviewData | null>(() => {
+    if (!draft) return null;
+    const validItems = itemSummaries
+      .map((summary, index) => {
+        if (!summary.name1 || summary.qty <= 0) return null;
+        const item = items[index];
+        return {
+          seq: index + 1,
+          name1: summary.name1,
+          name2: summary.name2,
+          gubun: summary.gubun,
+          qty: summary.qty,
+          unitPrice: summary.unitPrice,
+          supply: summary.supply,
+          vat: item.vat,
+          orderDate: emptyToNull(item.orderDate),
+          arriveDate: emptyToNull(item.arriveDate),
+          itemNote: item.itemNote.trim(),
+          eaPerB: summary.eaPerB,
+          boxPerP: summary.boxPerP,
+          pallet: summary.pallet,
+          box: summary.box,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    if (validItems.length === 0) return null;
+
+    return {
+      issueNo: draft.issueNo,
+      client: draft.client,
+      manager: draft.manager || '',
+      managerTel: draft.managerTel || '',
+      receiver: draft.receiver || '',
+      supplierBizNo: draft.supplierBizNo,
+      supplierName: draft.supplierName,
+      supplierOwner: draft.supplierOwner,
+      supplierAddress: draft.supplierAddress,
+      supplierBusinessType: draft.supplierBusinessType,
+      supplierBusinessItem: draft.supplierBusinessItem,
+      orderDate: emptyToNull(draft.orderDate || ''),
+      arriveDate: emptyToNull(draft.arriveDate || ''),
+      deliveryAddr: draft.deliveryAddr || '',
+      remark: draft.remark || '',
+      requestNote: draft.requestNote || '',
+      totalSupply: totals.supply,
+      totalVat: totals.vat,
+      totalAmount: totals.total,
+      items: validItems,
+    };
+  }, [draft, itemSummaries, items, totals]);
+
+
   function updateDraft<K extends keyof DocumentHistory>(key: K, value: DocumentHistory[K]) {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
-  }
-
-  function updateDraftItem(index: number, updater: (item: DocumentHistoryItem) => DocumentHistoryItem) {
-    setDraft((current) => {
-      if (!current) return current;
-      const items = current.items.map((item, idx) => (idx === index ? updater(item) : item));
-      const totals = getDocumentTotals(items);
-      return {
-        ...current,
-        items,
-        totalSupply: totals.totalSupply,
-        totalVat: totals.totalVat,
-        totalAmount: totals.totalAmount,
-      };
-    });
-  }
-
-  function addDraftItem() {
-    if (!draft) return;
-
-    setDraft((current) => {
-      if (!current) return current;
-      const nextItem: DocumentHistoryItem = {
-        id: `new-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        seq: current.items.length + 1,
-        name1: '',
-        name2: '',
-        gubun: '',
-        qty: 0,
-        unitPrice: 0,
-        supply: 0,
-        vat: true,
-        orderDate: current.orderDate,
-        arriveDate: current.arriveDate,
-        itemNote: '',
-        eaPerB: null,
-        boxPerP: null,
-        customPallet: null,
-        customBox: null,
-        delYn: 'N',
-        updatedAt: null,
-        updatedBy: '',
-      };
-      const items = [...current.items, nextItem].map((item, idx) => ({ ...item, seq: idx + 1 }));
-      const totals = getDocumentTotals(items);
-      return { ...current, items, totalSupply: totals.totalSupply, totalVat: totals.totalVat, totalAmount: totals.totalAmount };
-    });
-  }
-
-  function removeDraftItem(index: number) {
-    setDraft((current) => {
-      if (!current || current.items.length === 1) return current;
-      const items = current.items
-        .filter((_, itemIndex) => itemIndex !== index)
-        .map((item, idx) => ({ ...item, seq: idx + 1 }));
-      const totals = getDocumentTotals(items);
-      return { ...current, items, totalSupply: totals.totalSupply, totalVat: totals.totalVat, totalAmount: totals.totalAmount };
-    });
   }
 
   async function handleSave() {
@@ -395,121 +412,15 @@ export default function DocHistoryPage() {
               ) : null}
             </section>
 
-            <section className="card">
-              <div className="card-header">
-                <div>
-                  <h2>품목정보</h2>
-                </div>
-                <button className="btn btn-primary" type="button" onClick={addDraftItem}>
-                  + 품목 추가
-                </button>
-              </div>
-
-              <div className="table-wrap">
-                <table className="table doc-items-table wide">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 32, textAlign: 'center' }}>#</th>
-                      <th>품목명</th>
-                      <th style={{ width: 60, textAlign: 'center' }}>구분</th>
-                      <th style={{ width: 110 }}>발주일자</th>
-                      <th style={{ width: 110 }}>입고일자</th>
-                      <th style={{ width: 90 }}>수량(ea)</th>
-                      <th style={{ width: 70 }}>파렛트</th>
-                      <th style={{ width: 70 }}>BOX</th>
-                      <th style={{ width: 110 }}>단가</th>
-                      <th style={{ width: 110 }}>공급가액</th>
-                      <th style={{ width: 70, textAlign: 'center' }}>VAT</th>
-                      <th style={{ width: 140 }}>비고</th>
-                      <th style={{ width: 84, textAlign: 'center' }}>관리</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {draft.items.map((item, index) => (
-                      <tr key={item.id || `${draft.id}-${index}`}>
-                        <td style={{ textAlign: 'center' }}>{index + 1}</td>
-                        <td className="doc-item-name-cell">
-                          <select
-                            className="doc-cell-control"
-                            value={findProductOptionValue(item, products)}
-                            onChange={(event) => {
-                              const selectedValue = event.target.value;
-
-                              if (selectedValue === MANUAL_PRODUCT_ID) {
-                                updateDraftItem(index, (current) => ({
-                                  ...current,
-                                  gubun: current.gubun || '기타',
-                                  eaPerB: null,
-                                  boxPerP: null,
-                                }));
-                                return;
-                              }
-
-                              const selectedProduct = products.find((product) => product.id === selectedValue);
-                              if (!selectedProduct) return;
-
-                              updateDraftItem(index, (current) => ({
-                                ...current,
-                                name1: selectedProduct.name1,
-                                name2: selectedProduct.name2 || selectedProduct.name1,
-                                gubun: selectedProduct.gubun,
-                                unitPrice: selectedProduct.sell_price ?? current.unitPrice,
-                                eaPerB: selectedProduct.ea_per_b,
-                                boxPerP: selectedProduct.box_per_p,
-                                customPallet: null,
-                                customBox: null,
-                              }));
-                            }}
-                          >
-                            <option value="">품목 선택</option>
-                            {productOptions.map((option) => (
-                              <option key={option.id} value={option.id}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                          {isManualItem(item, products) ? (
-                            <input
-                              className="doc-cell-control doc-item-name-input"
-                              value={item.name1}
-                              onChange={(event) =>
-                                updateDraftItem(index, (current) => ({
-                                  ...current,
-                                  name1: event.target.value,
-                                  name2: event.target.value,
-                                }))
-                              }
-                              placeholder="품목명"
-                            />
-                          ) : null}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>{item.gubun || '-'}</td>
-                        <td><input className="doc-cell-control" type="date" value={item.orderDate || draft.orderDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, orderDate: emptyToNull(event.target.value) }))} /></td>
-                        <td><input className="doc-cell-control" type="date" value={item.arriveDate || draft.arriveDate || ''} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, arriveDate: emptyToNull(event.target.value) }))} /></td>
-                        <td><input className="doc-cell-control" type="number" value={item.qty} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, qty: Math.max(parseInt(event.target.value || '0', 10) || 0, 0) }))} /></td>
-                        <td><input className="doc-cell-control" type="number" value={item.customPallet ?? calculatePallet(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customPallet: parseNullableInteger(event.target.value) }))} /></td>
-                        <td><input className="doc-cell-control" type="number" value={item.customBox ?? calculateBox(item)} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, customBox: parseNullableInteger(event.target.value) }))} /></td>
-                        <td><input className="doc-cell-control" type="number" value={item.unitPrice} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, unitPrice: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
-                        <td><input className="doc-cell-control" type="number" value={item.supply} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, supply: parseInt(event.target.value || '0', 10) || 0 }))} /></td>
-                        <td style={{ textAlign: 'center' }}><input type="checkbox" checked={item.vat} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, vat: event.target.checked }))} /></td>
-                        <td><textarea className="doc-cell-control doc-item-note" rows={1} value={item.itemNote} onChange={(event) => updateDraftItem(index, (current) => ({ ...current, itemNote: event.target.value }))} /></td>
-                        <td style={{ textAlign: 'center' }}>
-                          <button type="button" className="btn btn-danger doc-delete-button" onClick={() => removeDraftItem(index)}>
-                            삭제
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <div className="doc-totals-strip">
-              <div className="doc-total-item"><span>공급가액</span><strong>{formatNumber(draft.totalSupply)}</strong></div>
-              <div className="doc-total-item"><span>부가세</span><strong>{formatNumber(draft.totalVat)}</strong></div>
-              <div className="doc-total-item total"><span>합계금액</span><strong>{formatNumber(draft.totalAmount)}</strong></div>
-            </div>
+            <DocumentItemTable
+              items={items}
+              clientProducts={products}
+              itemSummaries={itemSummaries}
+              totals={totals}
+              onUpdateItem={updateItem}
+              onRemoveItem={removeItem}
+              onAddItem={() => addItem(draft?.orderDate || '', draft?.arriveDate || '')}
+            />
 
             <div className="doc-action-stack inline">
               <button className="btn btn-primary" disabled={saving} onClick={handleSave}>{saving ? '저장 중..' : '수정 저장'}</button>
@@ -524,12 +435,12 @@ export default function DocHistoryPage() {
         </section>
       )}
 
-      {previewType && draft ? (
+      {previewType && previewData ? (
         <DocumentPreviewModal
           type={previewType}
-          data={mapDraftToPreviewData(draft)}
+          data={previewData}
           onClose={() => setPreviewType(null)}
-          description="발행 이력에서 저장한 문서를 다시 불러온 미리보기입니다."
+          description="발행 이력에서 수정한 내역이 반영된 미리보기입니다."
         />
       ) : null}
     </div>
@@ -596,51 +507,6 @@ function getDocumentTotals(items: DocumentHistoryItem[]) {
   );
 }
 
-function mapDraftToPreviewData(draft: DocumentHistory): PreviewData {
-  return {
-    issueNo: draft.issueNo,
-    client: draft.client,
-    manager: draft.manager || '',
-    managerTel: draft.managerTel || '',
-    receiver: draft.receiver || '',
-    supplierBizNo: draft.supplierBizNo,
-    supplierName: draft.supplierName,
-    supplierOwner: draft.supplierOwner,
-    supplierAddress: draft.supplierAddress,
-    supplierBusinessType: draft.supplierBusinessType,
-    supplierBusinessItem: draft.supplierBusinessItem,
-    orderDate: draft.orderDate,
-    arriveDate: draft.arriveDate,
-    deliveryAddr: draft.deliveryAddr || '',
-    remark: draft.remark || '',
-    requestNote: draft.requestNote || '',
-    totalSupply: draft.totalSupply,
-    totalVat: draft.totalVat,
-    totalAmount: draft.totalAmount,
-    items: draft.items.map((item, idx) => {
-      const p = calculatePallet(item);
-      const b = calculateBox(item);
-      return {
-        seq: item.seq || idx + 1,
-        name1: item.name1,
-        name2: item.name2 || item.name1,
-        gubun: item.gubun || '',
-        qty: item.qty || 0,
-        unitPrice: item.unitPrice || 0,
-        supply: item.supply || 0,
-        vat: item.vat,
-        orderDate: item.orderDate,
-        arriveDate: item.arriveDate,
-        itemNote: item.itemNote || '',
-        eaPerB: item.eaPerB,
-        boxPerP: item.boxPerP,
-        pallet: typeof item.customPallet === 'number' ? item.customPallet : typeof p === 'number' ? p : null,
-        box: typeof item.customBox === 'number' ? item.customBox : typeof b === 'number' ? b : null,
-      };
-    }),
-  };
-}
-
 function formatDateTime(value: string | null) {
   if (!value) return '-';
   return value.slice(0, 16).replace('T', ' ');
@@ -658,17 +524,6 @@ function formatCompactDateTime(value: string | null) {
   return `${yy}-${mm}-${dd} ${hh}:${mi}`;
 }
 
-function emptyToNull(value: string) {
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-}
-
-function parseNullableInteger(value: string) {
-  if (!value.trim()) return null;
-  const parsed = parseInt(value, 10);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
 function getDateOneYearAgo(baseDate: string) {
   const date = new Date(baseDate);
   date.setFullYear(date.getFullYear() - 1);
@@ -683,7 +538,3 @@ function getDateOneYearLater(baseDate: string) {
 
 
 
-function formatNumber(value: number | null | undefined) {
-  if (value == null) return '';
-  return value.toLocaleString('ko-KR');
-}

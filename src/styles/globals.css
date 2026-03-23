@@ -952,13 +952,23 @@ a {
   resize: none;
 }
 
-.doc-number-input-sm {
-  width: 88px;
+.doc-number-input-qty {
+  width: 44px;
   text-align: right;
 }
 
-.doc-number-input-price {
-  width: 78px;
+.doc-number-input-pallet-box {
+  width: 110px;
+  text-align: right;
+}
+
+.doc-number-input-unitprice {
+  width: 40px;
+  text-align: right;
+}
+
+.doc-number-input-supply {
+  width: 88px;
   text-align: right;
 }
 
@@ -976,12 +986,12 @@ a {
 }
 
 .doc-note-col {
-  width: 118px;
+  width: 180px;
 }
 
 .doc-pallet-col,
 .doc-box-col {
-  width: 78px;
+  width: 110px;
 }
 
 .doc-delete-button {
