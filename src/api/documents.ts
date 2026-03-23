@@ -1,6 +1,7 @@
 import { getSupabaseClient } from './supabase/client';
 import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import type { DocumentHistory, DocumentPayload, DocumentStatus } from '../types/document';
+import { getStoredUser } from '../lib/session';
 
 let creatingDocument = false;
 const updatingDocumentIds = new Set<string>();
@@ -14,12 +15,16 @@ export async function saveDocument(payload: DocumentPayload) {
   creatingDocument = true;
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
+  const currentUser = getStoredUser();
+  const clientId = await findClientIdByName(payload.client);
+  const authorId = payload.authorId ?? currentUser?.id ?? null;
 
   try {
     const { data: documentRow, error: documentError } = await supabase
       .from('documents')
       .insert({
         issue_no: payload.issueNo,
+        client_id: clientId,
         client: payload.client,
         manager: payload.manager,
         manager_tel: payload.managerTel,
@@ -38,6 +43,7 @@ export async function saveDocument(payload: DocumentPayload) {
         total_supply: payload.totalSupply,
         total_vat: payload.totalVat,
         total_amount: payload.totalAmount,
+        author_id: authorId,
         author: payload.author,
         status: payload.status,
         ...auditFields,
@@ -80,6 +86,7 @@ export async function saveDocument(payload: DocumentPayload) {
         payload.items.map((item) => ({
           doc_id: documentRow.id,
           issue_no: payload.issueNo,
+          client_id: clientId,
           date: payload.orderDate,
           deadline: payload.arriveDate,
           client: payload.client,
@@ -110,7 +117,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const { data, error } = await supabase
     .from('documents')
     .select(
-      'id, issue_no, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, status, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
+      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
     )
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
@@ -121,6 +128,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
 
   return (data ?? []).map((row: any) => ({
     id: String(row.id),
+    clientId: row.client_id === null || row.client_id === undefined ? null : String(row.client_id),
     issueNo: row.issue_no ?? '',
     client: row.client ?? '',
     manager: row.manager ?? '',
@@ -140,8 +148,14 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
     totalSupply: row.total_supply ?? 0,
     totalVat: row.total_vat ?? 0,
     totalAmount: row.total_amount ?? 0,
+    authorId: row.author_id === null || row.author_id === undefined ? null : String(row.author_id),
     author: row.author ?? '',
-    status: mapDocumentStatus(row.status, row.cancelled),
+    status: mapDocumentStatus(row.status),
+    approvalTitle: row.approval_title ?? '',
+    approvalStatus: (row.approval_status ?? 'draft') as DocumentHistory['approvalStatus'],
+    approvalRequestedAt: row.approval_requested_at ?? null,
+    approvalCompletedAt: row.approval_completed_at ?? null,
+    approvalCurrentStep: row.approval_current_step ?? 0,
     createdAt: row.created_at ?? null,
     updatedAt: row.updated_at ?? null,
     updatedBy: row.updated_by ?? '',
@@ -182,12 +196,14 @@ export async function updateDocument(document: DocumentHistory) {
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const deletedAuditFields = getDeletedAuditFields();
+  const clientId = await findClientIdByName(document.client);
 
   try {
     const { data: updatedDocumentRows, error: docError } = await supabase
       .from('documents')
       .update({
         issue_no: document.issueNo,
+        client_id: clientId,
         client: document.client,
         manager: document.manager,
         manager_tel: document.managerTel,
@@ -206,6 +222,7 @@ export async function updateDocument(document: DocumentHistory) {
         total_supply: document.totalSupply,
         total_vat: document.totalVat,
         total_amount: document.totalAmount,
+        author_id: document.authorId,
         status: document.status,
         ...auditFields,
       })
@@ -322,6 +339,7 @@ export async function updateDocument(document: DocumentHistory) {
       const orderBookPayload = {
         doc_id: document.id,
         issue_no: document.issueNo,
+        client_id: clientId,
         date: document.orderDate,
         deadline: document.arriveDate,
         client: document.client,
@@ -413,10 +431,31 @@ export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
   }
 }
 
-function mapDocumentStatus(status: string | null | undefined, cancelled?: boolean | null): DocumentStatus {
+async function findClientIdByName(clientName: string) {
+  const normalizedName = clientName.trim();
+  if (!normalizedName) return null;
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('name', normalizedName)
+    .eq('del_yn', 'N')
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.id ?? null;
+}
+
+function mapDocumentStatus(status: string | null | undefined): DocumentStatus {
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
-  return cancelled ? 'ST01' : 'ST00';
+  return 'ST00';
 }
 
 function isPersistedId(value: string | null | undefined) {

@@ -16,6 +16,7 @@ const GUBUN_CHOICES = ['컵', '컵뚜껑', '실링', '스트로우', '기타'];
 const PAGE_SIZE = 15;
 
 const emptyForm: ProductInput = {
+  clientId: '',
   gubun: DEFAULT_GUBUN,
   client: '',
   supplier: '',
@@ -74,14 +75,14 @@ export default function MasterProductPage() {
   }
 
   const clientOptions = useMemo(
-    () => [...new Set(clients.map((client) => client.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko')),
+    () => clients.filter((client) => client.name.trim()),
     [clients],
   );
 
   const filteredFormClientOptions = useMemo(() => {
     const keyword = form.client.trim().toLowerCase();
     if (!keyword) return clientOptions;
-    return clientOptions.filter((name) => name.toLowerCase().includes(keyword));
+    return clientOptions.filter((client) => client.name.toLowerCase().includes(keyword));
   }, [clientOptions, form.client]);
 
   const filteredProducts = useMemo(() => {
@@ -124,6 +125,7 @@ export default function MasterProductPage() {
   function openEditModal(product: Product) {
     setEditingProduct(product);
     setForm({
+      clientId: product.clientId ?? '',
       gubun: product.gubun || DEFAULT_GUBUN,
       client: product.client,
       supplier: product.supplier,
@@ -162,14 +164,16 @@ export default function MasterProductPage() {
   }
 
   function handleClientSelect(clientName: string) {
+    const selectedClient = clients.find((client) => client.name === clientName);
     updateForm('client', clientName);
+    updateForm('clientId', selectedClient?.id ?? '');
     setClientDropdownOpen(false);
   }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
-    if (!form.client.trim()) {
+    if (!form.client.trim() || !form.clientId) {
       setFormError('거래처를 선택해주세요.');
       return;
     }
@@ -184,6 +188,7 @@ export default function MasterProductPage() {
       setFormError(null);
 
       const payload: ProductInput = {
+        clientId: form.clientId,
         gubun: form.gubun.trim() || DEFAULT_GUBUN,
         client: form.client.trim(),
         supplier: form.supplier.trim(),
@@ -243,8 +248,8 @@ export default function MasterProductPage() {
             >
               <option value="">전체 거래처</option>
               {clientOptions.map((client) => (
-                <option key={client} value={client}>
-                  {client}
+                <option key={client.id} value={client.name}>
+                  {client.name}
                 </option>
               ))}
             </select>
@@ -376,7 +381,10 @@ export default function MasterProductPage() {
                 className="search-input"
                 value={form.client}
                 onChange={(event) => {
-                  updateForm('client', event.target.value);
+                  const nextClientName = event.target.value;
+                  const matchedClient = clients.find((client) => client.name === nextClientName);
+                  updateForm('client', nextClientName);
+                  updateForm('clientId', matchedClient?.id ?? '');
                   setClientDropdownOpen(true);
                 }}
                 onFocus={() => setClientDropdownOpen(true)}
@@ -386,14 +394,14 @@ export default function MasterProductPage() {
               {clientDropdownOpen ? (
                 <div className="client-search-dropdown">
                   {filteredFormClientOptions.length > 0 ? (
-                    filteredFormClientOptions.map((clientName) => (
+                    filteredFormClientOptions.map((client) => (
                       <button
-                        key={clientName}
+                        key={client.id}
                         type="button"
                         className="client-search-option"
-                        onClick={() => handleClientSelect(clientName)}
+                        onClick={() => handleClientSelect(client.name)}
                       >
-                        {clientName}
+                        {client.name}
                       </button>
                     ))
                   ) : (

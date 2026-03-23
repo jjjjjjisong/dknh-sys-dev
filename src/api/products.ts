@@ -5,6 +5,7 @@ import type { Product, ProductInput } from '../types/product';
 type ProductRow = {
   id: number | string;
   no: number | null;
+  client_id: number | string | null;
   gubun: string | null;
   client: string | null;
   name1: string | null;
@@ -22,7 +23,7 @@ type ProductRow = {
 };
 
 const productSelectColumns =
-  'id, no, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by';
+  'id, no, client_id, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by';
 
 export async function fetchProducts(): Promise<Product[]> {
   const supabase = getSupabaseClient();
@@ -61,7 +62,18 @@ export async function createProduct(input: ProductInput): Promise<Product> {
   const nextNo = await fetchNextProductNo();
   const payload = {
     no: nextNo,
-    ...input,
+    client_id: Number(input.clientId),
+    client: input.client,
+    gubun: input.gubun,
+    supplier: input.supplier,
+    name1: input.name1,
+    name2: input.name2,
+    cost_price: input.cost_price,
+    sell_price: input.sell_price,
+    ea_per_b: input.ea_per_b,
+    box_per_p: input.box_per_p,
+    ea_per_p: input.ea_per_p,
+    pallets_per_truck: input.pallets_per_truck,
     ...getActiveAuditFields(),
   };
 
@@ -102,7 +114,18 @@ export async function updateProduct(id: string, currentNo: number | null, input:
     .from('products')
     .update({
       no: currentNo,
-      ...input,
+      client_id: Number(input.clientId),
+      client: input.client,
+      gubun: input.gubun,
+      supplier: input.supplier,
+      name1: input.name1,
+      name2: input.name2,
+      cost_price: input.cost_price,
+      sell_price: input.sell_price,
+      ea_per_b: input.ea_per_b,
+      box_per_p: input.box_per_p,
+      ea_per_p: input.ea_per_p,
+      pallets_per_truck: input.pallets_per_truck,
       ...getActiveAuditFields(),
     })
     .eq('id', id)
@@ -169,6 +192,7 @@ function mapProductRow(product: ProductRow): Product {
   return {
     id: String(product.id),
     no: product.no ?? null,
+    clientId: product.client_id === null || product.client_id === undefined ? null : String(product.client_id),
     gubun: product.gubun ?? '',
     client: product.client ?? '',
     name1: product.name1 ?? '',

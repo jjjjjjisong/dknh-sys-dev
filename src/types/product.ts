@@ -1,6 +1,7 @@
 export type Product = {
   id: string;
   no: number | null;
+  clientId: string | null;
   gubun: string;
   client: string;
   name1: string;
@@ -18,6 +19,7 @@ export type Product = {
 };
 
 export type ProductInput = {
+  clientId: string;
   gubun: string;
   client: string;
   supplier: string;

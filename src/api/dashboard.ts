@@ -31,7 +31,6 @@ type DocumentRow = {
   created_at: string | null;
   updated_at: string | null;
   status: string | null;
-  cancelled: boolean | null;
   del_yn: string | null;
   document_items: DocumentItemRow[] | null;
 };
@@ -53,7 +52,7 @@ export async function fetchDashboardSummary(baseDate: Date = new Date()): Promis
     supabase
       .from('documents')
       .select(
-        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, cancelled, del_yn, document_items(id, name1, name2, qty, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, del_yn, document_items(id, name1, name2, qty, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
       )
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false })
@@ -85,7 +84,7 @@ export async function fetchDashboardSummary(baseDate: Date = new Date()): Promis
   const sourceDocuments = (documentsResult.data ?? []) as DocumentRow[];
 
   const recentDocuments: DashboardRecentDocument[] = sourceDocuments
-    .filter((document) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
+    .filter((document) => mapStatus(document.status) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .map((document) => {
       const items = (document.document_items ?? []).filter((item) => (item.del_yn ?? 'N') === 'N');
       const firstOrderBook = orderBookMap.get(getOrderBookKey(document.issue_no, items[0]?.name1 ?? ''));
@@ -100,14 +99,14 @@ export async function fetchDashboardSummary(baseDate: Date = new Date()): Promis
         author: document.author ?? '',
         createdAt: document.created_at ?? '',
         updatedAt: document.updated_at ?? '',
-        status: mapStatus(document.status, document.cancelled),
+        status: mapStatus(document.status),
         receipt: firstOrderBook?.receipt ?? '',
       };
     })
     .slice(0, 3);
 
   const incomingItems: DashboardIncomingDocument[] = sourceDocuments
-    .filter((document) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N')
+    .filter((document) => mapStatus(document.status) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .flatMap((document) =>
       (document.document_items ?? [])
         .filter((item) => (item.del_yn ?? 'N') === 'N')
@@ -148,7 +147,7 @@ export async function fetchDashboardWeeklyArrivals(
     supabase
       .from('documents')
       .select(
-        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, cancelled, del_yn, document_items(id, name1, name2, qty, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
+        'id, issue_no, client, receiver, order_date, arrive_date, author, created_at, updated_at, status, del_yn, document_items(id, name1, name2, qty, arrive_date, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn)',
       )
       .eq('del_yn', 'N')
       .order('created_at', { ascending: false })
@@ -178,7 +177,7 @@ export async function fetchDashboardWeeklyArrivals(
 
   const incomingItems: DashboardIncomingDocument[] = sourceDocuments
     .filter(
-      (document) => mapStatus(document.status, document.cancelled) === 'ST00' && (document.del_yn ?? 'N') === 'N',
+      (document) => mapStatus(document.status) === 'ST00' && (document.del_yn ?? 'N') === 'N',
     )
     .flatMap((document) =>
       (document.document_items ?? [])
@@ -219,7 +218,7 @@ function mapIncomingItem(
     qty,
     pallet: calculatePallet(item, qty),
     box: calculateBox(item, qty),
-    status: mapStatus(orderBook?.status ?? document.status, document.cancelled),
+    status: mapStatus(orderBook?.status ?? document.status),
     shippedStatus: mapShippedStatus(orderBook?.shipped_status),
   };
 }
@@ -307,10 +306,10 @@ function formatShortDate(value: string) {
   return `${String(month).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
 }
 
-function mapStatus(status: string | null | undefined, cancelled?: boolean | null): OrderBookStatus {
+function mapStatus(status: string | null | undefined): OrderBookStatus {
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
-  return cancelled ? 'ST01' : 'ST00';
+  return 'ST00';
 }
 
 function mapShippedStatus(value: string | null | undefined): OrderBookShippingStatus {

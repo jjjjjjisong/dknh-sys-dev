@@ -4,6 +4,7 @@ create table if not exists public.products (
   updated_at timestamptz not null default now(),
   no integer not null,
   gubun text not null,
+  client_id bigint null,
   client text not null,
   name1 text not null,
   name2 text not null default '',
@@ -21,6 +22,14 @@ create table if not exists public.products (
 do $$
 begin
   if not exists (
+    select 1 from pg_constraint where conname = 'products_client_id_fkey'
+  ) then
+    alter table public.products
+      add constraint products_client_id_fkey
+      foreign key (client_id) references public.clients(id);
+  end if;
+
+  if not exists (
     select 1 from pg_constraint where conname = 'products_del_yn_check'
   ) then
     alter table public.products
@@ -31,6 +40,7 @@ end
 $$;
 
 create index if not exists idx_products_no on public.products (no);
+create index if not exists idx_products_client_id on public.products (client_id);
 create index if not exists idx_products_client on public.products (client);
 create index if not exists idx_products_gubun on public.products (gubun);
 create index if not exists idx_products_del_yn on public.products (del_yn);

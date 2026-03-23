@@ -20,6 +20,7 @@ export type DocumentItemPayload = {
 
 export type DocumentPayload = {
   issueNo: string;
+  clientId?: string | null;
   client: string;
   manager: string;
   managerTel: string;
@@ -38,6 +39,7 @@ export type DocumentPayload = {
   totalSupply: number;
   totalVat: number;
   totalAmount: number;
+  authorId?: string | null;
   author: string;
   status: DocumentStatus;
   items: DocumentItemPayload[];
@@ -67,6 +69,7 @@ export type DocumentHistoryItem = {
 
 export type DocumentHistory = {
   id: string;
+  clientId: string | null;
   issueNo: string;
   client: string;
   manager: string;
@@ -86,8 +89,14 @@ export type DocumentHistory = {
   totalSupply: number;
   totalVat: number;
   totalAmount: number;
+  authorId: string | null;
   author: string;
   status: DocumentStatus;
+  approvalTitle: string;
+  approvalStatus: 'draft' | 'pending' | 'in_review' | 'approved' | 'rejected' | 'cancelled';
+  approvalRequestedAt: string | null;
+  approvalCompletedAt: string | null;
+  approvalCurrentStep: number;
   createdAt: string | null;
   updatedAt: string | null;
   updatedBy: string;
