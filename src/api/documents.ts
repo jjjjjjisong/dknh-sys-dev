@@ -2,102 +2,116 @@ import { getSupabaseClient } from './supabase/client';
 import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import type { DocumentHistory, DocumentPayload, DocumentStatus } from '../types/document';
 
+let creatingDocument = false;
+const updatingDocumentIds = new Set<string>();
+const togglingDocumentIds = new Set<string>();
+
 export async function saveDocument(payload: DocumentPayload) {
+  if (creatingDocument) {
+    throw new Error('문서 저장이 이미 진행 중입니다. 잠시 후 다시 시도해 주세요.');
+  }
+
+  creatingDocument = true;
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
-  const deletedAuditFields = getDeletedAuditFields();
 
-  const { data: documentRow, error: documentError } = await supabase
-    .from('documents')
-    .insert({
-      issue_no: payload.issueNo,
-      client: payload.client,
-      manager: payload.manager,
-      manager_tel: payload.managerTel,
-      receiver: payload.receiver,
-      supplier_biz_no: payload.supplierBizNo,
-      supplier_name: payload.supplierName,
-      supplier_owner: payload.supplierOwner,
-      supplier_address: payload.supplierAddress,
-      supplier_business_type: payload.supplierBusinessType,
-      supplier_business_item: payload.supplierBusinessItem,
-      order_date: payload.orderDate,
-      arrive_date: payload.arriveDate,
-      delivery_addr: payload.deliveryAddr,
-      remark: payload.remark,
-      request_note: payload.requestNote,
-      total_supply: payload.totalSupply,
-      total_vat: payload.totalVat,
-      total_amount: payload.totalAmount,
-      author: payload.author,
-      status: payload.status,
-      ...auditFields,
-    })
-    .select('id')
-    .single();
-
-  if (documentError) {
-    throw documentError;
-  }
-
-  if (payload.items.length > 0) {
-    const itemRows = payload.items.map((item) => ({
-      document_id: documentRow.id,
-      seq: item.seq,
-      name1: item.name1,
-      name2: item.name2,
-      gubun: item.gubun,
-      qty: item.qty,
-      unit_price: item.unitPrice,
-      supply: item.supply,
-      vat: item.vat,
-      order_date: item.orderDate,
-      arrive_date: item.arriveDate,
-      item_note: item.itemNote,
-      ea_per_b: item.eaPerB,
-      box_per_p: item.boxPerP,
-      custom_pallet: item.customPallet,
-      custom_box: item.customBox,
-      ...auditFields,
-    }));
-
-    const { error: itemError } = await supabase.from('document_items').insert(itemRows);
-
-    if (itemError) {
-      throw itemError;
-    }
-
-    const { error: orderBookError } = await supabase.from('order_book').insert(
-      payload.items.map((item) => ({
-        doc_id: documentRow.id,
+  try {
+    const { data: documentRow, error: documentError } = await supabase
+      .from('documents')
+      .insert({
         issue_no: payload.issueNo,
-        date: payload.orderDate,
-        deadline: payload.arriveDate,
         client: payload.client,
-        product: item.name1,
-        qty: item.qty,
-        note: payload.remark,
-        receipt: '',
+        manager: payload.manager,
+        manager_tel: payload.managerTel,
+        receiver: payload.receiver,
+        supplier_biz_no: payload.supplierBizNo,
+        supplier_name: payload.supplierName,
+        supplier_owner: payload.supplierOwner,
+        supplier_address: payload.supplierAddress,
+        supplier_business_type: payload.supplierBusinessType,
+        supplier_business_item: payload.supplierBusinessItem,
+        order_date: payload.orderDate,
+        arrive_date: payload.arriveDate,
+        delivery_addr: payload.deliveryAddr,
+        remark: payload.remark,
+        request_note: payload.requestNote,
+        total_supply: payload.totalSupply,
+        total_vat: payload.totalVat,
+        total_amount: payload.totalAmount,
+        author: payload.author,
         status: payload.status,
-        shipped_status: '미출고',
-        from_doc: true,
         ...auditFields,
-      })),
-    );
+      })
+      .select('id')
+      .single();
 
-    if (orderBookError) {
-      throw orderBookError;
+    if (documentError) {
+      throw documentError;
     }
-  }
 
-  return documentRow.id as string;
+    if (payload.items.length > 0) {
+      const itemRows = payload.items.map((item) => ({
+        document_id: documentRow.id,
+        seq: item.seq,
+        name1: item.name1,
+        name2: item.name2,
+        gubun: item.gubun,
+        qty: item.qty,
+        unit_price: item.unitPrice,
+        supply: item.supply,
+        vat: item.vat,
+        order_date: item.orderDate,
+        arrive_date: item.arriveDate,
+        item_note: item.itemNote,
+        ea_per_b: item.eaPerB,
+        box_per_p: item.boxPerP,
+        custom_pallet: item.customPallet,
+        custom_box: item.customBox,
+        ...auditFields,
+      }));
+
+      const { error: itemError } = await supabase.from('document_items').insert(itemRows);
+
+      if (itemError) {
+        throw itemError;
+      }
+
+      const { error: orderBookError } = await supabase.from('order_book').insert(
+        payload.items.map((item) => ({
+          doc_id: documentRow.id,
+          issue_no: payload.issueNo,
+          date: payload.orderDate,
+          deadline: payload.arriveDate,
+          client: payload.client,
+          product: item.name1,
+          qty: item.qty,
+          note: payload.remark,
+          receipt: '',
+          status: payload.status,
+          shipped_status: '미출고',
+          from_doc: true,
+          ...auditFields,
+        })),
+      );
+
+      if (orderBookError) {
+        throw orderBookError;
+      }
+    }
+
+    return documentRow.id as string;
+  } finally {
+    creatingDocument = false;
+  }
 }
 
 export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('documents')
-    .select('id, issue_no, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, status, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)')
+    .select(
+      'id, issue_no, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author, status, cancelled, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
+    )
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
@@ -160,60 +174,79 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
 }
 
 export async function updateDocument(document: DocumentHistory) {
+  if (updatingDocumentIds.has(document.id)) {
+    throw new Error('같은 문서의 수정 저장이 이미 진행 중입니다. 잠시 후 다시 시도해 주세요.');
+  }
+
+  updatingDocumentIds.add(document.id);
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const deletedAuditFields = getDeletedAuditFields();
 
-  const { data: updatedDocumentRows, error: docError } = await supabase
-    .from('documents')
-    .update({
-      issue_no: document.issueNo,
-      client: document.client,
-      manager: document.manager,
-      manager_tel: document.managerTel,
-      receiver: document.receiver,
-      supplier_biz_no: document.supplierBizNo,
-      supplier_name: document.supplierName,
-      supplier_owner: document.supplierOwner,
-      supplier_address: document.supplierAddress,
-      supplier_business_type: document.supplierBusinessType,
-      supplier_business_item: document.supplierBusinessItem,
-      order_date: document.orderDate,
-      arrive_date: document.arriveDate,
-      delivery_addr: document.deliveryAddr,
-      remark: document.remark,
-      request_note: document.requestNote,
-      total_supply: document.totalSupply,
-      total_vat: document.totalVat,
-      total_amount: document.totalAmount,
-      status: document.status,
-      ...auditFields,
-    })
-    .eq('id', document.id)
-    .select('id');
+  try {
+    const { data: updatedDocumentRows, error: docError } = await supabase
+      .from('documents')
+      .update({
+        issue_no: document.issueNo,
+        client: document.client,
+        manager: document.manager,
+        manager_tel: document.managerTel,
+        receiver: document.receiver,
+        supplier_biz_no: document.supplierBizNo,
+        supplier_name: document.supplierName,
+        supplier_owner: document.supplierOwner,
+        supplier_address: document.supplierAddress,
+        supplier_business_type: document.supplierBusinessType,
+        supplier_business_item: document.supplierBusinessItem,
+        order_date: document.orderDate,
+        arrive_date: document.arriveDate,
+        delivery_addr: document.deliveryAddr,
+        remark: document.remark,
+        request_note: document.requestNote,
+        total_supply: document.totalSupply,
+        total_vat: document.totalVat,
+        total_amount: document.totalAmount,
+        status: document.status,
+        ...auditFields,
+      })
+      .eq('id', document.id)
+      .eq('del_yn', 'N')
+      .select('id');
 
-  if (docError) {
-    throw docError;
-  }
+    if (docError) {
+      throw docError;
+    }
 
-  if (!updatedDocumentRows || updatedDocumentRows.length === 0) {
-    throw new Error('문서 업데이트 권한이 없거나 DB 정책이 적용되지 않았습니다.');
-  }
+    if (!updatedDocumentRows || updatedDocumentRows.length === 0) {
+      throw new Error('문서를 수정할 수 없습니다. 삭제되었거나 권한이 없는 상태일 수 있습니다.');
+    }
 
-  const { error: deleteItemError } = await supabase
-    .from('document_items')
-    .update(deletedAuditFields)
-    .eq('document_id', document.id);
+    const nextItems = document.items.map((item, index) => ({
+      ...item,
+      seq: index + 1,
+    }));
 
-  if (deleteItemError) {
-    throw deleteItemError;
-  }
+    const existingItemIds = nextItems
+      .map((item) => (isPersistedId(item.id) ? item.id : null))
+      .filter((value): value is string => Boolean(value));
 
-  if (document.items.length > 0) {
-    const { error: insertItemError } = await supabase.from('document_items').insert(
-      document.items.map((item, index) => ({
+    const { data: activeItemRows, error: activeItemsError } = await supabase
+      .from('document_items')
+      .select('id')
+      .eq('document_id', document.id)
+      .eq('del_yn', 'N');
+
+    if (activeItemsError) {
+      throw activeItemsError;
+    }
+
+    const activeItemIds = (activeItemRows ?? []).map((row: any) => String(row.id));
+    const removedItemIds = activeItemIds.filter((id: string) => !existingItemIds.includes(id));
+
+    for (const item of nextItems) {
+      const itemPayload = {
         document_id: document.id,
-        seq: index + 1,
+        seq: item.seq,
         name1: item.name1,
         name2: item.name2,
         gubun: item.gubun,
@@ -229,26 +262,64 @@ export async function updateDocument(document: DocumentHistory) {
         custom_pallet: item.customPallet,
         custom_box: item.customBox,
         ...auditFields,
-      })),
-    );
+      };
 
-    if (insertItemError) {
-      throw insertItemError;
+      if (isPersistedId(item.id)) {
+        const { error: updateItemError } = await supabase
+          .from('document_items')
+          .update(itemPayload)
+          .eq('id', item.id)
+          .eq('document_id', document.id)
+          .eq('del_yn', 'N');
+
+        if (updateItemError) {
+          throw updateItemError;
+        }
+      } else {
+        const { error: insertItemError } = await supabase.from('document_items').insert(itemPayload);
+
+        if (insertItemError) {
+          throw insertItemError;
+        }
+      }
     }
-  }
 
-  const { error: deleteOrderBookError } = await supabase
-    .from('order_book')
-    .update(deletedAuditFields)
-    .eq('doc_id', document.id);
+    if (removedItemIds.length > 0) {
+      const { error: deleteItemError } = await supabase
+        .from('document_items')
+        .update(deletedAuditFields)
+        .in('id', removedItemIds)
+        .eq('document_id', document.id)
+        .eq('del_yn', 'N');
 
-  if (deleteOrderBookError) {
-    throw deleteOrderBookError;
-  }
+      if (deleteItemError) {
+        throw deleteItemError;
+      }
+    }
 
-  if (document.items.length > 0) {
-    const { error: insertOrderBookError } = await supabase.from('order_book').insert(
-      document.items.map((item) => ({
+    const { data: activeOrderBookRows, error: activeOrderBookError } = await supabase
+      .from('order_book')
+      .select('id, receipt, shipped_status')
+      .eq('doc_id', document.id)
+      .eq('from_doc', true)
+      .eq('del_yn', 'N')
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true });
+
+    if (activeOrderBookError) {
+      throw activeOrderBookError;
+    }
+
+    const currentOrderBookRows = (activeOrderBookRows ?? []) as Array<{
+      id: string;
+      receipt: string | null;
+      shipped_status: string | null;
+    }>;
+
+    for (let index = 0; index < nextItems.length; index += 1) {
+      const item = nextItems[index];
+      const existingOrderBook = currentOrderBookRows[index];
+      const orderBookPayload = {
         doc_id: document.id,
         issue_no: document.issueNo,
         date: document.orderDate,
@@ -257,47 +328,88 @@ export async function updateDocument(document: DocumentHistory) {
         product: item.name1,
         qty: item.qty,
         note: document.remark,
-        receipt: '',
+        receipt: existingOrderBook?.receipt ?? '',
         status: document.status,
-        shipped_status: '미출고',
+        shipped_status: normalizeShippedStatus(existingOrderBook?.shipped_status),
         from_doc: true,
         ...auditFields,
-      })),
-    );
+      };
 
-    if (insertOrderBookError) {
-      throw insertOrderBookError;
+      if (existingOrderBook) {
+        const { error: updateOrderBookError } = await supabase
+          .from('order_book')
+          .update(orderBookPayload)
+          .eq('id', existingOrderBook.id)
+          .eq('doc_id', document.id)
+          .eq('del_yn', 'N');
+
+        if (updateOrderBookError) {
+          throw updateOrderBookError;
+        }
+      } else {
+        const { error: insertOrderBookError } = await supabase.from('order_book').insert(orderBookPayload);
+
+        if (insertOrderBookError) {
+          throw insertOrderBookError;
+        }
+      }
     }
+
+    const removedOrderBookIds = currentOrderBookRows.slice(nextItems.length).map((row) => row.id);
+    if (removedOrderBookIds.length > 0) {
+      const { error: deleteOrderBookError } = await supabase
+        .from('order_book')
+        .update(deletedAuditFields)
+        .in('id', removedOrderBookIds)
+        .eq('doc_id', document.id)
+        .eq('del_yn', 'N');
+
+      if (deleteOrderBookError) {
+        throw deleteOrderBookError;
+      }
+    }
+  } finally {
+    updatingDocumentIds.delete(document.id);
   }
 }
 
 export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
+  if (togglingDocumentIds.has(id)) {
+    throw new Error('문서 상태 변경이 이미 진행 중입니다. 잠시 후 다시 시도해 주세요.');
+  }
+
+  togglingDocumentIds.add(id);
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const status: DocumentStatus = cancelled ? 'ST01' : 'ST00';
 
-  const { data: updatedDocumentRows, error: docError } = await supabase
-    .from('documents')
-    .update({ status, ...auditFields })
-    .eq('id', id)
-    .select('id');
+  try {
+    const { data: updatedDocumentRows, error: docError } = await supabase
+      .from('documents')
+      .update({ status, ...auditFields })
+      .eq('id', id)
+      .eq('del_yn', 'N')
+      .select('id');
 
-  if (docError) {
-    throw docError;
-  }
+    if (docError) {
+      throw docError;
+    }
 
-  if (!updatedDocumentRows || updatedDocumentRows.length === 0) {
-    throw new Error('문서 상태 변경 권한이 없거나 DB 정책이 적용되지 않았습니다.');
-  }
+    if (!updatedDocumentRows || updatedDocumentRows.length === 0) {
+      throw new Error('문서 상태를 변경할 수 없습니다. 삭제되었거나 권한이 없는 상태일 수 있습니다.');
+    }
 
-  const { error: orderBookError } = await supabase
-    .from('order_book')
-    .update({ status, ...auditFields })
-    .eq('doc_id', id)
-    .eq('del_yn', 'N');
+    const { error: orderBookError } = await supabase
+      .from('order_book')
+      .update({ status, ...auditFields })
+      .eq('doc_id', id)
+      .eq('del_yn', 'N');
 
-  if (orderBookError) {
-    throw orderBookError;
+    if (orderBookError) {
+      throw orderBookError;
+    }
+  } finally {
+    togglingDocumentIds.delete(id);
   }
 }
 
@@ -305,4 +417,15 @@ function mapDocumentStatus(status: string | null | undefined, cancelled?: boolea
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
   return cancelled ? 'ST01' : 'ST00';
+}
+
+function isPersistedId(value: string | null | undefined) {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return false;
+  if (/^\d+$/.test(normalized)) return true;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized);
+}
+
+function normalizeShippedStatus(value: string | null | undefined) {
+  return value === '출고' ? '출고' : '미출고';
 }

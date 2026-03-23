@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
 import { saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
@@ -76,6 +77,7 @@ function buildClientRemark(client: Client | null) {
 }
 
 export default function DocCreatePage() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<DocForm>(createInitialForm);
@@ -87,6 +89,7 @@ export default function DocCreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const saveLockRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -259,6 +262,10 @@ export default function DocCreatePage() {
   }
 
   async function handleSave() {
+    if (saveLockRef.current || saving) {
+      return;
+    }
+
     const validationMessage = validateForm();
     if (validationMessage) {
       window.alert(validationMessage);
@@ -268,6 +275,7 @@ export default function DocCreatePage() {
     if (!previewData) return;
 
     try {
+      saveLockRef.current = true;
       setSaving(true);
       setError(null);
 
@@ -312,12 +320,14 @@ export default function DocCreatePage() {
         })),
       };
 
-      await saveDocument(payload);
+      const documentId = await saveDocument(payload);
       window.localStorage.setItem('dkh_issueno', previewData.issueNo);
+      navigate(`/doc-history/${documentId}`);
       window.alert('문서 저장이 완료되었습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '문서 저장에 실패했습니다.');
     } finally {
+      saveLockRef.current = false;
       setSaving(false);
     }
   }

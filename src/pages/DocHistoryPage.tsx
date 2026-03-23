@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
@@ -38,6 +38,7 @@ export default function DocHistoryPage() {
   const [previewType, setPreviewType] = useState<PreviewType | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const saveLockRef = useRef(false);
 
   useEffect(() => {
     void reload();
@@ -115,6 +116,36 @@ export default function DocHistoryPage() {
       mounted = false;
     };
   }, [draft?.client]);
+
+  useEffect(() => {
+    if (!draft) {
+      setItems([]);
+      return;
+    }
+
+    const mappedItems: SharedItemRow[] = draft.items.map((item) => {
+      const matched = products.find((p) => p.name1 === item.name1);
+      const pId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
+
+      return {
+        id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        productId: pId,
+        manualName: pId === MANUAL_PRODUCT_ID ? item.name1 : '',
+        manualGubun: pId === MANUAL_PRODUCT_ID ? item.gubun || '기타' : '',
+        orderDate: item.orderDate || draft.orderDate || '',
+        arriveDate: item.arriveDate || draft.arriveDate || '',
+        qty: item.qty || 0,
+        customPallet: item.customPallet ?? null,
+        customBox: item.customBox ?? null,
+        unitPrice: item.unitPrice ?? null,
+        customSupply: item.supply ?? null,
+        vat: typeof item.vat === 'boolean' ? item.vat : true,
+        itemNote: item.itemNote || '',
+      };
+    });
+
+    setItems(mappedItems);
+  }, [draft, products, setItems]);
 
   const filteredDocuments = useMemo(() => {
     const search = keyword.trim().toLowerCase();
@@ -216,28 +247,72 @@ export default function DocHistoryPage() {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
   }
 
+  function buildDraftItems() {
+    return itemSummaries
+      .map((summary, index) => {
+        if (!summary.name1 || summary.qty <= 0) return null;
+
+        const item = items[index];
+        const existingItem = draft?.items.find((row) => row.id === item.id);
+
+        return {
+          id: existingItem?.id ?? item.id,
+          seq: index + 1,
+          name1: summary.name1,
+          name2: summary.name2,
+          gubun: summary.gubun,
+          qty: summary.qty,
+          unitPrice: summary.unitPrice,
+          supply: summary.supply,
+          vat: item.vat,
+          orderDate: emptyToNull(item.orderDate),
+          arriveDate: emptyToNull(item.arriveDate),
+          itemNote: item.itemNote.trim(),
+          eaPerB: summary.eaPerB,
+          boxPerP: summary.boxPerP,
+          customPallet: item.customPallet,
+          customBox: item.customBox,
+          delYn: existingItem?.delYn ?? 'N',
+          updatedAt: existingItem?.updatedAt ?? null,
+          updatedBy: existingItem?.updatedBy ?? '',
+        };
+      })
+      .filter((item): item is DocumentHistoryItem => item !== null);
+  }
+
   async function handleSave() {
-    if (!draft) return;
+    if (!draft || saveLockRef.current || saving) return;
 
     try {
+      saveLockRef.current = true;
       setSaving(true);
       setError(null);
-      await updateDocument(draft);
+      const nextDraft: DocumentHistory = {
+        ...draft,
+        items: buildDraftItems(),
+        totalSupply: totals.supply,
+        totalVat: totals.vat,
+        totalAmount: totals.total,
+      };
+      await updateDocument(nextDraft);
+      setDraft(nextDraft);
       await reload();
       window.alert('수정 저장이 완료되었습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '수정 저장에 실패했습니다.');
     } finally {
+      saveLockRef.current = false;
       setSaving(false);
     }
   }
 
   async function handleToggleCancel() {
-    if (!draft) return;
+    if (!draft || saveLockRef.current || saving) return;
     const nextStatus = draft.status === 'ST01' ? 'ST00' : 'ST01';
     const nextCancelled = nextStatus === 'ST01';
 
     try {
+      saveLockRef.current = true;
       setSaving(true);
       setError(null);
       await toggleDocumentCancelled(draft.id, nextCancelled);
@@ -252,6 +327,7 @@ export default function DocHistoryPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '상태 변경에 실패했습니다.');
     } finally {
+      saveLockRef.current = false;
       setSaving(false);
     }
   }
