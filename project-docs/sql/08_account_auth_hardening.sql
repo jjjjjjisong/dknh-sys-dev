@@ -14,7 +14,7 @@ begin
   ) then
     alter table public.accounts
       add constraint accounts_password_algo_check
-      check (password_algo in ('legacy-plain', 'bcrypt'));
+      check (password_algo in ('legacy-plain', 'bcrypt', 'pbkdf2-sha256'));
   end if;
 end
 $$;
@@ -27,4 +27,3 @@ update public.accounts
 set password_changed_at = coalesce(updated_at, created_at)
 where password_changed_at is null
   and coalesce(password, '') <> '';
-
