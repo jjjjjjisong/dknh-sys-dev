@@ -14,6 +14,7 @@ CNAME
 public/CNAME
 
 # Local logs and scratch files
+logs/
 *.log
 error.log
 vite-dev.log
