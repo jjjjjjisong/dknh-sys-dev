@@ -15,7 +15,9 @@ export function formatIntegerInput(value: number | null) {
 
 export function formatDecimalInput(value: number | null) {
   if (value == null) return '';
-  return value.toString();
+  return value.toLocaleString('ko-KR', {
+    maximumFractionDigits: 10,
+  });
 }
 
 export function parseNullableInteger(value: string) {
@@ -26,7 +28,7 @@ export function parseNullableInteger(value: string) {
 
 export function parseNullableDecimal(value: string) {
   if (!value) return null;
-  const parsed = parseFloat(value);
+  const parsed = parseFloat(value.replace(/,/g, ''));
   return Number.isNaN(parsed) ? null : parsed;
 }
 

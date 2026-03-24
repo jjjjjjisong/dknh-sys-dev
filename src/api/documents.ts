@@ -457,6 +457,29 @@ async function findClientIdByName(clientName: string) {
   return data?.id ?? null;
 }
 
+export async function fetchNextIssueNo() {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('documents')
+    .select('issue_no, created_at')
+    .eq('del_yn', 'N')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  const latestIssueNo = String(data?.issue_no ?? '').trim();
+  const parsed = parseInt(latestIssueNo, 10);
+  if (Number.isNaN(parsed)) {
+    return '26001';
+  }
+
+  return String(parsed + 1);
+}
+
 function mapDocumentStatus(status: string | null | undefined): DocumentStatus {
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';

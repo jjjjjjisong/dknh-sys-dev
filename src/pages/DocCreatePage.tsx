@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
-import { saveDocument } from '../api/documents';
+import { fetchNextIssueNo, saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
@@ -40,12 +40,8 @@ type DocForm = {
 
 
 function createInitialForm(): DocForm {
-  const nextIssueNo = String(
-    (parseInt(window.localStorage.getItem('dkh_issueno') || '26000', 10) || 26000) + 1,
-  );
-
   return {
-    issueNo: nextIssueNo,
+    issueNo: '',
     orderDate: today,
     arriveDate: '',
     client: '',
@@ -100,9 +96,10 @@ export default function DocCreatePage() {
       try {
         setLoading(true);
         setError(null);
-        const rows = await fetchClients();
+        const [rows, nextIssueNo] = await Promise.all([fetchClients(), fetchNextIssueNo()]);
         if (!mounted) return;
         setClients(rows.filter((client) => client.active !== false));
+        setForm((current) => ({ ...current, issueNo: nextIssueNo }));
       } catch (err) {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : '기본정보를 불러오지 못했습니다.');
@@ -344,7 +341,6 @@ export default function DocCreatePage() {
       };
 
       const documentId = await saveDocument(payload);
-      window.localStorage.setItem('dkh_issueno', previewData.issueNo);
       navigate(`/doc-history/${documentId}`);
       window.alert('문서 저장이 완료되었습니다.');
     } catch (err) {

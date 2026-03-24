@@ -1397,6 +1397,21 @@ a {
   min-width: 1180px;
 }
 
+.release-preview-host.release-preview-host-print {
+  width: 273mm;
+  min-width: 273mm;
+  background: #fff;
+  margin: 0 auto;
+}
+
+.release-preview-host.release-preview-host-print .doc-tbl .qty-col {
+  width: 88px;
+}
+
+.release-preview-host.release-preview-host-print .doc-tbl td {
+  overflow: hidden;
+}
+
 .preview-modal-card {
   width: min(1400px, calc(100vw - 48px));
 }
