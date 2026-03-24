@@ -6,13 +6,13 @@ import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
 import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
-import DocumentItemTable, { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
-import type { SharedItemRow, ItemSummary } from '../components/ui/DocumentItemTable';
+import DocumentItemTable, { MANUAL_PRODUCT_ID } from '../components/ui/DocumentItemTable';
+import type { SharedItemRow } from '../components/ui/DocumentItemTable';
 import { useDocumentItems } from '../hooks/useDocumentItems';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
 import type { Product } from '../types/product';
-import { emptyToNull, parseNullableInteger, formatNumber } from '../utils/formatters';
+import { emptyToNull, formatNumber } from '../utils/formatters';
 
 const PAGE_SIZE = 20;
 
@@ -82,29 +82,8 @@ export default function DocHistoryPage() {
         const rows = await fetchProductsByClient(draft.client);
         if (!mounted) return;
         setProducts(rows);
-        if (draft) {
-          const mappedItems: SharedItemRow[] = draft.items.map((item) => {
-            const matched = rows.find((p) => p.name1 === item.name1);
-            const pId = matched ? matched.id : (item.name1 ? MANUAL_PRODUCT_ID : '');
-            return {
-              id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-              productId: pId,
-              manualName: pId === MANUAL_PRODUCT_ID ? item.name1 : '',
-              manualGubun: pId === MANUAL_PRODUCT_ID ? (item.gubun || '기타') : '',
-              orderDate: item.orderDate || draft.orderDate || '',
-              arriveDate: item.arriveDate || draft.arriveDate || '',
-              qty: item.qty || 0,
-              customPallet: item.customPallet ?? null,
-              customBox: item.customBox ?? null,
-              unitPrice: item.unitPrice ?? null,
-              customSupply: item.supply ?? null,
-              vat: typeof item.vat === 'boolean' ? item.vat : true,
-              releaseNote: item.releaseNote || '',
-              invoiceNote: item.invoiceNote || '',
-            };
-          });
-          setItems(mappedItems);
-        }
+        if (!draft) return;
+        setItems(mapDraftItemsToSharedRows(draft, rows));
       } catch (err) {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : '품목 목록을 불러오지 못했습니다.');
@@ -124,29 +103,7 @@ export default function DocHistoryPage() {
       return;
     }
 
-    const mappedItems: SharedItemRow[] = draft.items.map((item) => {
-      const matched = products.find((p) => p.name1 === item.name1);
-      const pId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
-
-      return {
-        id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        productId: pId,
-        manualName: pId === MANUAL_PRODUCT_ID ? item.name1 : '',
-        manualGubun: pId === MANUAL_PRODUCT_ID ? item.gubun || '기타' : '',
-        orderDate: item.orderDate || draft.orderDate || '',
-        arriveDate: item.arriveDate || draft.arriveDate || '',
-        qty: item.qty || 0,
-        customPallet: item.customPallet ?? null,
-        customBox: item.customBox ?? null,
-        unitPrice: item.unitPrice ?? null,
-        customSupply: item.supply ?? null,
-        vat: typeof item.vat === 'boolean' ? item.vat : true,
-        releaseNote: item.releaseNote || '',
-        invoiceNote: item.invoiceNote || '',
-      };
-    });
-
-    setItems(mappedItems);
+    setItems(mapDraftItemsToSharedRows(draft, products));
   }, [draft, products, setItems]);
 
   const filteredDocuments = useMemo(() => {
@@ -185,11 +142,6 @@ export default function DocHistoryPage() {
 
   function openDocument(document: DocumentHistory) {
     navigate(`/doc-history/${document.id}`);
-  }
-
-  function closeEditor() {
-    setPreviewType(null);
-    navigate('/doc-history');
   }
 
   const previewData = useMemo<PreviewData | null>(() => {
@@ -245,9 +197,12 @@ export default function DocHistoryPage() {
     };
   }, [draft, itemSummaries, items, totals]);
 
-
   function updateDraft<K extends keyof DocumentHistory>(key: K, value: DocumentHistory[K]) {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
+  }
+
+  function addDraftItem() {
+    addItem(draft?.orderDate || '', draft?.arriveDate || '');
   }
 
   function buildDraftItems() {
@@ -327,7 +282,7 @@ export default function DocHistoryPage() {
         ),
       );
       await reload();
-      window.alert(nextCancelled ? '거래취소 처리되었습니다.' : '거래취소가 해제되었습니다.');
+      window.alert(nextCancelled ? '거래취소 처리했습니다.' : '거래취소를 해제했습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '상태 변경에 실패했습니다.');
     } finally {
@@ -335,8 +290,6 @@ export default function DocHistoryPage() {
       setSaving(false);
     }
   }
-
-
 
   async function exportToExcel() {
     if (!draft) return;
@@ -349,10 +302,7 @@ export default function DocHistoryPage() {
 
   return (
     <div className="page-content">
-      <PageHeader
-        title={draft ? '발행이력 상세' : '발행 이력'}
-        description=""
-      />
+      <PageHeader title={draft ? '발행이력 상세' : '발행 이력'} description="" />
 
       {error ? <div className="alert alert-error">{error}</div> : null}
 
@@ -372,13 +322,13 @@ export default function DocHistoryPage() {
                 <span>검색 필터</span>
                 <select className="history-filter-select" value={filterType} onChange={(event) => setFilterType(event.target.value as 'all' | 'client' | 'author')}>
                   <option value="all">전체</option>
-                  <option value="client">납품업체</option>
+                  <option value="client">거래처</option>
                   <option value="author">작성자</option>
                 </select>
               </label>
               <label className="field">
                 <span>키워드</span>
-                <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="검색어를 입력해주세요." />
+                <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="검색어를 입력해 주세요." />
               </label>
             </div>
           </section>
@@ -394,7 +344,7 @@ export default function DocHistoryPage() {
                       <th style={{ width: 90, textAlign: 'center' }}>발급번호</th>
                       <th style={{ width: 120, textAlign: 'center' }}>발주일자</th>
                       <th style={{ width: 120, textAlign: 'center' }}>입고일자</th>
-                      <th style={{ minWidth: 180 }}>납품처</th>
+                      <th style={{ minWidth: 180 }}>거래처</th>
                       <th style={{ minWidth: 150 }}>수신처</th>
                       <th style={{ minWidth: 220 }}>품목명</th>
                       <th style={{ width: 90, textAlign: 'right' }}>수량</th>
@@ -448,23 +398,28 @@ export default function DocHistoryPage() {
           </section>
         </>
       ) : (
-        <section className="card">
-          <div className="detail-stack">
-            <div className="doc-form-grid">
-              <label className="field"><span>발주일</span><input type="date" value={draft.orderDate || ''} onChange={(event) => updateDraft('orderDate', emptyToNull(event.target.value))} /></label>
-              <label className="field"><span>입고일</span><input type="date" value={draft.arriveDate || ''} onChange={(event) => updateDraft('arriveDate', emptyToNull(event.target.value))} /></label>
-              <label className="field"><span>발급번호</span><input value={draft.issueNo} onChange={(event) => updateDraft('issueNo', event.target.value)} /></label>
+        <>
+          <section className="doc-main-stack">
+            <section className="card">
+              <div className="card-header">
+                <div>
+                  <h2>湲곕낯 ?뺣낫</h2>
+                </div>
+              </div>
 
-              <label className="field"><span>납품처</span><input value={draft.client} onChange={(event) => updateDraft('client', event.target.value)} /></label>
-              <label className="field"><span>담당자</span><input value={draft.manager} onChange={(event) => updateDraft('manager', event.target.value)} /></label>
-              <label className="field"><span>담당자 연락처</span><input value={draft.managerTel} onChange={(event) => updateDraft('managerTel', event.target.value)} /></label>
-
-              <label className="field"><span>수신처</span><input value={draft.receiver} onChange={(event) => updateDraft('receiver', event.target.value)} /></label>
-              <label className="field field-span-2-cols"><span>납품주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
-
-              <label className="field field-span-2"><span>유의사항</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
-              <label className="field field-span-2"><span>요청사항</span><textarea rows={2} value={draft.requestNote} onChange={(event) => updateDraft('requestNote', event.target.value)} /></label>
-            </div>
+              <div className="doc-form-grid">
+                <label className="field"><span>발주일</span><input type="date" value={draft.orderDate || ''} onChange={(event) => updateDraft('orderDate', emptyToNull(event.target.value))} /></label>
+                <label className="field"><span>입고일</span><input type="date" value={draft.arriveDate || ''} onChange={(event) => updateDraft('arriveDate', emptyToNull(event.target.value))} /></label>
+                <label className="field"><span>발급번호</span><input value={draft.issueNo} onChange={(event) => updateDraft('issueNo', event.target.value)} /></label>
+                <label className="field"><span>거래처</span><input value={draft.client} onChange={(event) => updateDraft('client', event.target.value)} /></label>
+                <label className="field"><span>담당자</span><input value={draft.manager} onChange={(event) => updateDraft('manager', event.target.value)} /></label>
+                <label className="field"><span>담당자 연락처</span><input value={draft.managerTel} onChange={(event) => updateDraft('managerTel', event.target.value)} /></label>
+                <label className="field"><span>수신처</span><input value={draft.receiver} onChange={(event) => updateDraft('receiver', event.target.value)} /></label>
+                <label className="field field-span-2-cols"><span>납품주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
+                <label className="field field-span-2"><span>유의사항</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
+                <label className="field field-span-2"><span>요청사항</span><textarea rows={2} value={draft.requestNote} onChange={(event) => updateDraft('requestNote', event.target.value)} /></label>
+              </div>
+            </section>
 
             <section className="card">
               <div className="card-header">
@@ -499,20 +454,22 @@ export default function DocHistoryPage() {
               totals={totals}
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
-              onAddItem={() => addItem(draft?.orderDate || '', draft?.arriveDate || '')}
+              onAddItem={addDraftItem}
             />
+          </section>
 
-            <div className="doc-action-stack inline">
-              <button className="btn btn-primary" disabled={saving} onClick={handleSave}>{saving ? '저장 중..' : '수정 저장'}</button>
-              <button className={draft.status === 'ST01' ? 'btn btn-secondary' : 'btn btn-danger'} disabled={saving} onClick={handleToggleCancel}>
+          <div className="doc-sticky-actions">
+            <div className="doc-action-stack inline doc-action-stack-sticky">
+              <button className="btn btn-secondary doc-sticky-action-button" onClick={() => setPreviewType('release')}>출고의뢰서</button>
+              <button className="btn btn-secondary doc-sticky-action-button" onClick={() => setPreviewType('invoice')}>거래명세서</button>
+              <button className="btn btn-secondary doc-sticky-action-button" style={{ backgroundColor: '#217346', color: 'white', borderColor: '#217346' }} onClick={exportToExcel}>엑셀 다운로드</button>
+              <button className={draft.status === 'ST01' ? 'btn btn-secondary doc-sticky-action-button' : 'btn btn-danger doc-sticky-action-button'} disabled={saving} onClick={handleToggleCancel}>
                 {draft.status === 'ST01' ? '취소 해제' : '거래취소'}
               </button>
-              <button className="btn btn-secondary" onClick={() => setPreviewType('release')}>출고의뢰서</button>
-              <button className="btn btn-primary" onClick={() => setPreviewType('invoice')}>거래명세서</button>
-              <button className="btn btn-secondary" style={{ backgroundColor: '#217346', color: 'white', borderColor: '#217346' }} onClick={exportToExcel}>엑셀 다운로드</button>
+              <button className="btn btn-primary doc-sticky-action-button" disabled={saving} onClick={handleSave}>{saving ? '저장 중..' : '수정 저장'}</button>
             </div>
           </div>
-        </section>
+        </>
       )}
 
       {previewType && previewData ? (
@@ -520,7 +477,7 @@ export default function DocHistoryPage() {
           type={previewType}
           data={previewData}
           onClose={() => setPreviewType(null)}
-          description="발행 이력에서 수정한 내역이 반영된 미리보기입니다."
+          description="발행 이력에서 수정한 내용이 반영된 미리보기입니다."
         />
       ) : null}
     </div>
@@ -531,14 +488,28 @@ function cloneDocument(document: DocumentHistory): DocumentHistory {
   return { ...document, items: document.items.map((item) => ({ ...item })) };
 }
 
-function findProductOptionValue(item: DocumentHistoryItem, products: Product[]) {
-  const matched = products.find((product) => product.name1 === item.name1);
-  if (matched) return matched.id;
-  return item.name1 ? MANUAL_PRODUCT_ID : '';
-}
+function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]): SharedItemRow[] {
+  return draft.items.map((item) => {
+    const matched = products.find((p) => p.name1 === item.name1);
+    const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
 
-function isManualItem(item: DocumentHistoryItem, products: Product[]) {
-  return findProductOptionValue(item, products) === MANUAL_PRODUCT_ID;
+    return {
+      id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      productId,
+      manualName: productId === MANUAL_PRODUCT_ID ? item.name1 : '',
+      manualGubun: productId === MANUAL_PRODUCT_ID ? item.gubun || '기타' : '',
+      orderDate: item.orderDate || draft.orderDate || '',
+      arriveDate: item.arriveDate || draft.arriveDate || '',
+      qty: item.qty || 0,
+      customPallet: item.customPallet ?? null,
+      customBox: item.customBox ?? null,
+      unitPrice: item.unitPrice ?? null,
+      customSupply: item.supply ?? null,
+      vat: typeof item.vat === 'boolean' ? item.vat : true,
+      releaseNote: item.releaseNote || '',
+      invoiceNote: item.invoiceNote || '',
+    };
+  });
 }
 
 function calculatePallet(item: DocumentHistoryItem) {
@@ -572,26 +543,6 @@ function summarizeItemNames(items: DocumentHistoryItem[]) {
   return `${names[0]} 외 ${names.length - 1}건`;
 }
 
-function getDocumentTotals(items: DocumentHistoryItem[]) {
-  return items.reduce(
-    (acc, item) => {
-      const supply = item.supply || Math.round((item.unitPrice || 0) * item.qty);
-      const vat = item.vat ? Math.round(supply * 0.1) : 0;
-      return {
-        totalSupply: acc.totalSupply + supply,
-        totalVat: acc.totalVat + vat,
-        totalAmount: acc.totalAmount + supply + vat,
-      };
-    },
-    { totalSupply: 0, totalVat: 0, totalAmount: 0 },
-  );
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return '-';
-  return value.slice(0, 16).replace('T', ' ');
-}
-
 function formatCompactDateTime(value: string | null) {
   if (!value) return '-';
   const date = new Date(value);
@@ -615,6 +566,3 @@ function getDateOneYearLater(baseDate: string) {
   date.setFullYear(date.getFullYear() + 1);
   return date.toISOString().slice(0, 10);
 }
-
-
-

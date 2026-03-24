@@ -1114,12 +1114,6 @@ a {
   margin-bottom: 12px;
 }
 
-.detail-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
 .detail-item {
   padding: 14px 0;
   border-bottom: 1px solid #e5e7eb;
