@@ -90,6 +90,8 @@ export default function DocCreatePage() {
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const saveLockRef = useRef(false);
+  const prevBaseOrderDateRef = useRef(form.orderDate);
+  const prevBaseArriveDateRef = useRef(form.arriveDate);
 
   useEffect(() => {
     let mounted = true;
@@ -143,13 +145,32 @@ export default function DocCreatePage() {
   }, [form.client]);
 
   useEffect(() => {
+    const previousOrderDate = prevBaseOrderDateRef.current;
     setItems((current) =>
       current.map((item) => ({
         ...item,
-        arriveDate: form.arriveDate,
+        orderDate:
+          !item.orderDate || item.orderDate === previousOrderDate
+            ? form.orderDate
+            : item.orderDate,
       })),
     );
-  }, [form.arriveDate]);
+    prevBaseOrderDateRef.current = form.orderDate;
+  }, [form.orderDate, setItems]);
+
+  useEffect(() => {
+    const previousArriveDate = prevBaseArriveDateRef.current;
+    setItems((current) =>
+      current.map((item) => ({
+        ...item,
+        arriveDate:
+          !item.arriveDate || item.arriveDate === previousArriveDate
+            ? form.arriveDate
+            : item.arriveDate,
+      })),
+    );
+    prevBaseArriveDateRef.current = form.arriveDate;
+  }, [form.arriveDate, setItems]);
 
   const filteredClients = useMemo(() => {
     const keyword = form.client.trim().toLowerCase();
@@ -174,7 +195,8 @@ export default function DocCreatePage() {
           vat: item.vat,
           orderDate: emptyToNull(item.orderDate),
           arriveDate: emptyToNull(item.arriveDate),
-          itemNote: item.itemNote.trim(),
+          releaseNote: item.releaseNote.trim(),
+          invoiceNote: item.invoiceNote.trim(),
           eaPerB: summary.eaPerB,
           boxPerP: summary.boxPerP,
           pallet: summary.pallet,
@@ -312,7 +334,8 @@ export default function DocCreatePage() {
           vat: item.vat,
           orderDate: item.orderDate,
           arriveDate: item.arriveDate,
-          itemNote: item.itemNote,
+          releaseNote: item.releaseNote,
+          invoiceNote: item.invoiceNote,
           eaPerB: item.eaPerB,
           boxPerP: item.boxPerP,
           customPallet: item.pallet,
@@ -434,7 +457,7 @@ export default function DocCreatePage() {
               <label className="field"><span>담당자 연락처</span><input value={form.managerTel} onChange={(event) => updateForm('managerTel', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field"><span>수신처</span><input required value={form.receiver} onChange={(event) => updateForm('receiver', event.target.value)} /></label>
               <label className="field field-span-2-cols"><span>납품주소</span><input required value={form.deliveryAddr} onChange={(event) => updateForm('deliveryAddr', event.target.value)} /></label>
-              <label className="field field-span-2"><span>비고</span><textarea value={form.remark} onChange={(event) => updateForm('remark', event.target.value)} /></label>
+              <label className="field field-span-2"><span>유의사항</span><textarea value={form.remark} onChange={(event) => updateForm('remark', event.target.value)} /></label>
               <label className="field field-span-2"><span>요청사항</span><textarea value={form.requestNote} onChange={(event) => updateForm('requestNote', event.target.value)} /></label>
             </div>
           )}

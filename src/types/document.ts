@@ -11,7 +11,8 @@ export type DocumentItemPayload = {
   vat: boolean;
   orderDate: string | null;
   arriveDate: string | null;
-  itemNote: string;
+  releaseNote: string;
+  invoiceNote: string;
   eaPerB: number | null;
   boxPerP: number | null;
   customPallet: number | null;
@@ -57,7 +58,8 @@ export type DocumentHistoryItem = {
   vat: boolean;
   orderDate: string | null;
   arriveDate: string | null;
-  itemNote: string;
+  releaseNote: string;
+  invoiceNote: string;
   eaPerB: number | null;
   boxPerP: number | null;
   customPallet: number | null;

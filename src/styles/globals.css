@@ -929,11 +929,11 @@ a {
 }
 
 .doc-item-name-cell {
-  min-width: 280px;
+  min-width: 240px;
 }
 
 .doc-item-name-input {
-  min-width: 220px;
+  min-width: 190px;
 }
 
 .doc-cell-control {
@@ -959,12 +959,12 @@ a {
 }
 
 .doc-number-input-qty {
-  width: 44px;
+  width: 58px;
   text-align: right;
 }
 
 .doc-number-input-pallet-box {
-  width: 110px;
+  width: 92px;
   text-align: right;
 }
 
@@ -974,7 +974,7 @@ a {
 }
 
 .doc-number-input-supply {
-  width: 88px;
+  width: 116px;
   text-align: right;
 }
 
@@ -997,7 +997,7 @@ a {
 
 .doc-pallet-col,
 .doc-box-col {
-  width: 110px;
+  width: 92px;
 }
 
 .doc-delete-button {

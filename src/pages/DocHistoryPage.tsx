@@ -99,7 +99,8 @@ export default function DocHistoryPage() {
               unitPrice: item.unitPrice ?? null,
               customSupply: item.supply ?? null,
               vat: typeof item.vat === 'boolean' ? item.vat : true,
-              itemNote: item.itemNote || '',
+              releaseNote: item.releaseNote || '',
+              invoiceNote: item.invoiceNote || '',
             };
           });
           setItems(mappedItems);
@@ -140,7 +141,8 @@ export default function DocHistoryPage() {
         unitPrice: item.unitPrice ?? null,
         customSupply: item.supply ?? null,
         vat: typeof item.vat === 'boolean' ? item.vat : true,
-        itemNote: item.itemNote || '',
+        releaseNote: item.releaseNote || '',
+        invoiceNote: item.invoiceNote || '',
       };
     });
 
@@ -207,7 +209,8 @@ export default function DocHistoryPage() {
           vat: item.vat,
           orderDate: emptyToNull(item.orderDate),
           arriveDate: emptyToNull(item.arriveDate),
-          itemNote: item.itemNote.trim(),
+          releaseNote: item.releaseNote.trim(),
+          invoiceNote: item.invoiceNote.trim(),
           eaPerB: summary.eaPerB,
           boxPerP: summary.boxPerP,
           pallet: summary.pallet,
@@ -267,7 +270,8 @@ export default function DocHistoryPage() {
           vat: item.vat,
           orderDate: emptyToNull(item.orderDate),
           arriveDate: emptyToNull(item.arriveDate),
-          itemNote: item.itemNote.trim(),
+          releaseNote: item.releaseNote.trim(),
+          invoiceNote: item.invoiceNote.trim(),
           eaPerB: summary.eaPerB,
           boxPerP: summary.boxPerP,
           customPallet: item.customPallet,
@@ -458,7 +462,7 @@ export default function DocHistoryPage() {
               <label className="field"><span>수신처</span><input value={draft.receiver} onChange={(event) => updateDraft('receiver', event.target.value)} /></label>
               <label className="field field-span-2-cols"><span>납품주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
 
-              <label className="field field-span-2"><span>비고</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
+              <label className="field field-span-2"><span>유의사항</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
               <label className="field field-span-2"><span>요청사항</span><textarea rows={2} value={draft.requestNote} onChange={(event) => updateDraft('requestNote', event.target.value)} /></label>
             </div>
 

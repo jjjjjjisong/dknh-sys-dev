@@ -95,6 +95,8 @@ create table if not exists public.document_items (
   order_date date null,
   arrive_date date null,
   item_note text not null default '',
+  release_note text not null default '',
+  invoice_note text not null default '',
   ea_per_b integer null,
   box_per_p integer null,
   custom_pallet numeric null,

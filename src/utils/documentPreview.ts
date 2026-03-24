@@ -17,7 +17,7 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
         <td class="c pallet-col">${escapeHtml(palletValue)}</td>
         <td class="c box-col">${escapeHtml(boxValue)}</td>
         <td class="c qty-col">${escapeHtml(formatNumber(item.qty))}</td>
-        <td class="l note-col">${escapeHtml(item.itemNote || '')}</td>
+        <td class="l note-col">${escapeHtml(item.releaseNote || '')}</td>
       </tr>`;
     })
     .join('');
@@ -92,7 +92,7 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
         <td class="r price-col">${item.unitPrice ? escapeHtml(formatNumber(item.unitPrice)) : ''}</td>
         <td class="r supply-col">${item.supply ? escapeHtml(formatNumber(item.supply)) : ''}</td>
         <td class="r vat-col">${item.vat ? escapeHtml(formatNumber(vatAmount)) : ''}</td>
-        <td class="l note-col">${escapeHtml(item.itemNote || '')}</td>
+        <td class="l note-col">${escapeHtml(item.invoiceNote || '')}</td>
       </tr>`;
     })
     .join('');
