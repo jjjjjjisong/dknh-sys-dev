@@ -42,7 +42,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text-1);
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 button,
@@ -95,7 +95,7 @@ a {
 .topbar-clock,
 .topbar-user {
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .app-body {
@@ -120,7 +120,7 @@ a {
 }
 
 .sidebar-section-title {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-3);
   margin-bottom: 6px;
   font-weight: 600;
@@ -138,7 +138,7 @@ a {
   padding: 8px 10px;
   border-radius: var(--r);
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 13.5px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -183,7 +183,7 @@ a {
 .page-description {
   margin: 3px 0 0;
   color: var(--text-3);
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .card {
@@ -205,7 +205,7 @@ a {
 .card-header h2,
 .placeholder-panel h2 {
   margin: 0 0 6px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -213,7 +213,7 @@ a {
 .placeholder-panel p {
   margin: 0;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .stats-grid {
@@ -299,7 +299,7 @@ a {
 
 .dashboard-summary-meta {
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .dashboard-chart-card {
@@ -323,7 +323,7 @@ a {
 
 .dashboard-card-head span {
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 12.5px;
   white-space: nowrap;
 }
 
@@ -456,7 +456,7 @@ a {
 
 .dashboard-bar-label,
 .dashboard-bar-value {
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .dashboard-bar-label {
@@ -564,7 +564,7 @@ a {
 .toolbar-meta {
   color: var(--text-3);
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .inline-check {
@@ -573,7 +573,7 @@ a {
   gap: 8px;
   color: var(--text-2);
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .inline-check input {
@@ -588,7 +588,7 @@ a {
   padding: 0 11px;
   background: var(--surface);
   color: var(--text-1);
-  font-size: 13px;
+  font-size: 14px;
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
 }
 
@@ -646,7 +646,7 @@ a {
   text-align: left;
   padding: 8px 10px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-1);
   cursor: pointer;
 }
@@ -663,7 +663,7 @@ a {
   width: 100%;
   border-collapse: collapse;
   min-width: 960px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .table th,
@@ -672,7 +672,7 @@ a {
   text-align: left;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-1);
 }
 
@@ -680,7 +680,7 @@ a {
   background: var(--bg);
   color: var(--text-3);
   font-weight: 600;
-  font-size: 11.5px;
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -757,7 +757,7 @@ a {
   border-radius: var(--r);
   background: var(--surface);
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 13.5px;
   cursor: pointer;
 }
 
@@ -779,7 +779,7 @@ a {
 .alert {
   padding: 12px 14px;
   border-radius: var(--r);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .alert-error {
@@ -818,7 +818,7 @@ a {
   height: 30px;
   padding: 0 10px;
   line-height: 1;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -829,7 +829,7 @@ a {
   justify-content: center;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   background: #eef4ff;
   color: var(--accent);
@@ -859,7 +859,7 @@ a {
   border-radius: var(--r);
   border: 1px solid transparent;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   line-height: 1.2;
@@ -897,7 +897,7 @@ a {
 .btn-sm {
   height: 30px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .placeholder-panel {
@@ -942,7 +942,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 0 11px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   background: var(--surface);
 }
@@ -980,7 +980,7 @@ a {
 
 .doc-item-note {
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -1063,7 +1063,7 @@ a {
 
 .doc-total-item span {
   color: #6b7280;
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .doc-total-item strong {
@@ -1131,7 +1131,7 @@ a {
 
 .detail-label {
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: 13.5px;
   color: #6b7280;
   font-weight: 700;
 }
@@ -1154,7 +1154,7 @@ a {
   border-radius: 999px;
   background: #fef3c7;
   color: #92400e;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -1199,7 +1199,7 @@ a {
 .login-hero-subtitle {
   margin: 0;
   color: #7b8797;
-  font-size: 14px;
+  font-size: 14.5px;
   text-align: center;
 }
 
@@ -1219,7 +1219,7 @@ a {
 .login-card-description {
   margin: 0;
   color: var(--text-3);
-  font-size: 14px;
+  font-size: 14.5px;
 }
 
 .field {
@@ -1230,7 +1230,7 @@ a {
 }
 
 .field span {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--text-2);
 }
@@ -1240,7 +1240,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 0 11px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   background: var(--surface);
   color: var(--text-1);
@@ -1251,7 +1251,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 0 36px 0 11px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   background: var(--surface);
   color: var(--text-1);
@@ -1271,7 +1271,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 8px 11px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: "Pretendard Variable", "Pretendard", sans-serif;
   background: var(--surface);
   color: var(--text-1);
@@ -1337,7 +1337,7 @@ a {
 .modal-head p {
   margin: 0;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .modal-form {
@@ -1378,7 +1378,7 @@ a {
   border-radius: 4px;
   padding: 0 8px;
   background: var(--surface);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .release-preview-wrap {
@@ -1584,7 +1584,7 @@ a {
 .history-editor-title p {
   margin: 0;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .history-edit-grid {
