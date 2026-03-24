@@ -17,7 +17,8 @@ export function createEmptySharedItem(baseOrderDate: string, baseArriveDate: str
     unitPrice: null,
     customSupply: null,
     vat: true,
-    itemNote: '',
+    releaseNote: '',
+    invoiceNote: '',
   };
 }
 

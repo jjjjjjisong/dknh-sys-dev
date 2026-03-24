@@ -19,7 +19,7 @@ type Props = {
 export default function DocumentPreviewModal({ type, data, onClose, description }: Props): JSX.Element {
   const title = type === 'release' ? '출고의뢰서 미리보기' : '거래명세서 미리보기';
   const html = type === 'release' ? buildReleasePreviewHtml(data) : buildInvoicePreviewHtml(data);
-  const styles = type === 'release' ? getReleasePreviewStyles(false) : getInvoicePreviewStyles(false);
+  const styles = type === 'release' ? getReleasePreviewStyles(true) : getInvoicePreviewStyles(false);
 
   function handlePrint() {
     const iframe = document.createElement('iframe');
@@ -82,7 +82,7 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
         <div className={`release-preview-wrap in-modal ${type === 'invoice' ? 'invoice-preview-wrap' : ''}`}>
           <style>{styles}</style>
           <div
-            className={`release-preview-host ${type === 'invoice' ? 'invoice-preview-host' : ''}`}
+            className={`release-preview-host ${type === 'release' ? 'release-preview-host-print' : ''} ${type === 'invoice' ? 'invoice-preview-host' : ''}`}
             dangerouslySetInnerHTML={{ __html: html }}
           />
         </div>

@@ -10,7 +10,7 @@ import {
 } from '../../utils/formatters';
 
 export const MANUAL_PRODUCT_ID = '__manual__';
-export const DEFAULT_GUBUN_OPTIONS = ['컵', '컵뚜껑', '실링', '스트로우', '기타'];
+export const DEFAULT_GUBUN_OPTIONS = ['캔', '캔뚜껑', '라벨', '스트로우', '기타'];
 
 export type SharedItemRow = {
   id: string;
@@ -25,7 +25,8 @@ export type SharedItemRow = {
   unitPrice: number | null;
   customSupply: number | null;
   vat: boolean;
-  itemNote: string;
+  releaseNote: string;
+  invoiceNote: string;
 };
 
 export type ItemSummary = {
@@ -100,7 +101,8 @@ export default function DocumentItemTable({
               <th>단가</th>
               <th>공급가액</th>
               <th>VAT</th>
-              <th className="doc-note-col">비고</th>
+              <th className="doc-note-col">비고1</th>
+              <th className="doc-note-col">비고2</th>
               <th>관리</th>
             </tr>
           </thead>
@@ -277,7 +279,9 @@ export default function DocumentItemTable({
                       <input
                         type="checkbox"
                         checked={item.vat}
-                        onChange={(event) => onUpdateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))
+                        }
                       />
                       포함
                     </label>
@@ -286,11 +290,22 @@ export default function DocumentItemTable({
                     <textarea
                       className="doc-cell-control doc-item-note"
                       rows={1}
-                      value={item.itemNote}
+                      value={item.releaseNote}
                       onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({ ...current, itemNote: event.target.value }))
+                        onUpdateItem(item.id, (current) => ({ ...current, releaseNote: event.target.value }))
                       }
-                      placeholder="비고"
+                      placeholder="비고(출고의뢰서)"
+                    />
+                  </td>
+                  <td className="doc-note-col">
+                    <textarea
+                      className="doc-cell-control doc-item-note"
+                      rows={1}
+                      value={item.invoiceNote}
+                      onChange={(event) =>
+                        onUpdateItem(item.id, (current) => ({ ...current, invoiceNote: event.target.value }))
+                      }
+                      placeholder="비고(거래명세서)"
                     />
                   </td>
                   <td>

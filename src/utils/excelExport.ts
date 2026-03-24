@@ -8,7 +8,7 @@ export interface InvoiceItem {
   unitPrice: number;
   supply: number;
   vat: boolean;
-  itemNote: string;
+  invoiceNote: string;
   orderDate?: string | null;
   arriveDate?: string | null;
 }
@@ -263,7 +263,7 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
         const vatAmount = item.vat ? Math.round((item.supply || 0) * 0.1) : 0;
         ws.getCell(startRow, 8).value = item.supply ? Number(item.supply) : '';
         ws.getCell(startRow, 9).value = item.vat ? vatAmount : '';
-        ws.getCell(startRow, 10).value = item.itemNote || '';
+        ws.getCell(startRow, 10).value = item.invoiceNote || '';
       } else {
         ws.mergeCells(startRow, 2, startRow, 4);
         ws.mergeCells(startRow, 6, startRow, 7);

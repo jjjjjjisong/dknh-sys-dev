@@ -9,7 +9,8 @@ export type SharedPreviewItem = {
   vat: boolean;
   orderDate: string | null;
   arriveDate: string | null;
-  itemNote: string;
+  releaseNote: string;
+  invoiceNote: string;
   eaPerB: number | null;
   boxPerP: number | null;
   pallet: number | null;

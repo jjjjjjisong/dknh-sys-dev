@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
-import { saveDocument } from '../api/documents';
+import { fetchNextIssueNo, saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
@@ -40,12 +40,8 @@ type DocForm = {
 
 
 function createInitialForm(): DocForm {
-  const nextIssueNo = String(
-    (parseInt(window.localStorage.getItem('dkh_issueno') || '26000', 10) || 26000) + 1,
-  );
-
   return {
-    issueNo: nextIssueNo,
+    issueNo: '',
     orderDate: today,
     arriveDate: '',
     client: '',
@@ -90,6 +86,8 @@ export default function DocCreatePage() {
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const saveLockRef = useRef(false);
+  const prevBaseOrderDateRef = useRef(form.orderDate);
+  const prevBaseArriveDateRef = useRef(form.arriveDate);
 
   useEffect(() => {
     let mounted = true;
@@ -98,9 +96,10 @@ export default function DocCreatePage() {
       try {
         setLoading(true);
         setError(null);
-        const rows = await fetchClients();
+        const [rows, nextIssueNo] = await Promise.all([fetchClients(), fetchNextIssueNo()]);
         if (!mounted) return;
         setClients(rows.filter((client) => client.active !== false));
+        setForm((current) => ({ ...current, issueNo: nextIssueNo }));
       } catch (err) {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : '기본정보를 불러오지 못했습니다.');
@@ -143,13 +142,32 @@ export default function DocCreatePage() {
   }, [form.client]);
 
   useEffect(() => {
+    const previousOrderDate = prevBaseOrderDateRef.current;
     setItems((current) =>
       current.map((item) => ({
         ...item,
-        arriveDate: form.arriveDate,
+        orderDate:
+          !item.orderDate || item.orderDate === previousOrderDate
+            ? form.orderDate
+            : item.orderDate,
       })),
     );
-  }, [form.arriveDate]);
+    prevBaseOrderDateRef.current = form.orderDate;
+  }, [form.orderDate, setItems]);
+
+  useEffect(() => {
+    const previousArriveDate = prevBaseArriveDateRef.current;
+    setItems((current) =>
+      current.map((item) => ({
+        ...item,
+        arriveDate:
+          !item.arriveDate || item.arriveDate === previousArriveDate
+            ? form.arriveDate
+            : item.arriveDate,
+      })),
+    );
+    prevBaseArriveDateRef.current = form.arriveDate;
+  }, [form.arriveDate, setItems]);
 
   const filteredClients = useMemo(() => {
     const keyword = form.client.trim().toLowerCase();
@@ -174,7 +192,8 @@ export default function DocCreatePage() {
           vat: item.vat,
           orderDate: emptyToNull(item.orderDate),
           arriveDate: emptyToNull(item.arriveDate),
-          itemNote: item.itemNote.trim(),
+          releaseNote: item.releaseNote.trim(),
+          invoiceNote: item.invoiceNote.trim(),
           eaPerB: summary.eaPerB,
           boxPerP: summary.boxPerP,
           pallet: summary.pallet,
@@ -312,7 +331,8 @@ export default function DocCreatePage() {
           vat: item.vat,
           orderDate: item.orderDate,
           arriveDate: item.arriveDate,
-          itemNote: item.itemNote,
+          releaseNote: item.releaseNote,
+          invoiceNote: item.invoiceNote,
           eaPerB: item.eaPerB,
           boxPerP: item.boxPerP,
           customPallet: item.pallet,
@@ -321,7 +341,6 @@ export default function DocCreatePage() {
       };
 
       const documentId = await saveDocument(payload);
-      window.localStorage.setItem('dkh_issueno', previewData.issueNo);
       navigate(`/doc-history/${documentId}`);
       window.alert('문서 저장이 완료되었습니다.');
     } catch (err) {
@@ -434,7 +453,7 @@ export default function DocCreatePage() {
               <label className="field"><span>담당자 연락처</span><input value={form.managerTel} onChange={(event) => updateForm('managerTel', event.target.value)} placeholder="납품처 선택 시 자동 입력" /></label>
               <label className="field"><span>수신처</span><input required value={form.receiver} onChange={(event) => updateForm('receiver', event.target.value)} /></label>
               <label className="field field-span-2-cols"><span>납품주소</span><input required value={form.deliveryAddr} onChange={(event) => updateForm('deliveryAddr', event.target.value)} /></label>
-              <label className="field field-span-2"><span>비고</span><textarea value={form.remark} onChange={(event) => updateForm('remark', event.target.value)} /></label>
+              <label className="field field-span-2"><span>유의사항</span><textarea value={form.remark} onChange={(event) => updateForm('remark', event.target.value)} /></label>
               <label className="field field-span-2"><span>요청사항</span><textarea value={form.requestNote} onChange={(event) => updateForm('requestNote', event.target.value)} /></label>
             </div>
           )}
