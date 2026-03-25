@@ -618,5 +618,6 @@ function formatMaybeNumber(value: number | null) {
 }
 
 function formatInteger(value: number) {
+  // Keep dashboard counts consistently formatted for Korean locale.
   return value.toLocaleString('ko-KR');
 }
