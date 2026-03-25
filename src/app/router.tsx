@@ -6,6 +6,7 @@ import DocHistoryPage from '../pages/DocHistoryPage';
 import OrderBookPage from '../pages/OrderBookPage';
 import MasterClientPage from '../pages/MasterClientPage';
 import MasterProductPage from '../pages/MasterProductPage';
+import MasterSupplierPage from '../pages/MasterSupplierPage';
 import AccountPage from '../pages/AccountPage';
 import LoginPage from '../pages/LoginPage';
 import { getStoredUser, isAdminUser } from '../lib/session';
@@ -53,6 +54,7 @@ export const router = createHashRouter([
       { path: 'doc-history/:documentId', element: <DocHistoryPage /> },
       { path: 'order-book', element: <OrderBookPage /> },
       { path: 'master-client', element: <MasterClientPage /> },
+      { path: 'master-supplier', element: <MasterSupplierPage /> },
       { path: 'master-product', element: <MasterProductPage /> },
       {
         element: <AdminOnlyRoute />,

@@ -1428,6 +1428,61 @@ a {
   width: min(100%, 1100px);
 }
 
+.supplier-import-modal-card {
+  width: min(100%, 816px);
+}
+
+.supplier-import-modal-card .table-wrap {
+  overflow-x: hidden;
+}
+
+.supplier-import-modal-card .table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.supplier-import-modal-card .table th:nth-child(1),
+.supplier-import-modal-card .table td:nth-child(1) {
+  width: 190px;
+}
+
+.supplier-import-modal-card .table th:nth-child(2),
+.supplier-import-modal-card .table td:nth-child(2) {
+  width: 90px;
+}
+
+.history-supplier-modal-card {
+  width: min(100%, 816px);
+}
+
+.history-supplier-modal-card .table th:nth-child(2),
+.history-supplier-modal-card .table td:nth-child(2),
+.history-supplier-modal-card .table th:nth-child(5),
+.history-supplier-modal-card .table td:nth-child(5),
+.history-supplier-modal-card .table th:nth-child(6),
+.history-supplier-modal-card .table td:nth-child(6),
+.history-supplier-modal-card .table th:nth-child(7),
+.history-supplier-modal-card .table td:nth-child(7) {
+  display: none;
+}
+
+.modal-select-row {
+  cursor: pointer;
+}
+
+.modal-select-row:hover td {
+  background: #f8fbff;
+}
+
+.supplier-modal-name,
+.supplier-modal-address {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .doc-import-trigger-button {
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease,
     background-color 0.18s ease;

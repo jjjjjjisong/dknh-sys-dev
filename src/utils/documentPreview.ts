@@ -84,20 +84,26 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
   const rows = data.items
     .map((item) => {
       const vatAmount = item.vat ? Math.round(item.supply * 0.1) : 0;
+      const unitPriceDisplay = item.unitPrice > 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
+      const supplyDisplay = item.supply > 0 ? escapeHtml(formatNumber(item.supply)) : '';
+      const vatDisplay = vatAmount > 0 ? escapeHtml(formatNumber(vatAmount)) : '';
 
       return `<tr>
         <td class="c date-col">${escapeHtml(formatMonthDay(item.arriveDate || data.arriveDate || ''))}</td>
         <td class="l product-col">${escapeHtml(item.name2 || item.name1)}</td>
         <td class="r qty-col">${escapeHtml(formatNumber(item.qty))}</td>
-        <td class="r price-col">${item.unitPrice ? escapeHtml(formatNumber(item.unitPrice)) : ''}</td>
-        <td class="r supply-col">${item.supply ? escapeHtml(formatNumber(item.supply)) : ''}</td>
-        <td class="r vat-col">${item.vat ? escapeHtml(formatNumber(vatAmount)) : ''}</td>
+        <td class="r price-col">${unitPriceDisplay}</td>
+        <td class="r supply-col">${supplyDisplay}</td>
+        <td class="r vat-col">${vatDisplay}</td>
         <td class="l note-col">${escapeHtml(item.invoiceNote || '')}</td>
       </tr>`;
     })
     .join('');
 
   const totalQty = data.items.reduce((sum, item) => sum + item.qty, 0);
+  const totalSupplyDisplay = data.totalSupply > 0 ? escapeHtml(formatNumber(data.totalSupply)) : '';
+  const totalVatDisplay = data.totalVat > 0 ? escapeHtml(formatNumber(data.totalVat)) : '';
+  const totalAmountDisplay = data.totalAmount > 0 ? escapeHtml(formatNumber(data.totalAmount)) : '';
   const issueDateFmt = data.arriveDate ? formatKoreanDate(data.arriveDate) : formatKoreanDate(today);
 
   const invoicePiece = (suffix: string) => `<div class="invoice-doc">
@@ -123,7 +129,7 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
       </tr>
     </table>
     <table class="invoice-total-table">
-      <tr><td class="label-cell">합계금액</td><td class="value-cell">${escapeHtml(formatNumber(data.totalAmount))} 원</td></tr>
+      <tr><td class="label-cell">합계금액</td><td class="value-cell">${totalAmountDisplay ? `${totalAmountDisplay} 원` : ''}</td></tr>
     </table>
     <table class="invoice-items-table">
       <thead>
@@ -131,8 +137,8 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
       </thead>
       <tbody>
         ${rows}
-        <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r">${escapeHtml(formatNumber(totalQty))}</td><td></td><td class="r">${escapeHtml(formatNumber(data.totalSupply))}</td><td class="r">${escapeHtml(formatNumber(data.totalVat))}</td><td></td></tr>
-        <tr class="grand-row"><td colspan="4" class="c">총 금 액</td><td class="r">${escapeHtml(formatNumber(data.totalAmount))}</td><td class="c">인수자</td><td></td></tr>
+        <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r">${escapeHtml(formatNumber(totalQty))}</td><td></td><td class="r">${totalSupplyDisplay}</td><td class="r">${totalVatDisplay}</td><td></td></tr>
+        <tr class="grand-row"><td colspan="4" class="c">총 금 액</td><td class="r">${totalAmountDisplay}</td><td class="c">인수자</td><td></td></tr>
       </tbody>
     </table>
     <div class="invoice-note-area">

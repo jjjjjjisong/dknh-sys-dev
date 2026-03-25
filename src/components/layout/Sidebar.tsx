@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
   { group: '문서', label: '수주대장', to: '/order-book' },
   { group: '관리', label: '납품처 관리', to: '/master-client' },
   { group: '관리', label: '품목 관리', to: '/master-product' },
+  { group: '관리', label: '공급자 관리', to: '/master-supplier' },
   { group: '관리자', label: '계정 관리', to: '/account' },
 ];
 
@@ -43,9 +44,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
-                  isActive ? 'sidebar-link active' : 'sidebar-link'
-                }
+                className={({ isActive }) => (isActive ? 'sidebar-link active' : 'sidebar-link')}
               >
                 {item.label}
               </NavLink>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
 import { fetchDocuments, fetchNextIssueNo, saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
+import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
 import { exportInvoiceToExcel } from '../utils/excelExport';
@@ -14,6 +15,7 @@ import { useDocumentItems, createEmptySharedItem } from '../hooks/useDocumentIte
 import type { Client } from '../types/client';
 import type { DocumentHistory, DocumentPayload } from '../types/document';
 import type { Product } from '../types/product';
+import type { Supplier } from '../types/supplier';
 import type { SharedPreviewData as PreviewData, SharedPreviewItem as PreviewItem } from '../types/documentPreview';
 import { emptyToNull, formatIntegerInput, parseNullableInteger, stripNonNumeric, formatNumber } from '../utils/formatters';
 
@@ -52,12 +54,12 @@ function createInitialForm(): DocForm {
     deliveryAddr: '',
     remark: '',
     requestNote: '',
-    supplierBizNo: '113 - 88 - 02729',
-    supplierName: '주식회사 에이치',
-    supplierOwner: '김주형',
-    supplierAddress: '서울 동대문구 천호대로 21, 5층 507호',
-    supplierBusinessType: '도매 및 소매업',
-    supplierBusinessItem: '생활용품(플라스틱용기)',
+    supplierBizNo: '',
+    supplierName: '',
+    supplierOwner: '',
+    supplierAddress: '',
+    supplierBusinessType: '',
+    supplierBusinessItem: '',
   };
 }
 
@@ -73,9 +75,21 @@ function buildClientRemark(client: Client | null) {
   return parts.join(' / ');
 }
 
+function hasSupplierValues(form: DocForm) {
+  return [
+    form.supplierBizNo,
+    form.supplierName,
+    form.supplierOwner,
+    form.supplierAddress,
+    form.supplierBusinessType,
+    form.supplierBusinessItem,
+  ].some((value) => value.trim().length > 0);
+}
+
 export default function DocCreatePage() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<DocForm>(createInitialForm);
   const clientProducts = useMemo(() => products, [products]);
@@ -86,6 +100,9 @@ export default function DocCreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
+  const [supplierLoading, setSupplierLoading] = useState(false);
+  const [supplierKeyword, setSupplierKeyword] = useState('');
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importDocuments, setImportDocuments] = useState<DocumentHistory[]>([]);
@@ -101,10 +118,34 @@ export default function DocCreatePage() {
       try {
         setLoading(true);
         setError(null);
-        const [rows, nextIssueNo] = await Promise.all([fetchClients(), fetchNextIssueNo()]);
+        const [rows, supplierRows, nextIssueNo] = await Promise.all([
+          fetchClients(),
+          fetchSuppliers(),
+          fetchNextIssueNo(),
+        ]);
         if (!mounted) return;
-        setClients(rows.filter((client) => client.active !== false));
-        setForm((current) => ({ ...current, issueNo: nextIssueNo }));
+        const activeClients = rows.filter((client) => client.active !== false);
+        const activeSuppliers = supplierRows.filter((supplier) => supplier.active !== false);
+        const defaultSupplier = activeSuppliers.find((supplier) => supplier.id === '1');
+
+        setClients(activeClients);
+        setSuppliers(activeSuppliers);
+        setForm((current) => {
+          if (!defaultSupplier || hasSupplierValues(current)) {
+            return { ...current, issueNo: nextIssueNo };
+          }
+
+          return {
+            ...current,
+            issueNo: nextIssueNo,
+            supplierBizNo: defaultSupplier.bizNo,
+            supplierName: defaultSupplier.name,
+            supplierOwner: defaultSupplier.owner,
+            supplierAddress: defaultSupplier.address,
+            supplierBusinessType: defaultSupplier.businessType,
+            supplierBusinessItem: defaultSupplier.businessItem,
+          };
+        });
       } catch (err) {
         if (!mounted) return;
         setError(err instanceof Error ? err.message : '기본 정보를 불러오지 못했습니다.');
@@ -237,6 +278,18 @@ export default function DocCreatePage() {
 
   function updateForm<K extends keyof DocForm>(key: K, value: DocForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function applySupplier(supplier: Supplier) {
+    setForm((current) => ({
+      ...current,
+      supplierBizNo: supplier.bizNo,
+      supplierName: supplier.name,
+      supplierOwner: supplier.owner,
+      supplierAddress: supplier.address,
+      supplierBusinessType: supplier.businessType,
+      supplierBusinessItem: supplier.businessItem,
+    }));
   }
 
   function handleClientChange(clientName: string) {
@@ -407,6 +460,26 @@ export default function DocCreatePage() {
     }
   }
 
+  async function openSupplierModal() {
+    try {
+      setSupplierLoading(true);
+      setError(null);
+      const rows = await fetchSuppliers();
+      setSuppliers(rows.filter((supplier) => supplier.active !== false));
+      setSupplierModalOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '불러올 공급자 목록을 가져오지 못했습니다.');
+    } finally {
+      setSupplierLoading(false);
+    }
+  }
+
+  function handleSelectSupplier(supplier: Supplier) {
+    applySupplier(supplier);
+    setSupplierModalOpen(false);
+    setSupplierKeyword('');
+  }
+
   async function handleImportDocument(document: DocumentHistory) {
     try {
       setImportLoading(true);
@@ -460,6 +533,25 @@ export default function DocCreatePage() {
         .includes(keyword),
     );
   }, [importDocuments, importKeyword]);
+
+  const filteredSuppliers = useMemo(() => {
+    const keyword = supplierKeyword.trim().toLowerCase();
+    if (!keyword) return suppliers;
+
+    return suppliers.filter((supplier) =>
+      [
+        supplier.name,
+        supplier.bizNo,
+        supplier.owner,
+        supplier.address,
+        supplier.businessType,
+        supplier.businessItem,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
+    );
+  }, [supplierKeyword, suppliers]);
 
 
 
@@ -538,13 +630,18 @@ export default function DocCreatePage() {
             <div>
               <h2>공급자 정보</h2>
             </div>
-            <button
-              className="btn btn-secondary"
-              type="button"
-              onClick={() => setSupplierSectionOpen((current) => !current)}
-            >
-              {supplierSectionOpen ? '접기' : '펼치기'}
-            </button>
+            <div className="button-row">
+              <button className="btn btn-secondary" type="button" onClick={() => void openSupplierModal()}>
+                불러오기
+              </button>
+              <button
+                className="btn btn-secondary"
+                type="button"
+                onClick={() => setSupplierSectionOpen((current) => !current)}
+              >
+                {supplierSectionOpen ? '접기' : '펼치기'}
+              </button>
+            </div>
           </div>
           {supplierSectionOpen ? (
             <div className="doc-form-grid">
@@ -585,6 +682,75 @@ export default function DocCreatePage() {
           onClose={() => setPreviewType(null)}
         />
       ) : null}
+
+      <Modal
+        open={supplierModalOpen}
+        title="공급자 불러오기"
+        cardClassName="supplier-import-modal-card"
+        onClose={() => {
+          if (supplierLoading) return;
+          setSupplierModalOpen(false);
+          setSupplierKeyword('');
+        }}
+        closeOnOverlayClick={false}
+        footer={
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setSupplierModalOpen(false);
+              setSupplierKeyword('');
+            }}
+            disabled={supplierLoading}
+          >
+            닫기
+          </button>
+        }
+      >
+        <div className="modal-head-actions">
+          <input
+            className="search-input"
+            value={supplierKeyword}
+            onChange={(event) => setSupplierKeyword(event.target.value)}
+            placeholder="상호, 등록번호, 성명, 주소로 검색"
+          />
+        </div>
+
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: 190 }}>상호</th>
+                <th style={{ width: 90 }}>성명</th>
+                <th>사업장주소</th>
+              </tr>
+            </thead>
+            <tbody>
+              {supplierLoading ? (
+                <tr>
+                  <td colSpan={3} className="table-empty">공급자 목록을 불러오는 중입니다...</td>
+                </tr>
+              ) : filteredSuppliers.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="table-empty">검색 결과가 없습니다.</td>
+                </tr>
+              ) : (
+                filteredSuppliers.map((supplier) => (
+                  <tr
+                    key={supplier.id}
+                    className="modal-select-row"
+                    onDoubleClick={() => handleSelectSupplier(supplier)}
+                  >
+                    <td><div className="supplier-modal-name" title={supplier.name}>{supplier.name}</div></td>
+                    <td>{supplier.owner || '-'}</td>
+                    <td><div className="supplier-modal-address" title={supplier.address || '-'}>{supplier.address || '-'}</div></td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Modal>
 
       <Modal
         open={importModalOpen}
@@ -631,37 +797,30 @@ export default function DocCreatePage() {
                 <th style={{ minWidth: 160 }}>납품처</th>
                 <th style={{ minWidth: 140 }}>수신처</th>
                 <th style={{ width: 90, textAlign: 'center' }}>작성자</th>
-                <th className="doc-import-select-column" aria-label="불러오기" />
               </tr>
             </thead>
             <tbody>
               {importLoading ? (
                 <tr>
-                  <td colSpan={7} className="table-empty">발행이력 목록을 불러오는 중입니다...</td>
+                  <td colSpan={6} className="table-empty">발행이력 목록을 불러오는 중입니다...</td>
                 </tr>
               ) : filteredImportDocuments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="table-empty">검색 결과가 없습니다.</td>
+                  <td colSpan={6} className="table-empty">검색 결과가 없습니다.</td>
                 </tr>
               ) : (
                 filteredImportDocuments.map((document) => (
-                  <tr key={document.id}>
+                  <tr
+                    key={document.id}
+                    className="modal-select-row"
+                    onDoubleClick={() => void handleImportDocument(document)}
+                  >
                     <td>{document.issueNo || '-'}</td>
                     <td style={{ textAlign: 'center' }}>{document.orderDate || '-'}</td>
                     <td style={{ textAlign: 'center' }}>{document.arriveDate || '-'}</td>
                     <td><div className="table-clamp-2" title={document.client || '-'}>{document.client || '-'}</div></td>
                     <td><div className="table-clamp-2" title={document.receiver || '-'}>{document.receiver || '-'}</div></td>
                     <td style={{ textAlign: 'center' }}>{document.author || '-'}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm doc-import-select-button"
-                        onClick={() => void handleImportDocument(document)}
-                        disabled={importLoading}
-                      >
-                        불러오기
-                      </button>
-                    </td>
                   </tr>
                 ))
               )}

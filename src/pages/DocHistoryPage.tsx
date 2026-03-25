@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
+import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
+import Modal from '../components/ui/Modal';
 import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
 import DocumentItemTable, { MANUAL_PRODUCT_ID } from '../components/ui/DocumentItemTable';
@@ -12,6 +14,7 @@ import { useDocumentItems } from '../hooks/useDocumentItems';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
 import type { Product } from '../types/product';
+import type { Supplier } from '../types/supplier';
 import { emptyToNull, formatNumber } from '../utils/formatters';
 
 const PAGE_SIZE = 20;
@@ -26,6 +29,7 @@ export default function DocHistoryPage() {
   const [documents, setDocuments] = useState<DocumentHistory[]>([]);
   const [draft, setDraft] = useState<DocumentHistory | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const { items, setItems, itemSummaries, totals, addItem, removeItem, updateItem } = useDocumentItems([], products);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,14 +38,37 @@ export default function DocHistoryPage() {
   const [filterType, setFilterType] = useState<'all' | 'client' | 'author'>('all');
   const [dateFrom, setDateFrom] = useState(oneYearAgo);
   const [dateTo, setDateTo] = useState(oneYearLater);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<PreviewType | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false);
+  const [supplierLoading, setSupplierLoading] = useState(false);
+  const [supplierKeyword, setSupplierKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const saveLockRef = useRef(false);
 
   useEffect(() => {
     void reload();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSuppliers() {
+      try {
+        const rows = await fetchSuppliers();
+        if (!mounted) return;
+        setSuppliers(rows.filter((supplier) => supplier.active !== false));
+      } catch (err) {
+        if (!mounted) return;
+        setError(err instanceof Error ? err.message : '공급자 목록을 불러오지 못했습니다.');
+      }
+    }
+
+    void loadSuppliers();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   async function reload() {
@@ -59,13 +86,11 @@ export default function DocHistoryPage() {
 
   useEffect(() => {
     if (!documentId) {
-      setSelectedId(null);
       setDraft(null);
       return;
     }
 
     const selected = documents.find((row) => row.id === documentId) ?? null;
-    setSelectedId(documentId);
     setDraft(selected ? cloneDocument(selected) : null);
   }, [documentId, documents]);
 
@@ -82,7 +107,6 @@ export default function DocHistoryPage() {
         const rows = await fetchProductsByClient(draft.client);
         if (!mounted) return;
         setProducts(rows);
-        if (!draft) return;
         setItems(mapDraftItemsToSharedRows(draft, rows));
       } catch (err) {
         if (!mounted) return;
@@ -95,7 +119,7 @@ export default function DocHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, [draft?.client]);
+  }, [draft?.client, setItems]);
 
   useEffect(() => {
     if (!draft) {
@@ -117,7 +141,13 @@ export default function DocHistoryPage() {
       if (filterType === 'client') return doc.client.toLowerCase().includes(search);
       if (filterType === 'author') return doc.author.toLowerCase().includes(search);
 
-      return [doc.issueNo, doc.client, doc.receiver, doc.author, doc.items.map((item) => `${item.name1} ${item.name2}`).join(' ')]
+      return [
+        doc.issueNo,
+        doc.client,
+        doc.receiver,
+        doc.author,
+        doc.items.map((item) => `${item.name1} ${item.name2}`).join(' '),
+      ]
         .join(' ')
         .toLowerCase()
         .includes(search);
@@ -140,9 +170,24 @@ export default function DocHistoryPage() {
     }
   }, [currentPage, filteredDocuments.length]);
 
-  function openDocument(document: DocumentHistory) {
-    navigate(`/doc-history/${document.id}`);
-  }
+  const filteredSuppliers = useMemo(() => {
+    const search = supplierKeyword.trim().toLowerCase();
+    if (!search) return suppliers;
+
+    return suppliers.filter((supplier) =>
+      [
+        supplier.name,
+        supplier.bizNo,
+        supplier.owner,
+        supplier.address,
+        supplier.businessType,
+        supplier.businessItem,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(search),
+    );
+  }, [supplierKeyword, suppliers]);
 
   const previewData = useMemo<PreviewData | null>(() => {
     if (!draft) return null;
@@ -197,12 +242,52 @@ export default function DocHistoryPage() {
     };
   }, [draft, itemSummaries, items, totals]);
 
+  function openDocument(document: DocumentHistory) {
+    navigate(`/doc-history/${document.id}`);
+  }
+
   function updateDraft<K extends keyof DocumentHistory>(key: K, value: DocumentHistory[K]) {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
   }
 
   function addDraftItem() {
     addItem(draft?.orderDate || '', draft?.arriveDate || '');
+  }
+
+  function applySupplier(supplier: Supplier) {
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            supplierBizNo: supplier.bizNo,
+            supplierName: supplier.name,
+            supplierOwner: supplier.owner,
+            supplierAddress: supplier.address,
+            supplierBusinessType: supplier.businessType,
+            supplierBusinessItem: supplier.businessItem,
+          }
+        : current,
+    );
+  }
+
+  async function openSupplierModal() {
+    try {
+      setSupplierLoading(true);
+      setError(null);
+      const rows = await fetchSuppliers();
+      setSuppliers(rows.filter((supplier) => supplier.active !== false));
+      setSupplierModalOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '공급자 목록을 불러오지 못했습니다.');
+    } finally {
+      setSupplierLoading(false);
+    }
+  }
+
+  function handleSelectSupplier(supplier: Supplier) {
+    applySupplier(supplier);
+    setSupplierModalOpen(false);
+    setSupplierKeyword('');
   }
 
   function buildDraftItems() {
@@ -426,13 +511,18 @@ export default function DocHistoryPage() {
                 <div>
                   <h2>공급자 정보</h2>
                 </div>
-                <button
-                  className="btn btn-secondary"
-                  type="button"
-                  onClick={() => setSupplierSectionOpen((current) => !current)}
-                >
-                  {supplierSectionOpen ? '접기' : '펼치기'}
-                </button>
+                <div className="button-row">
+                  <button className="btn btn-secondary" type="button" onClick={() => void openSupplierModal()}>
+                    불러오기
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    type="button"
+                    onClick={() => setSupplierSectionOpen((current) => !current)}
+                  >
+                    {supplierSectionOpen ? '접기' : '펼치기'}
+                  </button>
+                </div>
               </div>
 
               {supplierSectionOpen ? (
@@ -480,6 +570,83 @@ export default function DocHistoryPage() {
           description="발행 이력에서 수정한 내용을 반영한 미리보기입니다."
         />
       ) : null}
+
+      <Modal
+        open={supplierModalOpen}
+        cardClassName="supplier-import-modal-card history-supplier-modal-card"
+        title="공급자 불러오기"
+        onClose={() => {
+          if (supplierLoading) return;
+          setSupplierModalOpen(false);
+          setSupplierKeyword('');
+        }}
+        closeOnOverlayClick={false}
+        footer={
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setSupplierModalOpen(false);
+              setSupplierKeyword('');
+            }}
+            disabled={supplierLoading}
+          >
+            닫기
+          </button>
+        }
+      >
+        <div className="modal-head-actions">
+          <input
+            className="search-input"
+            value={supplierKeyword}
+            onChange={(event) => setSupplierKeyword(event.target.value)}
+            placeholder="상호, 등록번호, 성명, 주소로 검색"
+          />
+        </div>
+
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: 180 }}>상호</th>
+                <th style={{ width: 160 }}>등록번호</th>
+                <th style={{ width: 110 }}>성명</th>
+                <th style={{ minWidth: 220 }}>사업장주소</th>
+                <th style={{ width: 120 }}>업태</th>
+                <th style={{ width: 150 }}>종목</th>
+                <th className="doc-import-select-column" aria-label="불러오기" />
+              </tr>
+            </thead>
+            <tbody>
+              {supplierLoading ? (
+                <tr>
+                  <td colSpan={7} className="table-empty">공급자 목록을 불러오는 중입니다...</td>
+                </tr>
+              ) : filteredSuppliers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="table-empty">검색 결과가 없습니다.</td>
+                </tr>
+              ) : (
+                filteredSuppliers.map((supplier) => (
+                  <tr
+                    key={supplier.id}
+                    className="modal-select-row"
+                    onDoubleClick={() => handleSelectSupplier(supplier)}
+                  >
+                    <td><div className="supplier-modal-name" title={supplier.name}>{supplier.name}</div></td>
+                    <td>{supplier.bizNo || '-'}</td>
+                    <td>{supplier.owner || '-'}</td>
+                    <td><div className="supplier-modal-address" title={supplier.address || '-'}>{supplier.address || '-'}</div></td>
+                    <td>{supplier.businessType || '-'}</td>
+                    <td><div className="table-clamp-2" title={supplier.businessItem || '-'}>{supplier.businessItem || '-'}</div></td>
+                    <td />
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -490,7 +657,7 @@ function cloneDocument(document: DocumentHistory): DocumentHistory {
 
 function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]): SharedItemRow[] {
   return draft.items.map((item) => {
-    const matched = products.find((p) => p.name1 === item.name1);
+    const matched = products.find((product) => product.name1 === item.name1);
     const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
 
     return {
