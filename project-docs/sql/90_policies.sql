@@ -1,5 +1,6 @@
 alter table public.accounts enable row level security;
 alter table public.clients enable row level security;
+alter table public.suppliers enable row level security;
 alter table public.products enable row level security;
 alter table public.documents enable row level security;
 alter table public.document_items enable row level security;
@@ -53,6 +54,30 @@ begin
     select 1 from pg_policies where schemaname = 'public' and tablename = 'clients' and policyname = 'clients_delete_anon'
   ) then
     create policy clients_delete_anon on public.clients for delete to anon using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'suppliers' and policyname = 'suppliers_select_anon'
+  ) then
+    create policy suppliers_select_anon on public.suppliers for select to anon using (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'suppliers' and policyname = 'suppliers_insert_anon'
+  ) then
+    create policy suppliers_insert_anon on public.suppliers for insert to anon with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'suppliers' and policyname = 'suppliers_update_anon'
+  ) then
+    create policy suppliers_update_anon on public.suppliers for update to anon using (true) with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies where schemaname = 'public' and tablename = 'suppliers' and policyname = 'suppliers_delete_anon'
+  ) then
+    create policy suppliers_delete_anon on public.suppliers for delete to anon using (true);
   end if;
 
   if not exists (
