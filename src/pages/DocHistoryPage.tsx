@@ -282,7 +282,7 @@ export default function DocHistoryPage() {
         ),
       );
       await reload();
-      window.alert(nextCancelled ? '거래취소 처리했습니다.' : '거래취소를 해제했습니다.');
+      window.alert(nextCancelled ? '거래취소 처리되었습니다.' : '거래취소를 해제했습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '상태 변경에 실패했습니다.');
     } finally {
@@ -328,7 +328,7 @@ export default function DocHistoryPage() {
               </label>
               <label className="field">
                 <span>키워드</span>
-                <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="검색어를 입력해 주세요." />
+                <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="검색어를 입력해주세요." />
               </label>
             </div>
           </section>
@@ -348,17 +348,17 @@ export default function DocHistoryPage() {
                       <th style={{ minWidth: 150 }}>수신처</th>
                       <th style={{ minWidth: 220 }}>품목명</th>
                       <th style={{ width: 90, textAlign: 'right' }}>수량</th>
-                      <th style={{ width: 90, textAlign: 'right' }}>파렛트</th>
+                      <th style={{ width: 90, textAlign: 'right' }}>파레트</th>
                       <th style={{ width: 80, textAlign: 'right' }}>박스</th>
                       <th style={{ width: 90, textAlign: 'center' }}>작성자</th>
-                      <th style={{ width: 180, textAlign: 'center' }}>수정/저장일시</th>
+                      <th style={{ width: 180, textAlign: 'center' }}>수정/등록일시</th>
                       <th style={{ width: 90, textAlign: 'center' }}>상태</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredDocuments.length === 0 ? (
                       <tr>
-                        <td colSpan={11} className="table-empty" style={{ textAlign: 'center' }}>
+                        <td colSpan={12} className="table-empty" style={{ textAlign: 'center' }}>
                           검색 결과가 없습니다.
                         </td>
                       </tr>
@@ -403,7 +403,7 @@ export default function DocHistoryPage() {
             <section className="card">
               <div className="card-header">
                 <div>
-                  <h2>湲곕낯 ?뺣낫</h2>
+                  <h2>기본 정보</h2>
                 </div>
               </div>
 
@@ -477,7 +477,7 @@ export default function DocHistoryPage() {
           type={previewType}
           data={previewData}
           onClose={() => setPreviewType(null)}
-          description="발행 이력에서 수정한 내용이 반영된 미리보기입니다."
+          description="발행 이력에서 수정한 내용을 반영한 미리보기입니다."
         />
       ) : null}
     </div>
