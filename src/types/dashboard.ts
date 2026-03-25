@@ -39,15 +39,13 @@ export type DashboardArrivalTrend = {
 
 export type DashboardSummary = {
   todayIncomingCount: number;
-  weekIncomingCount: number;
-  incompleteCount: number;
-  completedCount: number;
-  trackedCount: number;
+  todayIncompleteCount: number;
+  delayedCount: number;
   weekLabel: string;
   todayLabel: string;
   todayIncomingDocuments: DashboardIncomingDocument[];
-  weekIncomingDocuments: DashboardIncomingDocument[];
-  incompleteDocuments: DashboardIncomingDocument[];
+  todayIncompleteDocuments: DashboardIncomingDocument[];
+  delayedDocuments: DashboardIncomingDocument[];
   recentDocuments: DashboardRecentDocument[];
   weeklyArrivals: DashboardArrivalTrend[];
 };

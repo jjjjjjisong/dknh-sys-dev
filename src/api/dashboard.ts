@@ -77,10 +77,8 @@ export async function fetchDashboardSummary(baseDate: Date = new Date()): Promis
     }
   }
 
-  const today = new Date();
-  const todayKey = toDateKey(today);
+  const todayKey = toDateKey(baseDate);
   const weekRange = getWeekRange(baseDate);
-
   const sourceDocuments = (documentsResult.data ?? []) as DocumentRow[];
 
   const recentDocuments: DashboardRecentDocument[] = sourceDocuments
@@ -115,24 +113,23 @@ export async function fetchDashboardSummary(baseDate: Date = new Date()): Promis
     .sort(compareIncomingDocuments);
 
   const todayIncomingDocuments = incomingItems.filter((item) => item.arriveDate === todayKey);
+  const todayIncompleteDocuments = todayIncomingDocuments.filter((item) => item.shippedStatus === '미출고');
+  const delayedDocuments = incomingItems.filter(
+    (item) => item.arriveDate < todayKey && item.shippedStatus === '미출고',
+  );
   const weekIncomingDocuments = incomingItems.filter(
     (item) => item.arriveDate >= weekRange.start && item.arriveDate <= weekRange.end,
-  );
-  const unshippedDocuments = incomingItems.filter(
-    (item) => item.status !== 'ST01' && item.shippedStatus === '미출고',
   );
 
   return {
     todayIncomingCount: todayIncomingDocuments.length,
-    weekIncomingCount: weekIncomingDocuments.length,
-    incompleteCount: unshippedDocuments.length,
-    completedCount: incomingItems.filter((item) => item.shippedStatus === '출고').length,
-    trackedCount: incomingItems.length,
+    todayIncompleteCount: todayIncompleteDocuments.length,
+    delayedCount: delayedDocuments.length,
     weekLabel: `${formatShortDate(weekRange.start)} - ${formatShortDate(weekRange.end)}`,
     todayLabel: formatShortDate(todayKey),
     todayIncomingDocuments,
-    weekIncomingDocuments,
-    incompleteDocuments: unshippedDocuments,
+    todayIncompleteDocuments,
+    delayedDocuments,
     recentDocuments,
     weeklyArrivals: buildWeeklyArrivals(weekRange, weekIncomingDocuments),
   };
@@ -176,9 +173,7 @@ export async function fetchDashboardWeeklyArrivals(
   const sourceDocuments = (documentsResult.data ?? []) as DocumentRow[];
 
   const incomingItems: DashboardIncomingDocument[] = sourceDocuments
-    .filter(
-      (document) => mapStatus(document.status) === 'ST00' && (document.del_yn ?? 'N') === 'N',
-    )
+    .filter((document) => mapStatus(document.status) === 'ST00' && (document.del_yn ?? 'N') === 'N')
     .flatMap((document) =>
       (document.document_items ?? [])
         .filter((item) => (item.del_yn ?? 'N') === 'N')
