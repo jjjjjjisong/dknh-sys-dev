@@ -10,7 +10,7 @@ import {
 } from '../../utils/formatters';
 
 export const MANUAL_PRODUCT_ID = '__manual__';
-export const DEFAULT_GUBUN_OPTIONS = ['캔', '캔뚜껑', '라벨', '스트로우', '기타'];
+export const DEFAULT_GUBUN_OPTIONS = ['컵', '컵뚜껑', '비닐', '스트로우', '기타'];
 
 export type SharedItemRow = {
   id: string;
@@ -96,13 +96,11 @@ export default function DocumentItemTable({
               <th>발주일자</th>
               <th>입고일자</th>
               <th>수량(ea)</th>
-              <th className="doc-pallet-col">파렛트</th>
+              <th className="doc-pallet-col">파레트</th>
               <th className="doc-box-col">BOX</th>
               <th>단가</th>
               <th>공급가액</th>
               <th>VAT</th>
-              <th className="doc-note-col">비고1</th>
-              <th className="doc-note-col">비고2</th>
               <th>관리</th>
             </tr>
           </thead>
@@ -112,10 +110,10 @@ export default function DocumentItemTable({
               const manualMode = item.productId === MANUAL_PRODUCT_ID;
 
               return (
-                <tr key={item.id}>
-                  <td>{index + 1}</td>
-                  <td className="doc-item-name-cell">
-                    <div className="doc-inline-stack">
+                <React.Fragment key={item.id}>
+                  <tr className="doc-item-main-row">
+                    <td>{index + 1}</td>
+                    <td className="doc-item-name-cell">
                       <select
                         className="doc-cell-control"
                         value={item.productId}
@@ -140,6 +138,150 @@ export default function DocumentItemTable({
                         ))}
                         <option value={MANUAL_PRODUCT_ID}>직접입력</option>
                       </select>
+                    </td>
+                    <td className="doc-gubun-cell">
+                      {manualMode ? (
+                        <select
+                          className="doc-cell-control"
+                          value={item.manualGubun}
+                          onChange={(event) =>
+                            onUpdateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))
+                          }
+                        >
+                          {DEFAULT_GUBUN_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        summary.gubun || '-'
+                      )}
+                    </td>
+                    <td>
+                      <input
+                        className="doc-cell-control"
+                        type="date"
+                        value={item.orderDate}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({ ...current, orderDate: event.target.value }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="doc-cell-control"
+                        type="date"
+                        value={item.arriveDate}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({ ...current, arriveDate: event.target.value }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="doc-cell-control doc-number-input-qty"
+                        type="text"
+                        inputMode="numeric"
+                        value={formatIntegerInput(item.qty)}
+                        onFocus={() => handleNumericFocus(item.id, 'qty')}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            qty: parseNullableInteger(stripNonNumeric(event.target.value)),
+                            customPallet: null,
+                            customBox: null,
+                            customSupply: null,
+                          }))
+                        }
+                      />
+                    </td>
+                    <td className="doc-pallet-col">
+                      <input
+                        className="doc-cell-control doc-number-input-pallet-box"
+                        type="text"
+                        inputMode="numeric"
+                        value={formatIntegerInput(item.customPallet)}
+                        onFocus={() => handleNumericFocus(item.id, 'customPallet')}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            customPallet: parseNullableInteger(stripNonNumeric(event.target.value)),
+                          }))
+                        }
+                        placeholder={summary.pallet !== null ? String(summary.pallet) : '자동'}
+                      />
+                    </td>
+                    <td className="doc-box-col">
+                      <input
+                        className="doc-cell-control doc-number-input-pallet-box"
+                        type="text"
+                        inputMode="numeric"
+                        value={formatIntegerInput(item.customBox)}
+                        onFocus={() => handleNumericFocus(item.id, 'customBox')}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            customBox: parseNullableInteger(stripNonNumeric(event.target.value)),
+                          }))
+                        }
+                        placeholder={summary.box !== null ? String(summary.box) : '자동'}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="doc-cell-control doc-number-input-unitprice"
+                        type="text"
+                        inputMode="decimal"
+                        value={formatDecimalInput(item.unitPrice)}
+                        onFocus={() => handleNumericFocus(item.id, 'unitPrice')}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            unitPrice: parseNullableDecimal(event.target.value),
+                            customSupply: null,
+                          }))
+                        }
+                        placeholder="단가"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="doc-cell-control doc-number-input-supply"
+                        type="text"
+                        inputMode="numeric"
+                        value={formatIntegerInput(item.customSupply)}
+                        onFocus={() => handleNumericFocus(item.id, 'customSupply')}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            customSupply: parseNullableInteger(stripNonNumeric(event.target.value)),
+                          }))
+                        }
+                        placeholder={formatNumber(summary.supply)}
+                      />
+                    </td>
+                    <td>
+                      <label className="inline-check">
+                        <input
+                          type="checkbox"
+                          checked={item.vat}
+                          onChange={(event) =>
+                            onUpdateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))
+                          }
+                        />
+                        포함
+                      </label>
+                    </td>
+                    <td>
+                      <button className="btn btn-danger doc-delete-button" type="button" onClick={() => onRemoveItem(item.id)}>
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                  <tr className="doc-item-note-row">
+                    <td className="doc-item-note-spacer" />
+                    <td>
                       {manualMode ? (
                         <input
                           className="doc-cell-control doc-item-name-input"
@@ -150,170 +292,30 @@ export default function DocumentItemTable({
                           placeholder="품목명"
                         />
                       ) : null}
-                    </div>
-                  </td>
-                  <td className="doc-gubun-cell">
-                    {manualMode ? (
-                      <select
-                        className="doc-cell-control"
-                        value={item.manualGubun}
-                        onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))
-                        }
-                      >
-                        {DEFAULT_GUBUN_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      summary.gubun || '-'
-                    )}
-                  </td>
-                  <td>
-                    <input
-                      className="doc-cell-control"
-                      type="date"
-                      value={item.orderDate}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({ ...current, orderDate: event.target.value }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="doc-cell-control"
-                      type="date"
-                      value={item.arriveDate}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({ ...current, arriveDate: event.target.value }))
-                      }
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="doc-cell-control doc-number-input-qty"
-                      type="text"
-                      inputMode="numeric"
-                      value={formatIntegerInput(item.qty)}
-                      onFocus={() => handleNumericFocus(item.id, 'qty')}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({
-                          ...current,
-                          qty: parseNullableInteger(stripNonNumeric(event.target.value)),
-                          customPallet: null,
-                          customBox: null,
-                          customSupply: null,
-                        }))
-                      }
-                    />
-                  </td>
-                  <td className="doc-pallet-col">
-                    <input
-                      className="doc-cell-control doc-number-input-pallet-box"
-                      type="text"
-                      inputMode="numeric"
-                      value={formatIntegerInput(item.customPallet)}
-                      onFocus={() => handleNumericFocus(item.id, 'customPallet')}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({
-                          ...current,
-                          customPallet: parseNullableInteger(stripNonNumeric(event.target.value)),
-                        }))
-                      }
-                      placeholder={summary.pallet !== null ? String(summary.pallet) : '자동'}
-                    />
-                  </td>
-                  <td className="doc-box-col">
-                    <input
-                      className="doc-cell-control doc-number-input-pallet-box"
-                      type="text"
-                      inputMode="numeric"
-                      value={formatIntegerInput(item.customBox)}
-                      onFocus={() => handleNumericFocus(item.id, 'customBox')}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({
-                          ...current,
-                          customBox: parseNullableInteger(stripNonNumeric(event.target.value)),
-                        }))
-                      }
-                      placeholder={summary.box !== null ? String(summary.box) : '자동'}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="doc-cell-control doc-number-input-unitprice"
-                      type="text"
-                      inputMode="decimal"
-                      value={formatDecimalInput(item.unitPrice)}
-                      onFocus={() => handleNumericFocus(item.id, 'unitPrice')}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({
-                          ...current,
-                          unitPrice: parseNullableDecimal(event.target.value),
-                          customSupply: null,
-                        }))
-                      }
-                      placeholder="단가"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="doc-cell-control doc-number-input-supply"
-                      type="text"
-                      inputMode="numeric"
-                      value={formatIntegerInput(item.customSupply)}
-                      onFocus={() => handleNumericFocus(item.id, 'customSupply')}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({
-                          ...current,
-                          customSupply: parseNullableInteger(stripNonNumeric(event.target.value)),
-                        }))
-                      }
-                      placeholder={formatNumber(summary.supply)}
-                    />
-                  </td>
-                  <td>
-                    <label className="inline-check">
-                      <input
-                        type="checkbox"
-                        checked={item.vat}
-                        onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))
-                        }
-                      />
-                      포함
-                    </label>
-                  </td>
-                  <td className="doc-note-col">
-                    <textarea
-                      className="doc-cell-control doc-item-note"
-                      rows={1}
-                      value={item.releaseNote}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({ ...current, releaseNote: event.target.value }))
-                      }
-                      placeholder="비고(출고의뢰서)"
-                    />
-                  </td>
-                  <td className="doc-note-col">
-                    <textarea
-                      className="doc-cell-control doc-item-note"
-                      rows={1}
-                      value={item.invoiceNote}
-                      onChange={(event) =>
-                        onUpdateItem(item.id, (current) => ({ ...current, invoiceNote: event.target.value }))
-                      }
-                      placeholder="비고(거래명세서)"
-                    />
-                  </td>
-                  <td>
-                    <button className="btn btn-danger doc-delete-button" type="button" onClick={() => onRemoveItem(item.id)}>
-                      삭제
-                    </button>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="doc-item-note-spacer" />
+                    <td colSpan={9}>
+                      <div className="doc-item-extra-inline">
+                        <input
+                          className="doc-cell-control"
+                          value={item.releaseNote}
+                          onChange={(event) =>
+                            onUpdateItem(item.id, (current) => ({ ...current, releaseNote: event.target.value }))
+                          }
+                          placeholder="비고(출고의뢰서) 입력"
+                        />
+                        <input
+                          className="doc-cell-control"
+                          value={item.invoiceNote}
+                          onChange={(event) =>
+                            onUpdateItem(item.id, (current) => ({ ...current, invoiceNote: event.target.value }))
+                          }
+                          placeholder="비고(거래명세서) 입력"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                </React.Fragment>
               );
             })}
           </tbody>

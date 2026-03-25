@@ -16,6 +16,9 @@ import type { OrderBookShippingStatus } from '../types/order-book';
 
 type PanelType = 'today' | 'delayed' | 'trend' | null;
 
+const SHIPPED_STATUS_SHIPPED = '異쒓퀬' as OrderBookShippingStatus;
+const SHIPPED_STATUS_UNSHIPPED = '誘몄텧怨?' as OrderBookShippingStatus;
+
 const emptySummary: DashboardSummary = {
   todayIncomingCount: 0,
   todayIncompleteCount: 0,
@@ -86,7 +89,7 @@ export default function DashboardPage() {
         }
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : '주간 입고 예정 데이터를 불러오지 못했습니다.');
+          setError(err instanceof Error ? err.message : '주간 입고예정 데이터를 불러오지 못했습니다.');
         }
       } finally {
         if (mounted) {
@@ -99,7 +102,7 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [weekOffset]);
+  }, [weekOffset, trendWeeklyArrivals.length]);
 
   useEffect(() => {
     setSelectedOrderBookIds([]);
@@ -138,8 +141,8 @@ export default function DashboardPage() {
   const allChecked =
     panelType === 'delayed' &&
     Boolean(panelConfig) &&
-    panelConfig!.items.length > 0 &&
-    panelConfig!.items.every((item) => item.orderBookId && selectedOrderBookIds.includes(item.orderBookId));
+    (panelConfig?.items.length ?? 0) > 0 &&
+    panelConfig?.items.every((item) => item.orderBookId && selectedOrderBookIds.includes(item.orderBookId));
 
   function closePanel() {
     setPanelType(null);
@@ -170,6 +173,11 @@ export default function DashboardPage() {
     });
   }
 
+  async function refreshSummary() {
+    const result = await fetchDashboardSummary();
+    setData(result);
+  }
+
   async function handleShippedStatusChange(
     document: DashboardIncomingDocument,
     shippedStatus: OrderBookShippingStatus,
@@ -178,10 +186,9 @@ export default function DashboardPage() {
 
     try {
       await updateOrderBookShippedStatus(document.orderBookId, shippedStatus);
-      const result = await fetchDashboardSummary();
-      setData(result);
+      await refreshSummary();
       window.alert(
-        shippedStatus === '출고'
+        shippedStatus === SHIPPED_STATUS_SHIPPED
           ? '출고상태로 변경되었습니다.'
           : '미출고상태로 변경되었습니다.',
       );
@@ -195,11 +202,10 @@ export default function DashboardPage() {
 
     try {
       setBatchUpdating(true);
-      await updateManyOrderBookShippedStatus(selectedOrderBookIds, '출고');
-      const result = await fetchDashboardSummary();
-      setData(result);
+      await updateManyOrderBookShippedStatus(selectedOrderBookIds, SHIPPED_STATUS_SHIPPED);
+      await refreshSummary();
       setSelectedOrderBookIds([]);
-      window.alert('선택한 항목이 출고상태로 변경되었습니다.');
+      window.alert('선택한 품목이 출고상태로 변경되었습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '일괄 출고처리에 실패했습니다.');
     } finally {
@@ -224,6 +230,7 @@ export default function DashboardPage() {
           <SummaryCard
             label="지연 건수"
             value={loading ? '...' : data.delayedCount.toLocaleString('ko-KR')}
+            description="어제까지 미입고 건수"
             danger
             onClick={() => setPanelType('delayed')}
           />
@@ -256,7 +263,7 @@ export default function DashboardPage() {
           <div className="dashboard-bar-chart">
             {(trendLoading ? getEmptyTrendBars() : trendWeeklyArrivals).map((item, index) => (
               <TrendBar
-                key={index}
+                key={item.date || index}
                 item={item}
                 max={getTrendMax(trendWeeklyArrivals)}
                 loading={trendLoading}
@@ -331,7 +338,7 @@ export default function DashboardPage() {
               onClick={() => void handleBatchShip()}
               disabled={!canBatchShip || batchUpdating}
             >
-              {batchUpdating ? '처리 중..' : '일괄 출고처리'}
+              {batchUpdating ? '처리 중...' : '일괄 출고처리'}
             </Button>
           </div>
         ) : null}
@@ -367,8 +374,8 @@ export default function DashboardPage() {
                 <tr>
                   <td colSpan={panelType === 'delayed' ? 10 : 9}>
                     <div className="dashboard-empty-state dashboard-panel-empty-state">
-                      <div>해당 기간에 예정된 항목이 없습니다.</div>
-                      <div>새로운 입고 일정이 등록되면 이곳에 표시됩니다.</div>
+                      <div>해당 기간의 입고 예정 품목이 없습니다.</div>
+                      <div>새로운 입고 일정이 등록되면 여기에 표시됩니다.</div>
                     </div>
                   </td>
                 </tr>
@@ -378,9 +385,7 @@ export default function DashboardPage() {
                     key={`${panelType}-${document.id}`}
                     document={document}
                     showSelection={panelType === 'delayed'}
-                    checked={
-                      document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false
-                    }
+                    checked={document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false}
                     showShippedStatus={panelType === 'delayed'}
                     onToggleSelect={(checked) => {
                       if (document.orderBookId) {
@@ -405,11 +410,13 @@ export default function DashboardPage() {
 function SummaryCard({
   label,
   value,
+  description,
   danger = false,
   onClick,
 }: {
   label: string;
   value: string;
+  description?: string;
   danger?: boolean;
   onClick: () => void;
 }) {
@@ -417,6 +424,7 @@ function SummaryCard({
     <button type="button" className="dashboard-summary-card-button" onClick={onClick}>
       <span className="dashboard-summary-label dashboard-summary-label-strong">{label}</span>
       <strong className={`dashboard-summary-number ${danger ? 'danger' : ''}`}>{value}</strong>
+      {description ? <span className="dashboard-summary-meta">{description}</span> : null}
     </button>
   );
 }
@@ -542,8 +550,8 @@ function DashboardIncomingRow({
               onChangeShippedStatus?.(event.target.value as OrderBookShippingStatus)
             }
           >
-            <option value="미출고">미출고</option>
-            <option value="출고">출고</option>
+            <option value={SHIPPED_STATUS_UNSHIPPED}>미출고</option>
+            <option value={SHIPPED_STATUS_SHIPPED}>출고</option>
           </select>
         ) : document.status === 'ST01' ? (
           <Badge variant="cancel">거래취소</Badge>
@@ -618,6 +626,5 @@ function formatMaybeNumber(value: number | null) {
 }
 
 function formatInteger(value: number) {
-  // Keep dashboard counts consistently formatted for Korean locale.
   return value.toLocaleString('ko-KR');
 }

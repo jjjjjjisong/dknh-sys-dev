@@ -1040,6 +1040,33 @@ a {
   line-height: 1.4;
 }
 
+.doc-item-main-row td {
+  border-bottom: 0;
+}
+
+.doc-item-note-row td {
+  padding-top: 4px;
+  padding-bottom: 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-item-note-spacer {
+  background: #fff !important;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-item-extra-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 360px));
+  gap: 10px;
+  justify-content: start;
+}
+
+.doc-item-extra-inline.manual {
+  grid-template-columns: minmax(220px, 240px) minmax(240px, 320px) minmax(240px, 320px);
+}
+
 .doc-gubun-col,
 .doc-gubun-cell {
   width: 84px;
