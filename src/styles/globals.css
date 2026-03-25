@@ -1016,11 +1016,11 @@ a {
 }
 
 .doc-item-name-cell {
-  min-width: 240px;
+  min-width: 270px;
 }
 
 .doc-item-name-input {
-  min-width: 190px;
+  min-width: 220px;
 }
 
 .doc-cell-control {
@@ -1056,7 +1056,7 @@ a {
 }
 
 .doc-number-input-unitprice {
-  width: 40px;
+  width: 28px;
   text-align: right;
 }
 
@@ -1087,15 +1087,12 @@ a {
   border-bottom: 1px solid var(--border);
 }
 
-.doc-item-extra-inline {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(240px, 360px));
-  gap: 10px;
-  justify-content: start;
+.doc-item-release-note {
+  width: 100%;
 }
 
-.doc-item-extra-inline.manual {
-  grid-template-columns: minmax(220px, 240px) minmax(240px, 320px) minmax(240px, 320px);
+.doc-item-invoice-note {
+  width: 100%;
 }
 
 .doc-gubun-col,
