@@ -750,6 +750,18 @@ a {
   color: var(--text-2);
 }
 
+.table-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.45;
+  max-height: calc(1.45em * 2);
+}
+
 .table-row-selected {
   background: #eff6ff;
 }

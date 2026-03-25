@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import * as XLSX from 'xlsx';
 import { fetchClients } from '../api/clients';
 import { createProduct, fetchProducts, removeProduct, updateProduct } from '../api/products';
 import PageHeader from '../components/PageHeader';
@@ -12,7 +13,7 @@ import type { Client } from '../types/client';
 import type { Product, ProductInput } from '../types/product';
 
 const DEFAULT_GUBUN = '컵';
-const GUBUN_CHOICES = ['컵', '컵뚜껑', '실링', '스트로우', '기타'];
+const GUBUN_CHOICES = ['컵', '컵뚜껑', '비닐', '스트로우', '기타'];
 const PAGE_SIZE = 15;
 
 const emptyForm: ProductInput = {
@@ -74,10 +75,7 @@ export default function MasterProductPage() {
     }
   }
 
-  const clientOptions = useMemo(
-    () => clients.filter((client) => client.name.trim()),
-    [clients],
-  );
+  const clientOptions = useMemo(() => clients.filter((client) => client.name.trim()), [clients]);
 
   const filteredFormClientOptions = useMemo(() => {
     const keyword = form.client.trim().toLowerCase();
@@ -232,6 +230,31 @@ export default function MasterProductPage() {
     }
   }
 
+  function handleDownloadExcel() {
+    if (filteredProducts.length === 0) {
+      window.alert('다운로드할 데이터가 없습니다.');
+      return;
+    }
+
+    const rows = filteredProducts.map((product) => ({
+      구분: product.gubun || '',
+      거래처: product.client || '',
+      품목명: product.name1 || '',
+      '품목명(거래명세서)': product.name2 || '',
+      출고처: product.supplier || '',
+      '입고 단가': product.cost_price ?? '',
+      '판매 단가': product.sell_price ?? '',
+      '1B=ea': product.ea_per_b ?? '',
+      '1P=BOX': product.box_per_p ?? '',
+      상태: '사용중',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '품목관리');
+    XLSX.writeFile(workbook, `품목관리_${formatFileStamp(new Date())}.xlsx`);
+  }
+
   return (
     <div className="page-content">
       <PageHeader title="품목 관리" description="" />
@@ -257,15 +280,20 @@ export default function MasterProductPage() {
               className="search-input"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="품목명, 거래처, 구분 검색 등 검색어를 입력하세요"
+              placeholder="품목명, 거래처, 구분으로 검색하세요."
             />
           </div>
 
           <div className="client-toolbar-actions product-toolbar-actions">
             <div className="toolbar-meta">검색 결과 {filteredProducts.length}건</div>
-            <button className="btn btn-primary" type="button" onClick={openCreateModal}>
-              품목 추가
-            </button>
+            <div className="button-row">
+              <Button type="button" variant="secondary" className="excel-download-button" onClick={handleDownloadExcel}>
+                엑셀다운
+              </Button>
+              <Button type="button" variant="primary" onClick={openCreateModal}>
+                품목 추가
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -305,13 +333,15 @@ export default function MasterProductPage() {
                       onClick={() => openEditModal(product)}
                     >
                       <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
-                      <td>{product.gubun || '-'}</td>
-                      <td>{product.client || '-'}</td>
+                      <td><div className="table-clamp-2" title={product.gubun || '-'}>{product.gubun || '-'}</div></td>
+                      <td><div className="table-clamp-2" title={product.client || '-'}>{product.client || '-'}</div></td>
                       <td>
-                        <div className="table-primary">{product.name1}</div>
+                        <div className="table-primary table-clamp-2" title={product.name1 || '-'}>
+                          {product.name1 || '-'}
+                        </div>
                       </td>
-                      <td>{product.name2 || '-'}</td>
-                      <td>{product.supplier || '-'}</td>
+                      <td><div className="table-clamp-2" title={product.name2 || '-'}>{product.name2 || '-'}</div></td>
+                      <td><div className="table-clamp-2" title={product.supplier || '-'}>{product.supplier || '-'}</div></td>
                       <td>{product.cost_price ?? '-'}</td>
                       <td>{product.sell_price ?? '-'}</td>
                       <td>{product.ea_per_b ?? '-'}</td>
@@ -388,7 +418,7 @@ export default function MasterProductPage() {
                   setClientDropdownOpen(true);
                 }}
                 onFocus={() => setClientDropdownOpen(true)}
-                placeholder="거래처를 선택하세요."
+                placeholder="거래처를 선택하세요"
               />
               <span className="client-search-caret" aria-hidden="true" />
               {clientDropdownOpen ? (
@@ -476,14 +506,14 @@ export default function MasterProductPage() {
             <input value={formatNullableNumber(form.ea_per_p)} readOnly placeholder="자동 계산" />
           </FormField>
 
-          <FormField label="1대당 파렛트">
+          <FormField label="1대당 파레트">
             <input
               value={formatNullableNumber(form.pallets_per_truck)}
               onChange={(event) =>
                 updateForm('pallets_per_truck', parseNullableNumber(event.target.value))
               }
               inputMode="numeric"
-              placeholder="파렛트 수"
+              placeholder="파레트 수"
             />
           </FormField>
 
@@ -492,4 +522,13 @@ export default function MasterProductPage() {
       </Modal>
     </div>
   );
+}
+
+function formatFileStamp(date: Date) {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${year}${month}${day}_${hour}${minute}`;
 }

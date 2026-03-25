@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import * as XLSX from 'xlsx';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
 import Alert from '../components/ui/Alert';
@@ -160,6 +161,29 @@ export default function MasterClientPage() {
     }
   }
 
+  function handleDownloadExcel() {
+    if (filteredClients.length === 0) {
+      window.alert('다운로드할 데이터가 없습니다.');
+      return;
+    }
+
+    const rows = filteredClients.map((client) => ({
+      납품처명: client.name || '',
+      담당자: client.manager || '',
+      담당자연락처: client.tel || '',
+      납품주소: client.addr || '',
+      점심시간: client.lunch || '',
+      입고시간: client.time || '',
+      비고: client.note || '',
+      상태: client.active === false ? '비활성' : '사용중',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '납품처관리');
+    XLSX.writeFile(workbook, `납품처관리_${formatFileStamp(new Date())}.xlsx`);
+  }
+
   return (
     <div className="page-content">
       <PageHeader title="납품처 관리" description="" />
@@ -172,13 +196,18 @@ export default function MasterClientPage() {
             className="search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="납품처명, 주소, 담당자 명 등으로 검색하세요."
+            placeholder="납품처명, 주소, 담당자명 등으로 검색하세요."
           />
           <div className="client-toolbar-actions">
             <div className="toolbar-meta">검색 결과 {filteredClients.length}건</div>
-            <Button type="button" variant="primary" onClick={openCreateModal}>
-              납품처 추가
-            </Button>
+            <div className="button-row">
+              <Button type="button" variant="secondary" className="excel-download-button" onClick={handleDownloadExcel}>
+                엑셀다운
+              </Button>
+              <Button type="button" variant="primary" onClick={openCreateModal}>
+                납품처 추가
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -192,7 +221,7 @@ export default function MasterClientPage() {
                   <th style={{ width: 56 }}>No</th>
                   <th style={{ width: 190 }}>납품처명</th>
                   <th style={{ width: 110 }}>담당자</th>
-                  <th style={{ width: 152 }}>담당자 연락처</th>
+                  <th style={{ width: 152 }}>담당자연락처</th>
                   <th style={{ width: 320 }}>납품주소</th>
                   <th style={{ width: 120 }}>점심시간</th>
                   <th style={{ width: 120 }}>입고시간</th>
@@ -213,14 +242,40 @@ export default function MasterClientPage() {
                     <tr key={client.id} className="history-clickable-row" onClick={() => openEditModal(client)}>
                       <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
                       <td>
-                        <div className="table-primary">{client.name}</div>
+                        <div className="table-primary table-clamp-2" title={client.name}>
+                          {client.name}
+                        </div>
                       </td>
-                      <td>{client.manager || '-'}</td>
-                      <td>{client.tel || '-'}</td>
-                      <td className="table-address">{client.addr || '-'}</td>
-                      <td>{client.lunch || '-'}</td>
-                      <td>{client.time || '-'}</td>
-                      <td>{client.note || '-'}</td>
+                      <td>
+                        <div className="table-clamp-2" title={client.manager || '-'}>
+                          {client.manager || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={client.tel || '-'}>
+                          {client.tel || '-'}
+                        </div>
+                      </td>
+                      <td className="table-address">
+                        <div className="table-clamp-2" title={client.addr || '-'}>
+                          {client.addr || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={client.lunch || '-'}>
+                          {client.lunch || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={client.time || '-'}>
+                          {client.time || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={client.note || '-'}>
+                          {client.note || '-'}
+                        </div>
+                      </td>
                       <td>
                         <span className={client.active === false ? 'badge badge-muted' : 'badge'}>
                           {client.active === false ? '비활성' : '사용중'}
@@ -281,7 +336,7 @@ export default function MasterClientPage() {
               <input value={form.manager} onChange={(event) => updateForm('manager', event.target.value)} />
             </FormField>
 
-            <FormField label="담당자 연락처">
+            <FormField label="담당자연락처">
               <input value={form.tel} onChange={(event) => updateForm('tel', event.target.value)} />
             </FormField>
 
@@ -318,4 +373,13 @@ export default function MasterClientPage() {
       </Modal>
     </div>
   );
+}
+
+function formatFileStamp(date: Date) {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${year}${month}${day}_${hour}${minute}`;
 }
