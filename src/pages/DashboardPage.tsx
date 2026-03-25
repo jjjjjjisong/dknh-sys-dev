@@ -16,8 +16,8 @@ import type { OrderBookShippingStatus } from '../types/order-book';
 
 type PanelType = 'today' | 'delayed' | 'trend' | null;
 
-const SHIPPED_STATUS_SHIPPED = '異쒓퀬' as OrderBookShippingStatus;
-const SHIPPED_STATUS_UNSHIPPED = '誘몄텧怨?' as OrderBookShippingStatus;
+const SHIPPED_STATUS_SHIPPED = '출고' as OrderBookShippingStatus;
+const SHIPPED_STATUS_UNSHIPPED = '미출고' as OrderBookShippingStatus;
 
 const emptySummary: DashboardSummary = {
   todayIncomingCount: 0,
@@ -111,7 +111,7 @@ export default function DashboardPage() {
   const panelConfig = useMemo(() => {
     if (panelType === 'today') {
       return {
-        title: `오늘 입고 예정${data.todayLabel ? ` (${data.todayLabel})` : ''}`,
+        title: `오늘의 할일${data.todayLabel ? ` (${data.todayLabel})` : ''}`,
         items: data.todayIncomingDocuments,
       };
     }
@@ -133,13 +133,15 @@ export default function DashboardPage() {
     return null;
   }, [data.delayedDocuments, data.todayIncomingDocuments, data.todayLabel, panelType, selectedTrend]);
 
+  const showShipmentActions = panelType === 'today' || panelType === 'delayed';
+
   const canBatchShip =
-    panelType === 'delayed' &&
+    showShipmentActions &&
     selectedOrderBookIds.length > 0 &&
     (panelConfig?.items ?? []).some((item) => selectedOrderBookIds.includes(item.orderBookId ?? ''));
 
   const allChecked =
-    panelType === 'delayed' &&
+    showShipmentActions &&
     Boolean(panelConfig) &&
     (panelConfig?.items.length ?? 0) > 0 &&
     panelConfig?.items.every((item) => item.orderBookId && selectedOrderBookIds.includes(item.orderBookId));
@@ -159,7 +161,7 @@ export default function DashboardPage() {
   }
 
   function toggleSelectAll(checked: boolean) {
-    if (!panelConfig || panelType !== 'delayed') return;
+    if (!showShipmentActions || !panelConfig) return;
     const ids = panelConfig.items
       .map((item) => item.orderBookId)
       .filter((value): value is string => Boolean(value));
@@ -205,7 +207,7 @@ export default function DashboardPage() {
       await updateManyOrderBookShippedStatus(selectedOrderBookIds, SHIPPED_STATUS_SHIPPED);
       await refreshSummary();
       setSelectedOrderBookIds([]);
-      window.alert('선택한 품목이 출고상태로 변경되었습니다.');
+      window.alert('선택한 항목이 출고상태로 변경되었습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '일괄 출고처리에 실패했습니다.');
     } finally {
@@ -246,7 +248,7 @@ export default function DashboardPage() {
                 onClick={() => setWeekOffset((current) => current - 1)}
                 aria-label="이전 주"
               >
-                ‹
+                ◀
               </button>
               <span style={{ fontSize: '1rem', fontWeight: 600, padding: '0 8px' }}>{trendWeekLabel}</span>
               <button
@@ -255,7 +257,7 @@ export default function DashboardPage() {
                 onClick={() => setWeekOffset((current) => current + 1)}
                 aria-label="다음 주"
               >
-                ›
+                ▶
               </button>
             </div>
           </div>
@@ -283,14 +285,14 @@ export default function DashboardPage() {
       <section className="card">
         <div className="card-header">
           <div>
-            <h2>최근 등록된 문서</h2>
+            <h2>최근 등록 문서</h2>
           </div>
         </div>
 
         {loading ? (
-          <div className="empty-state">최근 등록된 문서를 불러오는 중입니다...</div>
+          <div className="empty-state">최근 등록 문서를 불러오는 중입니다...</div>
         ) : data.recentDocuments.length === 0 ? (
-          <div className="empty-state">최근 등록된 문서가 없습니다.</div>
+          <div className="empty-state">최근 등록 문서가 없습니다.</div>
         ) : (
           <div className="table-wrap">
             <table className="table dashboard-recent-table">
@@ -330,7 +332,7 @@ export default function DashboardPage() {
           </button>
         }
       >
-        {panelType === 'delayed' ? (
+        {showShipmentActions ? (
           <div className="history-toolbar">
             <Button
               type="button"
@@ -347,7 +349,7 @@ export default function DashboardPage() {
           <table className="table dashboard-panel-table">
             <thead>
               <tr>
-                {panelType === 'delayed' ? (
+                {showShipmentActions ? (
                   <th style={{ width: 42, textAlign: 'center' }}>
                     <input
                       type="checkbox"
@@ -365,16 +367,16 @@ export default function DashboardPage() {
                 <th style={{ width: 88, textAlign: 'center' }}>파레트</th>
                 <th style={{ width: 88, textAlign: 'center' }}>박스</th>
                 <th style={{ width: 110, textAlign: 'center' }}>
-                  {panelType === 'delayed' ? '출고상태' : '상태'}
+                  {showShipmentActions ? '출고상태' : '상태'}
                 </th>
               </tr>
             </thead>
             <tbody>
               {!panelConfig || panelConfig.items.length === 0 ? (
                 <tr>
-                  <td colSpan={panelType === 'delayed' ? 10 : 9}>
+                  <td colSpan={showShipmentActions ? 10 : 9}>
                     <div className="dashboard-empty-state dashboard-panel-empty-state">
-                      <div>해당 기간의 입고 예정 품목이 없습니다.</div>
+                      <div>해당 기간의 입고 예정 항목이 없습니다.</div>
                       <div>새로운 입고 일정이 등록되면 여기에 표시됩니다.</div>
                     </div>
                   </td>
@@ -384,9 +386,9 @@ export default function DashboardPage() {
                   <DashboardIncomingRow
                     key={`${panelType}-${document.id}`}
                     document={document}
-                    showSelection={panelType === 'delayed'}
+                    showSelection={showShipmentActions}
                     checked={document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false}
-                    showShippedStatus={panelType === 'delayed'}
+                    showShippedStatus={showShipmentActions}
                     onToggleSelect={(checked) => {
                       if (document.orderBookId) {
                         toggleSelectOne(document.orderBookId, checked);
@@ -584,7 +586,13 @@ function DashboardRecentDocumentRow({
       <td style={{ textAlign: 'center' }}>{document.author || '-'}</td>
       <td style={{ textAlign: 'center' }}>{formatDateTime(document.updatedAt || document.createdAt)}</td>
       <td style={{ textAlign: 'center' }}>
-        {document.receipt ? <Badge variant="muted-blue">{document.receipt}</Badge> : <Badge>정상</Badge>}
+        {document.receipt ? (
+          <Badge variant="muted-blue">{document.receipt}</Badge>
+        ) : document.status === 'ST01' ? (
+          <Badge variant="cancel">거래취소</Badge>
+        ) : (
+          <Badge>정상</Badge>
+        )}
       </td>
     </tr>
   );
