@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
-import { fetchNextIssueNo, saveDocument } from '../api/documents';
+import { fetchDocuments, fetchNextIssueNo, saveDocument } from '../api/documents';
 import { fetchProductsByClient } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
 import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
+import Modal from '../components/ui/Modal';
 import DocumentItemTable, { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
 import type { SharedItemRow as DocItem, ItemSummary } from '../components/ui/DocumentItemTable';
 import { useDocumentItems, createEmptySharedItem } from '../hooks/useDocumentItems';
 import type { Client } from '../types/client';
-import type { DocumentPayload } from '../types/document';
+import type { DocumentHistory, DocumentPayload } from '../types/document';
 import type { Product } from '../types/product';
 import type { SharedPreviewData as PreviewData, SharedPreviewItem as PreviewItem } from '../types/documentPreview';
 import { emptyToNull, formatIntegerInput, parseNullableInteger, stripNonNumeric, formatNumber } from '../utils/formatters';
@@ -52,11 +53,11 @@ function createInitialForm(): DocForm {
     remark: '',
     requestNote: '',
     supplierBizNo: '113 - 88 - 02729',
-    supplierName: '디케이앤에이치',
-    supplierOwner: '김 주 영',
+    supplierName: '주식회사 에이치',
+    supplierOwner: '김주형',
     supplierAddress: '서울 동대문구 천호대로 21, 5층 507호',
     supplierBusinessType: '도매 및 소매업',
-    supplierBusinessItem: '식품용기류(플라스틱용기)',
+    supplierBusinessItem: '생활용품(플라스틱용기)',
   };
 }
 
@@ -85,6 +86,10 @@ export default function DocCreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [supplierSectionOpen, setSupplierSectionOpen] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importDocuments, setImportDocuments] = useState<DocumentHistory[]>([]);
+  const [importKeyword, setImportKeyword] = useState('');
   const saveLockRef = useRef(false);
   const prevBaseOrderDateRef = useRef(form.orderDate);
   const prevBaseArriveDateRef = useRef(form.arriveDate);
@@ -102,7 +107,7 @@ export default function DocCreatePage() {
         setForm((current) => ({ ...current, issueNo: nextIssueNo }));
       } catch (err) {
         if (!mounted) return;
-        setError(err instanceof Error ? err.message : '기본정보를 불러오지 못했습니다.');
+        setError(err instanceof Error ? err.message : '기본 정보를 불러오지 못했습니다.');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -244,7 +249,7 @@ export default function DocCreatePage() {
       deliveryAddr: client?.addr ?? '',
       remark:
         client && (client.time || client.lunch)
-          ? `입고시간 : ${client.time || '-'} / 점심 ${client.lunch || '-'}`
+          ? `입고시간 : ${client.time || '-'} / 점심 ${client.lunch || '-'}` 
           : '',
     }));
 
@@ -276,7 +281,7 @@ export default function DocCreatePage() {
     if (!form.client.trim()) return '납품처를 선택해 주세요.';
     if (!form.receiver.trim()) return '수신처를 입력해 주세요.';
     if (!form.deliveryAddr.trim()) return '납품주소를 입력해 주세요.';
-    if (!previewData) return '저장할 품목을 한 줄 이상 입력해 주세요.';
+    if (!previewData) return '저장할 품목을 1개 이상 입력해 주세요.';
     return null;
   }
 
@@ -353,13 +358,13 @@ export default function DocCreatePage() {
 
   function openPreview(type: Exclude<PreviewType, null>) {
     const validationMessage = validateForm();
-    if (validationMessage && validationMessage !== '저장할 품목을 한 줄 이상 입력해 주세요.') {
+    if (validationMessage && validationMessage !== '저장할 품목을 1개 이상 입력해 주세요.') {
       window.alert(validationMessage);
       return;
     }
 
     if (!previewData) {
-      window.alert('미리보기할 품목을 먼저 입력해 주세요.');
+      window.alert('미리보기 전에 품목을 먼저 입력해 주세요.');
       return;
     }
 
@@ -370,13 +375,13 @@ export default function DocCreatePage() {
 
   async function exportToExcel() {
     const validationMessage = validateForm();
-    if (validationMessage && validationMessage !== '저장할 품목을 한 줄 이상 입력해 주세요.') {
+    if (validationMessage && validationMessage !== '저장할 품목을 1개 이상 입력해 주세요.') {
       window.alert(validationMessage);
       return;
     }
 
     if (!previewData) {
-      window.alert('엑셀로 내보낼 품목을 먼저 입력해 주세요.');
+      window.alert('엑셀 다운로드 전에 품목을 먼저 입력해 주세요.');
       return;
     }
 
@@ -387,6 +392,74 @@ export default function DocCreatePage() {
       window.alert('엑셀 파일 생성 중 오류가 발생했습니다.');
     }
   }
+
+  async function openImportModal() {
+    try {
+      setImportLoading(true);
+      setError(null);
+      const rows = await fetchDocuments();
+      setImportDocuments(rows);
+      setImportModalOpen(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '불러올 발행이력 목록을 가져오지 못했습니다.');
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
+  async function handleImportDocument(document: DocumentHistory) {
+    try {
+      setImportLoading(true);
+      setError(null);
+      const productRows = document.client ? await fetchProductsByClient(document.client) : [];
+      setProducts(productRows);
+      setForm((current) => ({
+        ...current,
+        orderDate: document.orderDate ?? today,
+        arriveDate: document.arriveDate ?? '',
+        client: document.client,
+        manager: document.manager,
+        managerTel: document.managerTel,
+        receiver: document.receiver,
+        deliveryAddr: document.deliveryAddr,
+        remark: document.remark,
+        requestNote: document.requestNote,
+        supplierBizNo: document.supplierBizNo,
+        supplierName: document.supplierName,
+        supplierOwner: document.supplierOwner,
+        supplierAddress: document.supplierAddress,
+        supplierBusinessType: document.supplierBusinessType,
+        supplierBusinessItem: document.supplierBusinessItem,
+      }));
+      prevBaseOrderDateRef.current = document.orderDate ?? today;
+      prevBaseArriveDateRef.current = document.arriveDate ?? '';
+      setItems(mapImportedDocumentItems(document, productRows));
+      setImportModalOpen(false);
+      setImportKeyword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '선택한 문서를 불러오지 못했습니다.');
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
+  const filteredImportDocuments = useMemo(() => {
+    const keyword = importKeyword.trim().toLowerCase();
+    if (!keyword) return importDocuments;
+
+    return importDocuments.filter((document) =>
+      [
+        document.issueNo,
+        document.client,
+        document.receiver,
+        document.author,
+        document.items.map((item) => `${item.name1} ${item.name2}`).join(' '),
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword),
+    );
+  }, [importDocuments, importKeyword]);
 
 
 
@@ -402,6 +475,9 @@ export default function DocCreatePage() {
             <div>
               <h2>기본 정보</h2>
             </div>
+            <button className="btn btn-secondary doc-import-trigger-button" type="button" onClick={() => void openImportModal()}>
+              불러오기
+            </button>
           </div>
 
           {loading ? (
@@ -426,9 +502,7 @@ export default function DocCreatePage() {
                     onBlur={() => window.setTimeout(() => setClientDropdownOpen(false), 120)}
                     placeholder="납품처 검색 또는 선택"
                   />
-                  <span className="client-search-caret" aria-hidden="true">
-                    ▾
-                  </span>
+                  <span className="client-search-caret" aria-hidden="true" />
                   {clientDropdownOpen && filteredClients.length > 0 ? (
                     <div className="client-search-dropdown">
                       {filteredClients.map((client) => (
@@ -511,6 +585,122 @@ export default function DocCreatePage() {
           onClose={() => setPreviewType(null)}
         />
       ) : null}
+
+      <Modal
+        open={importModalOpen}
+        title="발행이력 불러오기"
+        description="기존 발행이력을 선택하면 현재 문서작성 화면에 내용이 채워집니다."
+        onClose={() => {
+          if (!importLoading) {
+            setImportModalOpen(false);
+            setImportKeyword('');
+          }
+        }}
+        cardClassName="doc-import-modal-card"
+        closeOnOverlayClick={false}
+        footer={
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setImportModalOpen(false);
+              setImportKeyword('');
+            }}
+            disabled={importLoading}
+          >
+            닫기
+          </button>
+        }
+      >
+        <div className="modal-head-actions">
+          <input
+            className="search-input"
+            value={importKeyword}
+            onChange={(event) => setImportKeyword(event.target.value)}
+            placeholder="발급번호, 납품처, 수신처, 작성자로 검색"
+          />
+        </div>
+
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: 110 }}>발급번호</th>
+                <th style={{ width: 120, textAlign: 'center' }}>발주일자</th>
+                <th style={{ width: 120, textAlign: 'center' }}>입고일자</th>
+                <th style={{ minWidth: 160 }}>납품처</th>
+                <th style={{ minWidth: 140 }}>수신처</th>
+                <th style={{ width: 90, textAlign: 'center' }}>작성자</th>
+                <th className="doc-import-select-column" aria-label="불러오기" />
+              </tr>
+            </thead>
+            <tbody>
+              {importLoading ? (
+                <tr>
+                  <td colSpan={7} className="table-empty">발행이력 목록을 불러오는 중입니다...</td>
+                </tr>
+              ) : filteredImportDocuments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="table-empty">검색 결과가 없습니다.</td>
+                </tr>
+              ) : (
+                filteredImportDocuments.map((document) => (
+                  <tr key={document.id}>
+                    <td>{document.issueNo || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>{document.orderDate || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>{document.arriveDate || '-'}</td>
+                    <td><div className="table-clamp-2" title={document.client || '-'}>{document.client || '-'}</div></td>
+                    <td><div className="table-clamp-2" title={document.receiver || '-'}>{document.receiver || '-'}</div></td>
+                    <td style={{ textAlign: 'center' }}>{document.author || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm doc-import-select-button"
+                        onClick={() => void handleImportDocument(document)}
+                        disabled={importLoading}
+                      >
+                        불러오기
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Modal>
     </div>
   );
 }
+
+function mapImportedDocumentItems(document: DocumentHistory, products: Product[]): DocItem[] {
+  if (document.items.length === 0) {
+    return [createEmptySharedItem(document.orderDate ?? today, document.arriveDate ?? '')];
+  }
+
+  return document.items.map((item) => {
+    const matched = products.find((product) => product.name1 === item.name1);
+    const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
+
+    return {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      productId,
+      manualName: productId === MANUAL_PRODUCT_ID ? item.name1 : '',
+      manualGubun:
+        productId === MANUAL_PRODUCT_ID
+          ? item.gubun || DEFAULT_GUBUN_OPTIONS[0]
+          : DEFAULT_GUBUN_OPTIONS[0],
+      orderDate: item.orderDate ?? document.orderDate ?? today,
+      arriveDate: item.arriveDate ?? document.arriveDate ?? '',
+      qty: item.qty,
+      customPallet: item.customPallet,
+      customBox: item.customBox,
+      unitPrice: item.unitPrice,
+      customSupply: item.supply,
+      vat: item.vat,
+      releaseNote: item.releaseNote ?? '',
+      invoiceNote: item.invoiceNote ?? '',
+    };
+  });
+}
+

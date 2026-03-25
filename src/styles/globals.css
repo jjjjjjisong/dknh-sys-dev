@@ -1405,6 +1405,36 @@ a {
   width: min(100%, 640px);
 }
 
+.doc-import-modal-card {
+  width: min(100%, 1100px);
+}
+
+.doc-import-trigger-button {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.doc-import-trigger-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border-color: #cfd8eb;
+  background: #f8fbff;
+}
+
+.doc-import-trigger-button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.doc-import-select-column {
+  width: 112px;
+  text-align: center;
+}
+
+.doc-import-select-button {
+  min-width: 76px;
+}
+
 .password-modal-card {
   width: min(100%, 420px);
 }
