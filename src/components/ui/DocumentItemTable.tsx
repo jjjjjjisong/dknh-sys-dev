@@ -1,12 +1,12 @@
 import React from 'react';
 import type { Product } from '../../types/product';
 import {
-  formatIntegerInput,
   formatDecimalInput,
-  parseNullableInteger,
-  parseNullableDecimal,
-  stripNonNumeric,
+  formatIntegerInput,
   formatNumber,
+  parseNullableDecimal,
+  parseNullableInteger,
+  stripNonNumeric,
 } from '../../utils/formatters';
 
 export const MANUAL_PRODUCT_ID = '__manual__';
@@ -125,7 +125,10 @@ export default function DocumentItemTable({
                             productId: nextId,
                             manualGubun: DEFAULT_GUBUN_OPTIONS[0],
                             manualName: nextId === MANUAL_PRODUCT_ID ? current.manualName : '',
-                            unitPrice: nextId === MANUAL_PRODUCT_ID ? current.unitPrice : selected?.sell_price ?? null,
+                            unitPrice:
+                              nextId === MANUAL_PRODUCT_ID
+                                ? current.unitPrice
+                                : selected?.sell_price ?? null,
                             customSupply: null,
                           }));
                         }}
@@ -145,7 +148,10 @@ export default function DocumentItemTable({
                           className="doc-cell-control"
                           value={item.manualGubun}
                           onChange={(event) =>
-                            onUpdateItem(item.id, (current) => ({ ...current, manualGubun: event.target.value }))
+                            onUpdateItem(item.id, (current) => ({
+                              ...current,
+                              manualGubun: event.target.value,
+                            }))
                           }
                         >
                           {DEFAULT_GUBUN_OPTIONS.map((option) => (
@@ -164,7 +170,10 @@ export default function DocumentItemTable({
                         type="date"
                         value={item.orderDate}
                         onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({ ...current, orderDate: event.target.value }))
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            orderDate: event.target.value,
+                          }))
                         }
                       />
                     </td>
@@ -174,7 +183,10 @@ export default function DocumentItemTable({
                         type="date"
                         value={item.arriveDate}
                         onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({ ...current, arriveDate: event.target.value }))
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            arriveDate: event.target.value,
+                          }))
                         }
                       />
                     </td>
@@ -267,14 +279,21 @@ export default function DocumentItemTable({
                           type="checkbox"
                           checked={item.vat}
                           onChange={(event) =>
-                            onUpdateItem(item.id, (current) => ({ ...current, vat: event.target.checked }))
+                            onUpdateItem(item.id, (current) => ({
+                              ...current,
+                              vat: event.target.checked,
+                            }))
                           }
                         />
                         포함
                       </label>
                     </td>
                     <td>
-                      <button className="btn btn-danger doc-delete-button" type="button" onClick={() => onRemoveItem(item.id)}>
+                      <button
+                        className="btn btn-danger doc-delete-button"
+                        type="button"
+                        onClick={() => onRemoveItem(item.id)}
+                      >
                         삭제
                       </button>
                     </td>
@@ -287,33 +306,47 @@ export default function DocumentItemTable({
                           className="doc-cell-control doc-item-name-input"
                           value={item.manualName}
                           onChange={(event) =>
-                            onUpdateItem(item.id, (current) => ({ ...current, manualName: event.target.value }))
+                            onUpdateItem(item.id, (current) => ({
+                              ...current,
+                              manualName: event.target.value,
+                            }))
                           }
-                          placeholder="품목명"
+                          placeholder="품목명 입력"
                         />
                       ) : null}
                     </td>
                     <td className="doc-item-note-spacer" />
-                    <td colSpan={9}>
-                      <div className="doc-item-extra-inline">
-                        <input
-                          className="doc-cell-control"
-                          value={item.releaseNote}
-                          onChange={(event) =>
-                            onUpdateItem(item.id, (current) => ({ ...current, releaseNote: event.target.value }))
-                          }
-                          placeholder="비고(출고의뢰서) 입력"
-                        />
-                        <input
-                          className="doc-cell-control"
-                          value={item.invoiceNote}
-                          onChange={(event) =>
-                            onUpdateItem(item.id, (current) => ({ ...current, invoiceNote: event.target.value }))
-                          }
-                          placeholder="비고(거래명세서) 입력"
-                        />
-                      </div>
+                    <td colSpan={2}>
+                      <input
+                        className="doc-cell-control doc-item-release-note"
+                        value={item.releaseNote}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            releaseNote: event.target.value,
+                          }))
+                        }
+                        placeholder="비고(출고의뢰서) 입력"
+                      />
                     </td>
+                    <td colSpan={2}>
+                      <input
+                        className="doc-cell-control doc-item-invoice-note"
+                        value={item.invoiceNote}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            invoiceNote: event.target.value,
+                          }))
+                        }
+                        placeholder="비고(거래명세서) 입력"
+                      />
+                    </td>
+                    <td className="doc-item-note-spacer" />
+                    <td className="doc-item-note-spacer" />
+                    <td className="doc-item-note-spacer" />
+                    <td className="doc-item-note-spacer" />
+                    <td className="doc-item-note-spacer" />
                   </tr>
                 </React.Fragment>
               );
