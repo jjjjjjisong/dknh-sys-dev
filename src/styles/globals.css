@@ -960,9 +960,16 @@ a {
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 8px;
   margin-top: 16px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto;
 }
 
 .pagination-pages {
@@ -996,6 +1003,13 @@ a {
 .pagination-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.pagination-summary {
+  flex-shrink: 0;
+  color: var(--text-3);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .alert {
