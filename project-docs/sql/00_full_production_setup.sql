@@ -230,6 +230,14 @@ begin
       add constraint order_book_del_yn_check
       check (del_yn in ('Y', 'N'));
   end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'order_book_from_doc_requires_document_item_id_check'
+  ) then
+    alter table public.order_book
+      add constraint order_book_from_doc_requires_document_item_id_check
+      check (from_doc = false or document_item_id is not null);
+  end if;
 end
 $$;
 
