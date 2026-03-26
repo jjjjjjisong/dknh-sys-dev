@@ -272,10 +272,6 @@ create index if not exists idx_order_book_shipped_status on public.order_book (s
 create index if not exists idx_order_book_del_yn on public.order_book (del_yn);
 create index if not exists idx_order_book_updated_at on public.order_book (updated_at desc);
 
-create unique index if not exists uq_documents_active_issue_no
-  on public.documents (issue_no)
-  where del_yn = 'N';
-
 create unique index if not exists uq_document_items_active_document_id_seq
   on public.document_items (document_id, seq)
   where del_yn = 'N';

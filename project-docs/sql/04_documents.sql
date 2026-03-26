@@ -91,10 +91,6 @@ create index if not exists idx_document_items_document_id on public.document_ite
 create index if not exists idx_document_items_del_yn on public.document_items (del_yn);
 create index if not exists idx_document_items_updated_at on public.document_items (updated_at desc);
 
-create unique index if not exists uq_documents_active_issue_no
-  on public.documents (issue_no)
-  where del_yn = 'N';
-
 create unique index if not exists uq_document_items_active_document_id_seq
   on public.document_items (document_id, seq)
   where del_yn = 'N';
