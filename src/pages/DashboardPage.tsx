@@ -15,7 +15,6 @@ import type {
 import type { OrderBookShippingStatus } from '../types/order-book';
 
 type PanelType = 'today' | 'delayed' | 'trend' | null;
-type TrendMotionDirection = 'previous' | 'next';
 
 const SHIPPED_STATUS_SHIPPED = '출고' as OrderBookShippingStatus;
 const SHIPPED_STATUS_UNSHIPPED = '미출고' as OrderBookShippingStatus;
@@ -46,8 +45,6 @@ export default function DashboardPage() {
   const [trendWeekLabel, setTrendWeekLabel] = useState('');
   const [trendWeeklyArrivals, setTrendWeeklyArrivals] = useState<DashboardArrivalTrend[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
-  const [trendMotionDirection, setTrendMotionDirection] = useState<TrendMotionDirection>('next');
-  const [trendAnimationKey, setTrendAnimationKey] = useState(0);
   const hasLoadedTrendRef = useRef(false);
 
   useEffect(() => {
@@ -82,15 +79,17 @@ export default function DashboardPage() {
     let mounted = true;
 
     async function loadTrend() {
+      const initialLoad = !hasLoadedTrendRef.current;
+
       try {
-        setTrendLoading(true);
+        if (initialLoad) {
+          setTrendLoading(true);
+        }
         const result = await fetchDashboardWeeklyArrivals(getShiftedWeekDate(weekOffset));
         if (mounted) {
           setTrendWeekLabel(result.weekLabel);
           setTrendWeeklyArrivals(result.weeklyArrivals);
-          if (hasLoadedTrendRef.current) {
-            setTrendAnimationKey((current) => current + 1);
-          } else {
+          if (!hasLoadedTrendRef.current) {
             hasLoadedTrendRef.current = true;
           }
         }
@@ -99,7 +98,7 @@ export default function DashboardPage() {
           setError(err instanceof Error ? err.message : '주간 입고예정 데이터를 불러오지 못했습니다.');
         }
       } finally {
-        if (mounted) {
+        if (mounted && initialLoad) {
           setTrendLoading(false);
         }
       }
@@ -252,10 +251,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-week-nav-button"
-                onClick={() => {
-                  setTrendMotionDirection('previous');
-                  setWeekOffset((current) => current - 1);
-                }}
+                onClick={() => setWeekOffset((current) => current - 1)}
                 aria-label="이전 주"
               >
                 ◀
@@ -264,10 +260,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-week-nav-button"
-                onClick={() => {
-                  setTrendMotionDirection('next');
-                  setWeekOffset((current) => current + 1);
-                }}
+                onClick={() => setWeekOffset((current) => current + 1)}
                 aria-label="다음 주"
               >
                 ▶
@@ -275,10 +268,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div
-            key={trendAnimationKey}
-            className={`dashboard-bar-chart dashboard-bar-chart-${trendMotionDirection}`}
-          >
+          <div className="dashboard-bar-chart">
             {(trendLoading ? getEmptyTrendBars() : trendWeeklyArrivals).map((item, index) => (
               <TrendBar
                 key={item.date || index}

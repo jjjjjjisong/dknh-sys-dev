@@ -12,12 +12,9 @@ export default function Pagination({
   onPageChange,
 }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-
-  if (totalItems <= pageSize) {
-    return null;
-  }
-
   const pages = getVisiblePages(currentPage, totalPages);
+  const rangeStart = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = totalItems === 0 ? 0 : Math.min(currentPage * pageSize, totalItems);
 
   function moveToPage(page: number) {
     const nextPage = Math.min(Math.max(page, 1), totalPages);
@@ -28,36 +25,42 @@ export default function Pagination({
 
   return (
     <div className="pagination">
-      <button
-        type="button"
-        className="pagination-button"
-        onClick={() => moveToPage(currentPage - 1)}
-        disabled={currentPage === 1}
-      >
-        이전
-      </button>
+      <div className="pagination-controls">
+        <button
+          type="button"
+          className="pagination-button"
+          onClick={() => moveToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          이전
+        </button>
 
-      <div className="pagination-pages">
-        {pages.map((page) => (
-          <button
-            key={page}
-            type="button"
-            className={page === currentPage ? 'pagination-button active' : 'pagination-button'}
-            onClick={() => moveToPage(page)}
-          >
-            {page}
-          </button>
-        ))}
+        <div className="pagination-pages">
+          {pages.map((page) => (
+            <button
+              key={page}
+              type="button"
+              className={page === currentPage ? 'pagination-button active' : 'pagination-button'}
+              onClick={() => moveToPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className="pagination-button"
+          onClick={() => moveToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          다음
+        </button>
       </div>
 
-      <button
-        type="button"
-        className="pagination-button"
-        onClick={() => moveToPage(currentPage + 1)}
-        disabled={currentPage === totalPages}
-      >
-        다음
-      </button>
+      <div className="pagination-summary">
+        {rangeStart}-{rangeEnd} / 총 {totalItems.toLocaleString('ko-KR')}건
+      </div>
     </div>
   );
 }
