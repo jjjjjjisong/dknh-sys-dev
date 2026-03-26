@@ -87,8 +87,12 @@ export async function saveDocument(payload: DocumentPayload) {
         throw itemError;
       }
 
+      const sortedInsertedItems = [...(insertedItems ?? [])].sort(
+        (a: any, b: any) => (a.seq ?? 0) - (b.seq ?? 0) || String(a.id).localeCompare(String(b.id)),
+      );
+
       const { error: orderBookError } = await supabase.from('order_book').insert(
-        (insertedItems ?? []).map((item: any) => ({
+        sortedInsertedItems.map((item: any) => ({
           doc_id: documentRow.id,
           document_item_id: item.id,
           issue_no: payload.issueNo,
@@ -267,6 +271,19 @@ export async function updateDocument(document: DocumentHistory) {
     const activeItemIds = (activeItemRows ?? []).map((row: any) => String(row.id));
     const removedItemIds = activeItemIds.filter((id: string) => !existingItemIds.includes(id));
 
+    if (removedItemIds.length > 0) {
+      const { error: deleteItemError } = await supabase
+        .from('document_items')
+        .update(deletedAuditFields)
+        .in('id', removedItemIds)
+        .eq('document_id', document.id)
+        .eq('del_yn', 'N');
+
+      if (deleteItemError) {
+        throw deleteItemError;
+      }
+    }
+
     for (const item of nextItems) {
       const itemPayload = {
         document_id: document.id,
@@ -310,19 +327,6 @@ export async function updateDocument(document: DocumentHistory) {
       }
     }
 
-    if (removedItemIds.length > 0) {
-      const { error: deleteItemError } = await supabase
-        .from('document_items')
-        .update(deletedAuditFields)
-        .in('id', removedItemIds)
-        .eq('document_id', document.id)
-        .eq('del_yn', 'N');
-
-      if (deleteItemError) {
-        throw deleteItemError;
-      }
-    }
-
     const { data: activeDocumentItemRows, error: activeDocumentItemsError } = await supabase
       .from('document_items')
       .select('id, seq, name1, qty, arrive_date')
@@ -355,6 +359,13 @@ export async function updateDocument(document: DocumentHistory) {
       document_item_id: string | null;
       product: string | null;
     }>;
+    const legacyOrderBookCount = currentOrderBookRows.filter((row) => !row.document_item_id).length;
+    if (legacyOrderBookCount > 0) {
+      throw new Error(
+        '기존 수주대장 데이터에 품목 연결 정보가 없어 안전하게 수정할 수 없습니다. 먼저 order_book document_item_id 백필 SQL을 실행해 주세요.',
+      );
+    }
+
     const activeDocumentItems = (activeDocumentItemRows ?? []) as Array<{
       id: string;
       seq: number | null;
@@ -364,7 +375,6 @@ export async function updateDocument(document: DocumentHistory) {
     }>;
 
     const orderBookByDocumentItemId = new Map<string, (typeof currentOrderBookRows)[number]>();
-    const legacyOrderBookRows = currentOrderBookRows.filter((row) => !row.document_item_id);
     const keptOrderBookIds = new Set<string>();
 
     for (const row of currentOrderBookRows) {
@@ -373,20 +383,9 @@ export async function updateDocument(document: DocumentHistory) {
       }
     }
 
-    const consumedLegacyOrderBookIds = new Set<string>();
-
     for (let index = 0; index < activeDocumentItems.length; index += 1) {
       const item = activeDocumentItems[index];
-      const existingOrderBook =
-        orderBookByDocumentItemId.get(item.id) ??
-        legacyOrderBookRows.find((row) => {
-          if (consumedLegacyOrderBookIds.has(row.id)) return false;
-          return true;
-        });
-
-      if (existingOrderBook && !existingOrderBook.document_item_id) {
-        consumedLegacyOrderBookIds.add(existingOrderBook.id);
-      }
+      const existingOrderBook = orderBookByDocumentItemId.get(item.id);
 
       const orderBookPayload = {
         doc_id: document.id,

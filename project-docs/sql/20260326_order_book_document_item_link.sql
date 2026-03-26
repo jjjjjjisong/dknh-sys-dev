@@ -62,3 +62,15 @@ where ob.id = matched.order_book_id
     ob.document_item_id is distinct from matched.document_item_id
     or ob.deadline is distinct from coalesce(matched.arrive_date, ob.deadline)
   );
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'order_book_from_doc_requires_document_item_id_check'
+  ) then
+    alter table public.order_book
+      add constraint order_book_from_doc_requires_document_item_id_check
+      check (from_doc = false or document_item_id is not null);
+  end if;
+end
+$$;

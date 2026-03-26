@@ -15,7 +15,7 @@ import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
 import type { Product } from '../types/product';
 import type { Supplier } from '../types/supplier';
-import { emptyToNull, formatNumber } from '../utils/formatters';
+import { emptyToNull, formatNumber, getErrorMessage } from '../utils/formatters';
 
 const PAGE_SIZE = 20;
 
@@ -60,7 +60,7 @@ export default function DocHistoryPage() {
         setSuppliers(rows.filter((supplier) => supplier.active !== false));
       } catch (err) {
         if (!mounted) return;
-        setError(err instanceof Error ? err.message : '공급자 목록을 불러오지 못했습니다.');
+        setError(getErrorMessage(err, '공급자 목록을 불러오지 못했습니다.'));
       }
     }
 
@@ -78,7 +78,7 @@ export default function DocHistoryPage() {
       const rows = await fetchDocuments();
       setDocuments(rows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '발행 이력을 불러오지 못했습니다.');
+      setError(getErrorMessage(err, '발행 이력을 불러오지 못했습니다.'));
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ export default function DocHistoryPage() {
         setItems(mapDraftItemsToSharedRows(draft, rows));
       } catch (err) {
         if (!mounted) return;
-        setError(err instanceof Error ? err.message : '품목 목록을 불러오지 못했습니다.');
+        setError(getErrorMessage(err, '품목 목록을 불러오지 못했습니다.'));
       }
     }
 
@@ -278,7 +278,7 @@ export default function DocHistoryPage() {
       setSuppliers(rows.filter((supplier) => supplier.active !== false));
       setSupplierModalOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '공급자 목록을 불러오지 못했습니다.');
+      setError(getErrorMessage(err, '공급자 목록을 불러오지 못했습니다.'));
     } finally {
       setSupplierLoading(false);
     }
@@ -343,7 +343,7 @@ export default function DocHistoryPage() {
       await reload();
       window.alert('수정 저장이 완료되었습니다.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '수정 저장에 실패했습니다.');
+      setError(getErrorMessage(err, '수정 저장에 실패했습니다.'));
     } finally {
       saveLockRef.current = false;
       setSaving(false);
@@ -369,7 +369,7 @@ export default function DocHistoryPage() {
       await reload();
       window.alert(nextCancelled ? '거래취소 처리되었습니다.' : '거래취소를 해제했습니다.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '상태 변경에 실패했습니다.');
+      setError(getErrorMessage(err, '상태 변경에 실패했습니다.'));
     } finally {
       saveLockRef.current = false;
       setSaving(false);

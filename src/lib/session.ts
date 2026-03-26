@@ -4,11 +4,14 @@ const STORAGE_KEY = 'dkh_user';
 const SESSION_EVENT = 'dkh-session-change';
 const TAB_COUNT_KEY = 'dkh_open_tab_count';
 const TAB_REGISTERED_KEY = 'dkh_tab_registered';
+const PENDING_CLEAR_KEY = 'dkh_pending_session_clear_at';
+const SESSION_CLEAR_GRACE_MS = 3000;
 
 let tabLifecycleBound = false;
 
 export function getStoredUser(): UserSession | null {
   ensureTabLifecycle();
+  reconcilePendingSessionClear();
 
   const raw =
     window.localStorage.getItem(STORAGE_KEY) ??
@@ -35,6 +38,7 @@ export function saveStoredUser(user: UserSession) {
 
 export function clearStoredUser() {
   window.localStorage.removeItem(STORAGE_KEY);
+  window.localStorage.removeItem(PENDING_CLEAR_KEY);
   window.sessionStorage.removeItem(STORAGE_KEY);
   window.dispatchEvent(new CustomEvent(SESSION_EVENT));
 }
@@ -57,10 +61,13 @@ export function subscribeSessionChange(listener: () => void) {
 function ensureTabLifecycle() {
   if (typeof window === 'undefined') return;
 
+  reconcilePendingSessionClear();
+
   if (!window.sessionStorage.getItem(TAB_REGISTERED_KEY)) {
     const nextCount = getOpenTabCount() + 1;
     window.localStorage.setItem(TAB_COUNT_KEY, String(nextCount));
     window.sessionStorage.setItem(TAB_REGISTERED_KEY, 'Y');
+    window.localStorage.removeItem(PENDING_CLEAR_KEY);
   }
 
   if (tabLifecycleBound) return;
@@ -75,7 +82,7 @@ function handleBeforeUnload() {
 
   if (nextCount === 0) {
     window.localStorage.removeItem(TAB_COUNT_KEY);
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.setItem(PENDING_CLEAR_KEY, String(Date.now()));
   } else {
     window.localStorage.setItem(TAB_COUNT_KEY, String(nextCount));
   }
@@ -102,4 +109,27 @@ function migrateLegacySessionStorage() {
 
 function clearLegacyLocalStorageSession() {
   return null;
+}
+
+function reconcilePendingSessionClear() {
+  const pendingAtRaw = window.localStorage.getItem(PENDING_CLEAR_KEY);
+  if (!pendingAtRaw) {
+    return;
+  }
+
+  const pendingAt = Number.parseInt(pendingAtRaw, 10);
+  if (Number.isNaN(pendingAt)) {
+    window.localStorage.removeItem(PENDING_CLEAR_KEY);
+    return;
+  }
+
+  const activeTabs = getOpenTabCount();
+  if (activeTabs > 0 || Date.now() - pendingAt <= SESSION_CLEAR_GRACE_MS) {
+    window.localStorage.removeItem(PENDING_CLEAR_KEY);
+    return;
+  }
+
+  window.localStorage.removeItem(PENDING_CLEAR_KEY);
+  window.localStorage.removeItem(TAB_COUNT_KEY);
+  window.localStorage.removeItem(STORAGE_KEY);
 }

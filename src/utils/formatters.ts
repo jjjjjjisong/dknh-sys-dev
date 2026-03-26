@@ -35,3 +35,28 @@ export function parseNullableDecimal(value: string) {
 export function stripNonNumeric(value: string) {
   return value.replace(/[^0-9]/g, '');
 }
+
+export function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+
+  if (err && typeof err === 'object') {
+    const message = 'message' in err ? (err as { message?: unknown }).message : null;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+
+    const details = 'details' in err ? (err as { details?: unknown }).details : null;
+    if (typeof details === 'string' && details.trim()) {
+      return details;
+    }
+
+    const hint = 'hint' in err ? (err as { hint?: unknown }).hint : null;
+    if (typeof hint === 'string' && hint.trim()) {
+      return hint;
+    }
+  }
+
+  return fallback;
+}
