@@ -413,22 +413,41 @@ a {
 }
 
 .dashboard-week-nav-button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: var(--accent-s);
+  font-size: 0;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 .dashboard-week-nav-button:hover {
-  background: var(--surface-2);
+  background: #eff6ff;
+  border-color: #bfd3ff;
+}
+
+.dashboard-week-nav-button::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+  display: block;
+  margin-left: -2px;
+}
+
+.dashboard-week-nav-button:first-of-type::before {
+  transform: rotate(-135deg);
+  margin-left: 2px;
 }
 
 .dashboard-donut-wrap {
@@ -514,6 +533,7 @@ a {
   justify-content: space-between;
   gap: 14px;
   padding-top: 16px;
+  overflow: hidden;
 }
 
 .dashboard-bar-item {
@@ -527,6 +547,7 @@ a {
   background: transparent;
   cursor: pointer;
   transition: transform 0.28s ease, opacity 0.28s ease;
+  opacity: 0;
 }
 
 .dashboard-bar-label,
@@ -582,10 +603,58 @@ a {
     transform 0.22s ease,
     opacity 0.22s ease;
   transform-origin: bottom center;
+  animation: dashboard-bar-grow 0.66s cubic-bezier(0.2, 0.9, 0.24, 1) both;
+  animation-delay: var(--bar-delay, 0ms);
+}
+
+.dashboard-bar-chart-next .dashboard-bar-item {
+  animation: dashboard-bar-slide-next 0.58s cubic-bezier(0.2, 0.8, 0.24, 1) both;
+  animation-delay: var(--bar-delay, 0ms);
+}
+
+.dashboard-bar-chart-previous .dashboard-bar-item {
+  animation: dashboard-bar-slide-previous 0.58s cubic-bezier(0.2, 0.8, 0.24, 1) both;
+  animation-delay: var(--bar-delay, 0ms);
 }
 
 .dashboard-bar-item:hover .dashboard-bar-fill {
   transform: scaleY(1.04);
+}
+
+@keyframes dashboard-bar-grow {
+  from {
+    transform: scaleY(0.3);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes dashboard-bar-slide-next {
+  from {
+    opacity: 0;
+    transform: translateX(18px) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes dashboard-bar-slide-previous {
+  from {
+    opacity: 0;
+    transform: translateX(-18px) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
 }
 
 .stat-label {

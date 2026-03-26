@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardSummary, fetchDashboardWeeklyArrivals } from '../api/dashboard';
 import { updateManyOrderBookShippedStatus, updateOrderBookShippedStatus } from '../api/order-book';
@@ -15,6 +15,7 @@ import type {
 import type { OrderBookShippingStatus } from '../types/order-book';
 
 type PanelType = 'today' | 'delayed' | 'trend' | null;
+type TrendMotionDirection = 'previous' | 'next';
 
 const SHIPPED_STATUS_SHIPPED = '출고' as OrderBookShippingStatus;
 const SHIPPED_STATUS_UNSHIPPED = '미출고' as OrderBookShippingStatus;
@@ -45,6 +46,9 @@ export default function DashboardPage() {
   const [trendWeekLabel, setTrendWeekLabel] = useState('');
   const [trendWeeklyArrivals, setTrendWeeklyArrivals] = useState<DashboardArrivalTrend[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
+  const [trendMotionDirection, setTrendMotionDirection] = useState<TrendMotionDirection>('next');
+  const [trendAnimationKey, setTrendAnimationKey] = useState(0);
+  const hasLoadedTrendRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -79,13 +83,16 @@ export default function DashboardPage() {
 
     async function loadTrend() {
       try {
-        if (trendWeeklyArrivals.length === 0) {
-          setTrendLoading(true);
-        }
+        setTrendLoading(true);
         const result = await fetchDashboardWeeklyArrivals(getShiftedWeekDate(weekOffset));
         if (mounted) {
           setTrendWeekLabel(result.weekLabel);
           setTrendWeeklyArrivals(result.weeklyArrivals);
+          if (hasLoadedTrendRef.current) {
+            setTrendAnimationKey((current) => current + 1);
+          } else {
+            hasLoadedTrendRef.current = true;
+          }
         }
       } catch (err) {
         if (mounted) {
@@ -102,7 +109,7 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [weekOffset, trendWeeklyArrivals.length]);
+  }, [weekOffset]);
 
   useEffect(() => {
     setSelectedOrderBookIds([]);
@@ -245,7 +252,10 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-week-nav-button"
-                onClick={() => setWeekOffset((current) => current - 1)}
+                onClick={() => {
+                  setTrendMotionDirection('previous');
+                  setWeekOffset((current) => current - 1);
+                }}
                 aria-label="이전 주"
               >
                 ◀
@@ -254,7 +264,10 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-week-nav-button"
-                onClick={() => setWeekOffset((current) => current + 1)}
+                onClick={() => {
+                  setTrendMotionDirection('next');
+                  setWeekOffset((current) => current + 1);
+                }}
                 aria-label="다음 주"
               >
                 ▶
@@ -262,7 +275,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="dashboard-bar-chart">
+          <div
+            key={trendAnimationKey}
+            className={`dashboard-bar-chart dashboard-bar-chart-${trendMotionDirection}`}
+          >
             {(trendLoading ? getEmptyTrendBars() : trendWeeklyArrivals).map((item, index) => (
               <TrendBar
                 key={item.date || index}
@@ -474,6 +490,15 @@ function TrendBar({
   onClick: () => void;
 }) {
   const height = max === 0 ? 16 : Math.max((item.count / max) * 100, item.count > 0 ? 16 : 10);
+  const motionStyle = {
+    transitionDelay: `${index * 55}ms`,
+    '--bar-delay': `${index * 55}ms`,
+  } as CSSProperties;
+  const barFillStyle = {
+    height: `${height}%`,
+    transitionDelay: `${index * 55}ms`,
+    '--bar-delay': `${index * 55}ms`,
+  } as CSSProperties;
 
   return (
     <button
@@ -481,16 +506,13 @@ function TrendBar({
       className="dashboard-bar-item"
       title={item.date ? `${item.date}: ${item.count}건` : undefined}
       onClick={onClick}
-      style={{ transitionDelay: `${index * 35}ms` }}
+      style={motionStyle}
     >
       <span className="dashboard-bar-label">{item.label}</span>
       <div className="dashboard-bar-track">
         <div
           className="dashboard-bar-fill"
-          style={{
-            height: `${height}%`,
-            transitionDelay: `${index * 35}ms`,
-          }}
+          style={barFillStyle}
         />
       </div>
       <strong className="dashboard-bar-value">{loading ? '...' : item.count}</strong>
