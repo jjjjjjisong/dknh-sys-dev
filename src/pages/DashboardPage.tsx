@@ -375,13 +375,13 @@ export default function DashboardPage() {
                   </th>
                 ) : null}
                 <th style={{ width: 88, textAlign: 'center' }}>발급번호</th>
-                <th style={{ width: 96, textAlign: 'center' }}>입고일자</th>
+                <th style={{ width: 116, textAlign: 'center' }}>입고일자</th>
                 <th style={{ textAlign: 'left' }}>납품처</th>
                 <th style={{ textAlign: 'left' }}>수신처</th>
                 <th style={{ textAlign: 'left' }}>품목명</th>
                 <th style={{ width: 88, textAlign: 'center' }}>수량</th>
-                <th style={{ width: 88, textAlign: 'center' }}>파레트</th>
-                <th style={{ width: 88, textAlign: 'center' }}>박스</th>
+                <th style={{ width: 72, textAlign: 'center' }}>파레트</th>
+                <th style={{ width: 72, textAlign: 'center' }}>박스</th>
                 <th style={{ width: 110, textAlign: 'center' }}>
                   {showShipmentActions ? '출고상태' : '상태'}
                 </th>
