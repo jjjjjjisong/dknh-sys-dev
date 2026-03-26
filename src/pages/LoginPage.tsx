@@ -5,12 +5,16 @@ import Alert from '../components/ui/Alert';
 import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
 import { getStoredUser, saveStoredUser } from '../lib/session';
+import { getErrorMessage } from '../utils/formatters';
 import logoImage from '../../logo.png';
+
+const SAVED_LOGIN_ID_KEY = 'dkh_saved_login_id';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberId, setRememberId] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
 
@@ -19,6 +23,14 @@ export default function LoginPage() {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const savedId = window.localStorage.getItem(SAVED_LOGIN_ID_KEY);
+    if (!savedId) return;
+
+    setId(savedId);
+    setRememberId(true);
+  }, []);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
@@ -40,10 +52,16 @@ export default function LoginPage() {
         return;
       }
 
+      if (rememberId) {
+        window.localStorage.setItem(SAVED_LOGIN_ID_KEY, id.trim());
+      } else {
+        window.localStorage.removeItem(SAVED_LOGIN_ID_KEY);
+      }
+
       saveStoredUser(user);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '로그인에 실패했습니다.');
+      setError(getErrorMessage(err, '로그인에 실패했습니다.'));
     } finally {
       setLoggingIn(false);
     }
@@ -53,7 +71,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-hero">
         <img className="login-logo-image" src={logoImage} alt="DKH 시스템" />
-        <p className="login-hero-subtitle">(주) 디케이앤에이치 업무 관리 시스템</p>
+        <p className="login-hero-subtitle">(주) 혜인에이치 시스템 업무 관리 시스템</p>
       </div>
 
       <form className="login-card" onSubmit={handleLogin}>
@@ -80,10 +98,19 @@ export default function LoginPage() {
           />
         </FormField>
 
+        <label className="login-remember">
+          <input
+            type="checkbox"
+            checked={rememberId}
+            onChange={(event) => setRememberId(event.target.checked)}
+          />
+          <span>ID 저장</span>
+        </label>
+
         {error ? <Alert>{error}</Alert> : null}
 
         <Button type="submit" variant="primary" block disabled={loggingIn}>
-          {loggingIn ? '로그인 중..' : '로그인'}
+          {loggingIn ? '로그인 중...' : '로그인'}
         </Button>
       </form>
     </div>
