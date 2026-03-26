@@ -648,7 +648,20 @@ function formatTrendTitleDate(value: string) {
 
 function formatDateTime(value: string) {
   if (!value) return '-';
-  return value.slice(0, 16).replace('T', ' ');
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value.slice(0, 16).replace('T', ' ');
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
 }
 
 function formatMaybeNumber(value: number | null) {
