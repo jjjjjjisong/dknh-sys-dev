@@ -125,6 +125,7 @@ create table if not exists public.order_book (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   doc_id uuid null,
+  document_item_id bigint null,
   issue_no text not null default '',
   date date null,
   deadline date null,
@@ -267,6 +268,7 @@ create index if not exists idx_order_book_created_at on public.order_book (creat
 create index if not exists idx_order_book_date on public.order_book (date desc);
 create index if not exists idx_order_book_client on public.order_book (client);
 create index if not exists idx_order_book_doc_id on public.order_book (doc_id);
+create index if not exists idx_order_book_document_item_id on public.order_book (document_item_id);
 create index if not exists idx_order_book_status on public.order_book (status);
 create index if not exists idx_order_book_shipped_status on public.order_book (shipped_status);
 create index if not exists idx_order_book_del_yn on public.order_book (del_yn);

@@ -78,22 +78,26 @@ export async function saveDocument(payload: DocumentPayload) {
         ...auditFields,
       }));
 
-      const { error: itemError } = await supabase.from('document_items').insert(itemRows);
+      const { data: insertedItems, error: itemError } = await supabase
+        .from('document_items')
+        .insert(itemRows)
+        .select('id, seq, name1, qty, arrive_date');
 
       if (itemError) {
         throw itemError;
       }
 
       const { error: orderBookError } = await supabase.from('order_book').insert(
-        payload.items.map((item) => ({
+        (insertedItems ?? []).map((item: any) => ({
           doc_id: documentRow.id,
+          document_item_id: item.id,
           issue_no: payload.issueNo,
           client_id: clientId,
           date: payload.orderDate,
-          deadline: payload.arriveDate,
+          deadline: item.arrive_date ?? payload.arriveDate,
           client: payload.client,
           product: item.name1,
-          qty: item.qty,
+          qty: item.qty ?? 0,
           note: payload.remark,
           receipt: '',
           status: payload.status,
@@ -319,9 +323,21 @@ export async function updateDocument(document: DocumentHistory) {
       }
     }
 
+    const { data: activeDocumentItemRows, error: activeDocumentItemsError } = await supabase
+      .from('document_items')
+      .select('id, seq, name1, qty, arrive_date')
+      .eq('document_id', document.id)
+      .eq('del_yn', 'N')
+      .order('seq', { ascending: true })
+      .order('id', { ascending: true });
+
+    if (activeDocumentItemsError) {
+      throw activeDocumentItemsError;
+    }
+
     const { data: activeOrderBookRows, error: activeOrderBookError } = await supabase
       .from('order_book')
-      .select('id, receipt, shipped_status')
+      .select('id, receipt, shipped_status, document_item_id, product')
       .eq('doc_id', document.id)
       .eq('from_doc', true)
       .eq('del_yn', 'N')
@@ -336,20 +352,52 @@ export async function updateDocument(document: DocumentHistory) {
       id: string;
       receipt: string | null;
       shipped_status: string | null;
+      document_item_id: string | null;
+      product: string | null;
+    }>;
+    const activeDocumentItems = (activeDocumentItemRows ?? []) as Array<{
+      id: string;
+      seq: number | null;
+      name1: string | null;
+      qty: number | null;
+      arrive_date: string | null;
     }>;
 
-    for (let index = 0; index < nextItems.length; index += 1) {
-      const item = nextItems[index];
-      const existingOrderBook = currentOrderBookRows[index];
+    const orderBookByDocumentItemId = new Map<string, (typeof currentOrderBookRows)[number]>();
+    const legacyOrderBookRows = currentOrderBookRows.filter((row) => !row.document_item_id);
+    const keptOrderBookIds = new Set<string>();
+
+    for (const row of currentOrderBookRows) {
+      if (row.document_item_id) {
+        orderBookByDocumentItemId.set(row.document_item_id, row);
+      }
+    }
+
+    const consumedLegacyOrderBookIds = new Set<string>();
+
+    for (let index = 0; index < activeDocumentItems.length; index += 1) {
+      const item = activeDocumentItems[index];
+      const existingOrderBook =
+        orderBookByDocumentItemId.get(item.id) ??
+        legacyOrderBookRows.find((row) => {
+          if (consumedLegacyOrderBookIds.has(row.id)) return false;
+          return true;
+        });
+
+      if (existingOrderBook && !existingOrderBook.document_item_id) {
+        consumedLegacyOrderBookIds.add(existingOrderBook.id);
+      }
+
       const orderBookPayload = {
         doc_id: document.id,
+        document_item_id: item.id,
         issue_no: document.issueNo,
         client_id: clientId,
         date: document.orderDate,
-        deadline: document.arriveDate,
+        deadline: item.arrive_date ?? document.arriveDate,
         client: document.client,
-        product: item.name1,
-        qty: item.qty,
+        product: item.name1 ?? '',
+        qty: item.qty ?? 0,
         note: document.remark,
         receipt: existingOrderBook?.receipt ?? '',
         status: document.status,
@@ -359,6 +407,7 @@ export async function updateDocument(document: DocumentHistory) {
       };
 
       if (existingOrderBook) {
+        keptOrderBookIds.add(existingOrderBook.id);
         const { error: updateOrderBookError } = await supabase
           .from('order_book')
           .update(orderBookPayload)
@@ -378,7 +427,10 @@ export async function updateDocument(document: DocumentHistory) {
       }
     }
 
-    const removedOrderBookIds = currentOrderBookRows.slice(nextItems.length).map((row) => row.id);
+    const removedOrderBookIds = currentOrderBookRows
+      .filter((row) => !keptOrderBookIds.has(row.id))
+      .map((row) => row.id);
+
     if (removedOrderBookIds.length > 0) {
       const { error: deleteOrderBookError } = await supabase
         .from('order_book')

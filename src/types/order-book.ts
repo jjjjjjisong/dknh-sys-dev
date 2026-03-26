@@ -4,6 +4,7 @@ export type OrderBookShippingStatus = '미출고' | '출고';
 export type OrderBookEntry = {
   id: string;
   docId: string | null;
+  documentItemId: string | null;
   issueNo: string;
   date: string | null;
   deadline: string | null;

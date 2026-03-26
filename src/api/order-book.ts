@@ -10,6 +10,7 @@ import type {
 type OrderBookRow = {
   id: string;
   doc_id: string | null;
+  document_item_id: string | null;
   issue_no: string | null;
   date: string | null;
   deadline: string | null;
@@ -39,7 +40,9 @@ type DocumentLookupRow = {
 };
 
 type DocumentItemLookupRow = {
+  id: string;
   document_id: string;
+  seq: number | null;
   name1: string | null;
   name2: string | null;
   arrive_date: string | null;
@@ -52,7 +55,7 @@ type DocumentItemLookupRow = {
 };
 
 const ORDER_BOOK_SELECT =
-  'id, doc_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
+  'id, doc_id, document_item_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
 
 export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   const supabase = getSupabaseClient();
@@ -192,7 +195,7 @@ async function fetchDocumentItemsByDocIds(ids: string[]) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('document_items')
-    .select('document_id, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn')
+    .select('id, document_id, seq, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn')
     .in('document_id', ids)
     .eq('del_yn', 'N');
 
@@ -213,11 +216,14 @@ function mapOrderBookRow(
   itemsByDocId: Map<string, DocumentItemLookupRow[]>,
 ): OrderBookEntry {
   const document = row.doc_id ? documentsById.get(row.doc_id) : undefined;
-  const matchedItem = row.doc_id ? findMatchingItem(itemsByDocId.get(row.doc_id) ?? [], row.product ?? '') : undefined;
+  const matchedItem = row.doc_id
+    ? findMatchingItem(itemsByDocId.get(row.doc_id) ?? [], row.document_item_id, row.product ?? '')
+    : undefined;
 
   return {
     id: String(row.id),
     docId: row.doc_id ? String(row.doc_id) : null,
+    documentItemId: row.document_item_id ? String(row.document_item_id) : null,
     issueNo: row.issue_no ?? document?.issue_no ?? '',
     date: document?.order_date ?? row.date ?? null,
     deadline: matchedItem?.arrive_date ?? document?.arrive_date ?? row.deadline ?? null,
@@ -240,7 +246,17 @@ function mapOrderBookRow(
   };
 }
 
-function findMatchingItem(items: DocumentItemLookupRow[], productName: string) {
+function findMatchingItem(
+  items: DocumentItemLookupRow[],
+  documentItemId: string | null | undefined,
+  productName: string,
+) {
+  const normalizedDocumentItemId = String(documentItemId ?? '').trim();
+  if (normalizedDocumentItemId) {
+    const exactItem = items.find((item) => String(item.id) === normalizedDocumentItemId);
+    if (exactItem) return exactItem;
+  }
+
   const normalizedProduct = normalizeValue(productName);
   return (
     items.find((item) => normalizeValue(item.name1) === normalizedProduct) ||
