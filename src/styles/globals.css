@@ -647,7 +647,7 @@ a {
   background: transparent;
   cursor: pointer;
   transition: transform 0.28s ease, opacity 0.28s ease;
-  opacity: 0;
+  opacity: 1;
 }
 
 .dashboard-bar-label,
@@ -707,16 +707,6 @@ a {
   animation-delay: var(--bar-delay, 0ms);
 }
 
-.dashboard-bar-chart-next .dashboard-bar-item {
-  animation: dashboard-bar-slide-next 0.58s cubic-bezier(0.2, 0.8, 0.24, 1) both;
-  animation-delay: var(--bar-delay, 0ms);
-}
-
-.dashboard-bar-chart-previous .dashboard-bar-item {
-  animation: dashboard-bar-slide-previous 0.58s cubic-bezier(0.2, 0.8, 0.24, 1) both;
-  animation-delay: var(--bar-delay, 0ms);
-}
-
 .dashboard-bar-item:hover .dashboard-bar-fill {
   transform: scaleY(1.04);
 }
@@ -730,30 +720,6 @@ a {
   to {
     transform: scaleY(1);
     opacity: 1;
-  }
-}
-
-@keyframes dashboard-bar-slide-next {
-  from {
-    opacity: 0;
-    transform: translateX(18px) translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0) translateY(0);
-  }
-}
-
-@keyframes dashboard-bar-slide-previous {
-  from {
-    opacity: 0;
-    transform: translateX(-18px) translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0) translateY(0);
   }
 }
 
