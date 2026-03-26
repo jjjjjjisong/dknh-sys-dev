@@ -83,7 +83,7 @@ export default function MasterSupplierPage() {
       const result = await fetchSuppliers();
       setSuppliers(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '공급자 목록 조회에 실패했습니다.');
+      setError(err instanceof Error ? err.message : '공급자 목록을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
@@ -125,7 +125,7 @@ export default function MasterSupplierPage() {
     event.preventDefault();
 
     if (!form.name.trim()) {
-      setFormError('상호를 입력해주세요.');
+      setFormError('상호를 입력해 주세요.');
       return;
     }
 
@@ -152,7 +152,7 @@ export default function MasterSupplierPage() {
       await loadSuppliers();
       setModalOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : '공급자 저장에 실패했습니다.');
+      setFormError(err instanceof Error ? err.message : '공급자를 저장하지 못했습니다.');
     } finally {
       setSaving(false);
     }
@@ -166,7 +166,7 @@ export default function MasterSupplierPage() {
       await removeSupplier(supplier.id);
       setSuppliers((current) => current.filter((item) => item.id !== supplier.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '공급자 삭제에 실패했습니다.');
+      setError(err instanceof Error ? err.message : '공급자를 삭제하지 못했습니다.');
     }
   }
 
@@ -182,7 +182,7 @@ export default function MasterSupplierPage() {
             className="search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="상호, 등록번호, 성명, 주소로 검색하세요."
+            placeholder="상호, 등록번호, 성명, 주소, 업태, 종목으로 검색"
           />
           <div className="client-toolbar-actions">
             <div className="toolbar-meta">검색 결과 {filteredSuppliers.length}건</div>
@@ -195,18 +195,18 @@ export default function MasterSupplierPage() {
         </div>
 
         {loading ? (
-          <div className="empty-state">공급자 목록을 불러오는 중입니다...</div>
+          <div className="empty-state">공급자 목록을 불러오는 중...</div>
         ) : (
           <div className="table-wrap">
             <table className="table client-table">
               <thead>
                 <tr>
                   <th style={{ width: 56 }}>No</th>
-                  <th style={{ width: 190 }}>상호</th>
-                  <th style={{ width: 160 }}>등록번호</th>
-                  <th style={{ width: 120 }}>성명</th>
-                  <th style={{ width: 320 }}>사업장주소</th>
-                  <th style={{ width: 120 }}>업태</th>
+                  <th style={{ width: 150 }}>상호</th>
+                  <th style={{ width: 130 }}>등록번호</th>
+                  <th style={{ width: 96 }}>성명</th>
+                  <th style={{ width: 400 }}>사업장주소</th>
+                  <th style={{ width: 180 }}>업태</th>
                   <th style={{ width: 160 }}>종목</th>
                   <th style={{ width: 80 }}>상태</th>
                   <th style={{ width: 72 }}>관리</th>
@@ -221,14 +221,42 @@ export default function MasterSupplierPage() {
                   </tr>
                 ) : (
                   pagedSuppliers.map((supplier, index) => (
-                    <tr key={supplier.id} className="history-clickable-row" onClick={() => openEditModal(supplier)}>
+                    <tr
+                      key={supplier.id}
+                      className="history-clickable-row"
+                      onClick={() => openEditModal(supplier)}
+                    >
                       <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
-                      <td><div className="table-primary table-clamp-2" title={supplier.name}>{supplier.name}</div></td>
-                      <td><div className="table-clamp-2" title={supplier.bizNo || '-'}>{supplier.bizNo || '-'}</div></td>
-                      <td><div className="table-clamp-2" title={supplier.owner || '-'}>{supplier.owner || '-'}</div></td>
-                      <td className="table-address"><div className="table-clamp-2" title={supplier.address || '-'}>{supplier.address || '-'}</div></td>
-                      <td><div className="table-clamp-2" title={supplier.businessType || '-'}>{supplier.businessType || '-'}</div></td>
-                      <td><div className="table-clamp-2" title={supplier.businessItem || '-'}>{supplier.businessItem || '-'}</div></td>
+                      <td>
+                        <div className="table-primary table-clamp-2" title={supplier.name}>
+                          {supplier.name}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={supplier.bizNo || '-'}>
+                          {supplier.bizNo || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={supplier.owner || '-'}>
+                          {supplier.owner || '-'}
+                        </div>
+                      </td>
+                      <td className="table-address">
+                        <div className="table-clamp-2" title={supplier.address || '-'}>
+                          {supplier.address || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={supplier.businessType || '-'}>
+                          {supplier.businessType || '-'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-clamp-2" title={supplier.businessItem || '-'}>
+                          {supplier.businessItem || '-'}
+                        </div>
+                      </td>
                       <td>
                         <span className={supplier.active === false ? 'badge badge-muted' : 'badge'}>
                           {supplier.active === false ? '비활성' : '사용중'}
@@ -294,11 +322,17 @@ export default function MasterSupplierPage() {
             </FormField>
 
             <FormField label="업태">
-              <input value={form.businessType} onChange={(event) => updateForm('businessType', event.target.value)} />
+              <input
+                value={form.businessType}
+                onChange={(event) => updateForm('businessType', event.target.value)}
+              />
             </FormField>
 
             <FormField label="종목">
-              <input value={form.businessItem} onChange={(event) => updateForm('businessItem', event.target.value)} />
+              <input
+                value={form.businessItem}
+                onChange={(event) => updateForm('businessItem', event.target.value)}
+              />
             </FormField>
 
             <FormField label="상태" className="field-check">
