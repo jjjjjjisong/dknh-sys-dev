@@ -346,6 +346,7 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
 
     startRow += 2;
 
+    // 높이 계산용 문자열
     let noteText = '';
     if (data.remark) noteText += `참고사항 : ${data.remark}\n`;
     noteText += `납품처 : ${data.client || ''}${data.deliveryAddr ? ` / ${data.deliveryAddr}` : ''}\n`;
@@ -354,13 +355,39 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     }
     if (data.requestNote) noteText += `요청사항 : ${data.requestNote || ''}`;
 
+    // Rich Text: 레이블만 볼드 처리
+    const boldFont = { name: '맑은 고딕', size: 11, bold: true } as const;
+    const normalFont = { name: '맑은 고딕', size: 11 } as const;
+
+    const richTexts: ExcelJS.RichText[] = [];
+    if (data.remark) {
+      richTexts.push({ text: '참고사항', font: boldFont });
+      richTexts.push({ text: ` : ${data.remark}\n`, font: normalFont });
+    }
+    richTexts.push({ text: '납품처', font: boldFont });
+    richTexts.push({
+      text: ` : ${data.client || ''}${data.deliveryAddr ? ` / ${data.deliveryAddr}` : ''}\n`,
+      font: normalFont,
+    });
+    if (data.manager || data.managerTel) {
+      richTexts.push({ text: '담당자', font: boldFont });
+      richTexts.push({
+        text: ` : ${data.manager || ''}${data.managerTel ? ` / ${data.managerTel}` : ''}\n`,
+        font: normalFont,
+      });
+    }
+    if (data.requestNote) {
+      richTexts.push({ text: '요청사항', font: boldFont });
+      richTexts.push({ text: ` : ${data.requestNote || ''}`, font: normalFont });
+    }
+
     ws.mergeCells(startRow, 1, startRow, 10);
     const noteCell = ws.getCell(startRow, 1);
-    noteCell.value = noteText;
-    noteCell.font = { name: '맑은 고딕', size: 11 };
+    noteCell.value = { richText: richTexts };
     noteCell.alignment = { vertical: 'top', wrapText: true };
     ws.getRow(startRow).height = Math.max(22, estimateWrappedLineCount(noteText) * 20 + 10);
     startRow += 1;
+
 
     ws.mergeCells(startRow, 1, startRow, 10);
     const issueCell = ws.getCell(startRow, 1);
