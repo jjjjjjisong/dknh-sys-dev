@@ -51,6 +51,22 @@ function formatMonthDay(value: string) {
   return value.slice(5).replace('-', ' / ');
 }
 
+function getVisualLength(str: string): number {
+  let len = 0;
+  for (const ch of str) {
+    // 한국어(KS X 1001), 한자, CJK 등 2바이트 문자
+    const code = ch.charCodeAt(0);
+    len += (code > 0x3000) ? 2 : 1;
+  }
+  return len;
+}
+
+function estimateWrappedLineCount(value: string, charsPerLine = 90) {
+  return value
+    .split('\n')
+    .reduce((count, line) => count + Math.max(1, Math.ceil((getVisualLength(line) || 1) / charsPerLine)), 0);
+}
+
 function createThinBorder(): Partial<ExcelJS.Borders> {
   return {
     top: { style: 'thin' },
@@ -336,17 +352,24 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     if (data.manager || data.managerTel) {
       noteText += `담당자 : ${data.manager || ''}${data.managerTel ? ` / ${data.managerTel}` : ''}\n`;
     }
-    if (data.requestNote) noteText += `요청사항 : ${data.requestNote.replace(/\n/g, ' ')}\n`;
-    noteText += `\n발급 No. ${data.issueNo}`;
+    if (data.requestNote) noteText += `요청사항 : ${data.requestNote || ''}`;
 
-    ws.mergeCells(startRow, 1, startRow + 3, 10);
+    ws.mergeCells(startRow, 1, startRow, 10);
     const noteCell = ws.getCell(startRow, 1);
     noteCell.value = noteText;
     noteCell.font = { name: '맑은 고딕', size: 11 };
     noteCell.alignment = { vertical: 'top', wrapText: true };
+    ws.getRow(startRow).height = Math.max(22, estimateWrappedLineCount(noteText) * 20 + 10);
+    startRow += 1;
+
+    ws.mergeCells(startRow, 1, startRow, 10);
+    const issueCell = ws.getCell(startRow, 1);
+    issueCell.value = `발급 No. ${data.issueNo}`;
+    issueCell.font = { name: '맑은 고딕', size: 11 };
+    issueCell.alignment = { vertical: 'middle' };
     ws.getRow(startRow).height = 22;
 
-    return startRow + 5;
+    return startRow + 2;
   };
 
   let nextRow = drawInvoicePart(1, '(공급자용)');
