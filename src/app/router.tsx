@@ -21,9 +21,7 @@ function ProtectedLayout() {
 
   return (
     <AppShell>
-      <div className="page-transition" key={location.pathname}>
-        <Outlet />
-      </div>
+      <Outlet />
     </AppShell>
   );
 }
