@@ -63,7 +63,7 @@ export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
     .from('order_book')
     .select(ORDER_BOOK_SELECT)
     .eq('del_yn', 'N')
-    .order('updated_at', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
 
@@ -286,7 +286,8 @@ function getPalletValue(item?: DocumentItemLookupRow) {
 }
 
 function mapOrderBookShippingStatus(shippedStatus: string | null | undefined): OrderBookShippingStatus {
-  return shippedStatus === '출고' ? '출고' : '미출고';
+  if (shippedStatus === '출고' || shippedStatus === '異쒓퀬') return '출고';
+  return '미출고';
 }
 
 function mapOrderBookStatus(status: string | null | undefined): OrderBookStatus {
