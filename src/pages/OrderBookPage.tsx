@@ -18,6 +18,7 @@ import type { OrderBookEntry, OrderBookInput, OrderBookShippingStatus } from '..
 const today = new Date();
 
 type FilterType = 'all' | 'client' | 'product' | 'issueNo' | 'receipt';
+type ShippingFilter = 'all' | '미출고' | '출고';
 const PAGE_SIZE = 20;
 
 function getDefaultDateRange() {
@@ -39,6 +40,7 @@ export default function OrderBookPage() {
   const [dateFrom, setDateFrom] = useState(defaults.from);
   const [dateTo, setDateTo] = useState(defaults.to);
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [shippingFilter, setShippingFilter] = useState<ShippingFilter>('all');
   const [keyword, setKeyword] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingEntry, setEditingEntry] = useState<OrderBookEntry | null>(null);
@@ -84,6 +86,7 @@ export default function OrderBookPage() {
       const arriveDate = entry.deadline || '';
       if (dateFrom && arriveDate && arriveDate < dateFrom) return false;
       if (dateTo && arriveDate && arriveDate > dateTo) return false;
+      if (shippingFilter !== 'all' && entry.shippedStatus !== shippingFilter) return false;
       if (!search) return true;
 
       if (filterType === 'client') return entry.client.toLowerCase().includes(search);
@@ -96,7 +99,8 @@ export default function OrderBookPage() {
         .toLowerCase()
         .includes(search);
     });
-  }, [dateFrom, dateTo, entries, filterType, keyword]);
+  }, [dateFrom, dateTo, entries, filterType, keyword, shippingFilter]);
+
   const pagedEntries = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredEntries.slice(start, start + PAGE_SIZE);
@@ -104,7 +108,7 @@ export default function OrderBookPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFrom, dateTo, filterType, keyword]);
+  }, [dateFrom, dateTo, filterType, keyword, shippingFilter]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
@@ -170,7 +174,7 @@ export default function OrderBookPage() {
         ),
       );
       setSelectedIds([]);
-      window.alert('선택한 품목들이 출고상태로 변경되었습니다.');
+      window.alert('선택한 항목이 출고상태로 변경되었습니다.');
     } catch (err) {
       setError(err instanceof Error ? err.message : '일괄 출고처리에 실패했습니다.');
     } finally {
@@ -192,7 +196,7 @@ export default function OrderBookPage() {
       수신처: entry.receiver || '',
       품목명: entry.product || '',
       수량: entry.qty ?? '',
-      파렛트: entry.pallet ?? '',
+      파레트: entry.pallet ?? '',
       박스: entry.box ?? '',
       상태: entry.status === 'ST01' ? '거래취소' : '',
       출고상태: entry.shippedStatus,
@@ -243,7 +247,7 @@ export default function OrderBookPage() {
       setEntries((current) => current.map((entry) => (entry.id === editingEntry.id ? saved : entry)));
       setModalOpen(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : '수주대장 저장에 실패했습니다.');
+      setFormError(err instanceof Error ? err.message : '수주대장 수정에 실패했습니다.');
     } finally {
       setSaving(false);
     }
@@ -311,8 +315,38 @@ export default function OrderBookPage() {
             <input
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
-              placeholder="검색어를 입력해주세요."
+              placeholder="검색어를 입력해 주세요."
             />
+          </label>
+        </div>
+
+        <div className="history-toolbar" style={{ justifyContent: 'flex-start', marginTop: 12, marginBottom: 0 }}>
+          <label className="inline-check">
+            <input
+              type="radio"
+              name="shipping-filter"
+              checked={shippingFilter === 'all'}
+              onChange={() => setShippingFilter('all')}
+            />
+            전체
+          </label>
+          <label className="inline-check">
+            <input
+              type="radio"
+              name="shipping-filter"
+              checked={shippingFilter === '미출고'}
+              onChange={() => setShippingFilter('미출고')}
+            />
+            미출고만
+          </label>
+          <label className="inline-check">
+            <input
+              type="radio"
+              name="shipping-filter"
+              checked={shippingFilter === '출고'}
+              onChange={() => setShippingFilter('출고')}
+            />
+            출고만
           </label>
         </div>
       </section>
@@ -320,7 +354,7 @@ export default function OrderBookPage() {
       <section className="card">
         <div className="history-toolbar">
           <Button type="button" variant="secondary" className="excel-download-button" onClick={handleDownloadExcel}>
-            엑셀다운
+            엑셀다운로드
           </Button>
           <Button
             type="button"
@@ -351,7 +385,7 @@ export default function OrderBookPage() {
                 <th style={{ minWidth: 120 }}>수신처</th>
                 <th style={{ minWidth: 180 }}>품목명</th>
                 <th style={{ width: 90, textAlign: 'right' }}>수량</th>
-                <th style={{ width: 90, textAlign: 'right' }}>파렛트</th>
+                <th style={{ width: 90, textAlign: 'right' }}>파레트</th>
                 <th style={{ width: 80, textAlign: 'right' }}>박스</th>
                 <th style={{ width: 80, textAlign: 'center' }}>상태</th>
                 <th style={{ width: 110, textAlign: 'center' }}>출고상태</th>
@@ -376,7 +410,7 @@ export default function OrderBookPage() {
                     key={entry.id}
                     className={entry.status === 'ST01' ? 'history-row-cancelled history-clickable-row' : 'history-clickable-row'}
                     onClick={() => openEditModal(entry)}
-                    title={entry.fromDoc ? '문서 연동 품목입니다.' : '클릭해서 수정할 수 있습니다.'}
+                    title={entry.fromDoc ? '문서 연동 항목입니다.' : '클릭해서 수정할 수 있습니다.'}
                   >
                     <td style={{ textAlign: 'center' }} onClick={(event) => event.stopPropagation()}>
                       <input
@@ -426,7 +460,7 @@ export default function OrderBookPage() {
       <Modal
         open={modalOpen}
         title="수주 항목 수정"
-        description={editingEntry?.fromDoc ? '문서 연동 품목은 삭제할 수 없지만 상태와 비고는 수정할 수 있습니다.' : undefined}
+        description={editingEntry?.fromDoc ? '문서 연동 항목은 삭제할 수 없지만 상태와 비고는 수정할 수 있습니다.' : undefined}
         onClose={closeModal}
         footer={
           <>

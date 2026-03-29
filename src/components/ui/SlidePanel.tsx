@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 type SlidePanelProps = PropsWithChildren<{
   open: boolean;
@@ -16,7 +17,7 @@ export default function SlidePanel({
 }: SlidePanelProps) {
   if (!open) return null;
 
-  return (
+  const panel = (
     <div className="slide-panel-overlay" onClick={onClose}>
       <aside className="slide-panel-card" onClick={(event) => event.stopPropagation()}>
         <div className="slide-panel-head">
@@ -31,4 +32,6 @@ export default function SlidePanel({
       </aside>
     </div>
   );
+
+  return createPortal(panel, document.body);
 }
