@@ -932,6 +932,23 @@ a {
   background: #f8fbff;
 }
 
+.dashboard-panel-row-shipped td {
+  background: #ecfdf3;
+}
+
+.dashboard-panel-row-shipped:hover td {
+  background: #d1fae5;
+}
+
+.dashboard-panel-row-cancelled td {
+  text-decoration: line-through;
+  color: var(--text-3);
+}
+
+.dashboard-panel-row-cancelled select {
+  text-decoration: none;
+}
+
 .table tbody tr {
   cursor: pointer;
 }

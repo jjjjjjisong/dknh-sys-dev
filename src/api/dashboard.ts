@@ -120,7 +120,7 @@ function buildRecentDocuments(
 
 function buildIncomingItems(orderBookEntries: OrderBookEntry[]): DashboardIncomingDocument[] {
   return orderBookEntries
-    .filter((entry) => entry.delYn === 'N' && entry.status !== 'ST01' && Boolean(entry.deadline))
+    .filter((entry) => entry.delYn === 'N' && Boolean(entry.deadline))
     .map(mapIncomingOrderBook)
     .sort(compareIncomingDocuments);
 }

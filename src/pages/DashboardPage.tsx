@@ -140,6 +140,7 @@ export default function DashboardPage() {
   }, [data.delayedDocuments, data.todayIncomingDocuments, data.todayLabel, panelType, selectedTrend]);
 
   const showShipmentActions = panelType === 'today' || panelType === 'delayed';
+  const showStatusColumn = panelType !== 'trend';
 
   const canBatchShip =
     showShipmentActions &&
@@ -372,15 +373,17 @@ export default function DashboardPage() {
                 <th style={{ width: 88, textAlign: 'center' }}>수량</th>
                 <th style={{ width: 72, textAlign: 'center' }}>파레트</th>
                 <th style={{ width: 72, textAlign: 'center' }}>박스</th>
-                <th style={{ width: 110, textAlign: 'center' }}>
-                  {showShipmentActions ? '출고상태' : '상태'}
-                </th>
+                {showStatusColumn ? (
+                  <th style={{ width: 110, textAlign: 'center' }}>
+                    {showShipmentActions ? '\uCD9C\uACE0\uC0C1\uD0DC' : '\uC0C1\uD0DC'}
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
               {!panelConfig || panelConfig.items.length === 0 ? (
                 <tr>
-                  <td colSpan={showShipmentActions ? 10 : 9}>
+                  <td colSpan={showShipmentActions ? 10 : showStatusColumn ? 9 : 8}>
                     <div className="dashboard-empty-state dashboard-panel-empty-state">
                       <div>해당 기간의 입고 예정 항목이 없습니다.</div>
                       <div>새로운 입고 일정이 등록되면 여기에 표시됩니다.</div>
@@ -395,6 +398,7 @@ export default function DashboardPage() {
                     showSelection={showShipmentActions}
                     checked={document.orderBookId ? selectedOrderBookIds.includes(document.orderBookId) : false}
                     showShippedStatus={showShipmentActions}
+                    showStatusColumn={showStatusColumn}
                     onToggleSelect={(checked) => {
                       if (document.orderBookId) {
                         toggleSelectOne(document.orderBookId, checked);
@@ -515,6 +519,7 @@ function DashboardIncomingRow({
   checked,
   showSelection,
   showShippedStatus,
+  showStatusColumn,
   onToggleSelect,
   onOpen,
   onChangeShippedStatus,
@@ -523,12 +528,21 @@ function DashboardIncomingRow({
   checked?: boolean;
   showSelection?: boolean;
   showShippedStatus?: boolean;
+  showStatusColumn?: boolean;
   onToggleSelect?: (checked: boolean) => void;
   onOpen: (documentId: string) => void;
   onChangeShippedStatus?: (shippedStatus: OrderBookShippingStatus) => void;
 }) {
+  const rowClassName = [
+    'dashboard-clickable-row',
+    document.shippedStatus === SHIPPED_STATUS_SHIPPED ? 'dashboard-panel-row-shipped' : '',
+    document.status === 'ST01' ? 'dashboard-panel-row-cancelled' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <tr className="dashboard-clickable-row" onClick={() => onOpen(document.documentId)}>
+    <tr className={rowClassName} onClick={() => onOpen(document.documentId)}>
       {showSelection ? (
         <td style={{ textAlign: 'center' }} onClick={(event) => event.stopPropagation()}>
           <input
@@ -552,31 +566,32 @@ function DashboardIncomingRow({
       <td style={{ textAlign: 'center' }}>{formatInteger(document.qty)}</td>
       <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.pallet)}</td>
       <td style={{ textAlign: 'center' }}>{formatMaybeNumber(document.box)}</td>
-      <td
-        style={{ textAlign: 'center' }}
-        onClick={(event) => showShippedStatus && event.stopPropagation()}
-      >
-        {showShippedStatus ? (
-          <select
-            className="history-filter-select"
-            value={document.shippedStatus}
-            onChange={(event) =>
-              onChangeShippedStatus?.(event.target.value as OrderBookShippingStatus)
-            }
-          >
-            <option value={SHIPPED_STATUS_UNSHIPPED}>미출고</option>
-            <option value={SHIPPED_STATUS_SHIPPED}>출고</option>
-          </select>
-        ) : document.status === 'ST01' ? (
-          <Badge variant="cancel">거래취소</Badge>
-        ) : (
-          <span>-</span>
-        )}
-      </td>
+      {showStatusColumn ? (
+        <td
+          style={{ textAlign: 'center' }}
+          onClick={(event) => showShippedStatus && event.stopPropagation()}
+        >
+          {showShippedStatus ? (
+            <select
+              className="history-filter-select"
+              value={document.shippedStatus}
+              onChange={(event) =>
+                onChangeShippedStatus?.(event.target.value as OrderBookShippingStatus)
+              }
+            >
+              <option value={SHIPPED_STATUS_UNSHIPPED}>{'\uBBF8\uCD9C\uACE0'}</option>
+              <option value={SHIPPED_STATUS_SHIPPED}>{'\uCD9C\uACE0'}</option>
+            </select>
+          ) : document.status === 'ST01' ? (
+            <Badge variant="cancel">{'\uAC70\uB798\uCDE8\uC18C'}</Badge>
+          ) : (
+            <span>-</span>
+          )}
+        </td>
+      ) : null}
     </tr>
   );
 }
-
 function DashboardRecentDocumentRow({
   document,
   onOpen,
