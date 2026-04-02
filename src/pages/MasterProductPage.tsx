@@ -307,9 +307,9 @@ export default function MasterProductPage() {
                   <th style={{ width: 56 }}>No</th>
                   <th style={{ width: 90 }}>구분</th>
                   <th style={{ width: 180 }}>거래처</th>
-                  <th style={{ width: 320 }}>품목명</th>
-                  <th style={{ width: 320 }}>품목명(거래명세서)</th>
-                  <th style={{ width: 110 }}>출고처</th>
+                  <th style={{ width: 300 }}>품목명</th>
+                  <th style={{ width: 300 }}>품목명(거래명세서)</th>
+                  <th style={{ width: 140 }}>출고처</th>
                   <th style={{ width: 110 }}>입고 단가</th>
                   <th style={{ width: 110 }}>판매 단가</th>
                   <th style={{ width: 90 }}>1B=ea</th>
