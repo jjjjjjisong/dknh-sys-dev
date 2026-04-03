@@ -2,6 +2,10 @@ import { SharedPreviewData } from '../types/documentPreview';
 
 const today = new Date().toISOString().slice(0, 10);
 
+type InvoicePreviewOptions = {
+  showPrice?: boolean;
+};
+
 export function buildReleasePreviewHtml(data: SharedPreviewData) {
   const rows = data.items
     .map((item) => {
@@ -39,8 +43,8 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
         </div>
       </div>
     </div>
-    <div class="doc-title">출 고 의 뢰 서</div>
-    <div class="doc-subtitle">수신 <strong>${escapeHtml(data.receiver || '수신처 미입력')}</strong> 귀하&emsp;|&emsp;담당자 ${escapeHtml(data.manager || '-')}&emsp;|&emsp;발급 No. <strong>${escapeHtml(data.issueNo || '-')}</strong></div>
+    <div class="doc-title">출고의뢰서</div>
+    <div class="doc-subtitle">수신 <strong>${escapeHtml(data.receiver || '수신처 미입력')}</strong> 귀하 &emsp;|&emsp;담당자 ${escapeHtml(data.manager || '-')}&emsp;|&emsp;발급 No. <strong>${escapeHtml(data.issueNo || '-')}</strong></div>
     <table class="doc-tbl">
       <thead>
         <tr>
@@ -49,7 +53,7 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
           <th class="date-col">입고일</th>
           <th class="client-col">납품처</th>
           <th class="name-col">품목명</th>
-          <th class="pallet-col">파렛트</th>
+          <th class="pallet-col">파레트</th>
           <th class="box-col">BOX</th>
           <th class="qty-col">수량</th>
           <th class="note-col">비고</th>
@@ -76,17 +80,22 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
       ${data.remark ? `<tr><td class="lbl">비고</td><td>${escapeHtml(data.remark)}</td></tr>` : ''}
     </table>
     ${data.requestNote ? `<div class="request-box"><strong>요청사항</strong>${escapeHtml(data.requestNote).replace(/\n/g, '<br>')}</div>` : ''}
-    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>㈜ 디케이앤에이치</strong></div>
+    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>대보산업주식회사</strong></div>
   </div>`;
 }
 
-export function buildInvoicePreviewHtml(data: SharedPreviewData) {
+export function buildInvoicePreviewHtml(
+  data: SharedPreviewData,
+  { showPrice = true }: InvoicePreviewOptions = {},
+) {
   const rows = data.items
     .map((item) => {
-      const vatAmount = item.vat ? Math.round(item.supply * 0.1) : 0;
-      const unitPriceDisplay = item.unitPrice > 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
-      const supplyDisplay = item.supply > 0 ? escapeHtml(formatNumber(item.supply)) : '';
-      const vatDisplay = vatAmount > 0 ? escapeHtml(formatNumber(vatAmount)) : '';
+      const vatAmount = showPrice && item.vat ? Math.round(item.supply * 0.1) : 0;
+      const unitPriceDisplay =
+        showPrice && item.unitPrice > 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
+      const supplyDisplay =
+        showPrice && item.supply > 0 ? escapeHtml(formatNumber(item.supply)) : '';
+      const vatDisplay = showPrice && vatAmount > 0 ? escapeHtml(formatNumber(vatAmount)) : '';
 
       return `<tr>
         <td class="c date-col">${escapeHtml(formatMonthDay(item.arriveDate || data.arriveDate || ''))}</td>
@@ -101,13 +110,17 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
     .join('');
 
   const totalQty = data.items.reduce((sum, item) => sum + item.qty, 0);
-  const totalSupplyDisplay = data.totalSupply > 0 ? escapeHtml(formatNumber(data.totalSupply)) : '';
-  const totalVatDisplay = data.totalVat > 0 ? escapeHtml(formatNumber(data.totalVat)) : '';
-  const totalAmountDisplay = data.totalAmount > 0 ? escapeHtml(formatNumber(data.totalAmount)) : '';
+  const totalSupplyDisplay =
+    showPrice && data.totalSupply > 0 ? escapeHtml(formatNumber(data.totalSupply)) : '';
+  const totalVatDisplay =
+    showPrice && data.totalVat > 0 ? escapeHtml(formatNumber(data.totalVat)) : '';
+  const totalAmountDisplay =
+    showPrice && data.totalAmount > 0 ? escapeHtml(formatNumber(data.totalAmount)) : '';
+  const amountText = showPrice && data.totalAmount > 0 ? escapeHtml(formatNumber(data.totalAmount)) : '';
   const issueDateFmt = data.arriveDate ? formatKoreanDate(data.arriveDate) : formatKoreanDate(today);
 
   const invoicePiece = (suffix: string) => `<div class="invoice-doc">
-    <div class="invoice-title">거 래 명 세 서 <span>${suffix}</span></div>
+    <div class="invoice-title">거래명세표<span>${suffix}</span></div>
     <table class="invoice-head-table">
       <tr>
         <td class="buyer-cell">
@@ -115,7 +128,7 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
             <tr><td colspan="2" class="c">${escapeHtml(issueDateFmt)}</td></tr>
             <tr><td class="c strong">${escapeHtml(data.client || '')}</td><td class="c narrow">귀하</td></tr>
             <tr><td colspan="2" class="c">아래와 같이 계산합니다.</td></tr>
-            <tr><td colspan="2" class="c">( 금 ${escapeHtml(formatNumber(data.totalAmount))} 원 ) VAT 포함</td></tr>
+            <tr><td colspan="2" class="c">( 금${amountText} 원) VAT 포함</td></tr>
           </table>
         </td>
         <td class="seller-cell">
@@ -138,13 +151,13 @@ export function buildInvoicePreviewHtml(data: SharedPreviewData) {
       <tbody>
         ${rows}
         <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r">${escapeHtml(formatNumber(totalQty))}</td><td></td><td class="r">${totalSupplyDisplay}</td><td class="r">${totalVatDisplay}</td><td></td></tr>
-        <tr class="grand-row"><td colspan="4" class="c">총 금 액</td><td class="r">${totalAmountDisplay}</td><td class="c">인수자</td><td></td></tr>
+        <tr class="grand-row"><td colspan="4" class="c">총 금액</td><td class="r">${totalAmountDisplay}</td><td class="c">인수자</td><td></td></tr>
       </tbody>
     </table>
     <div class="invoice-note-area">
       ${data.remark ? `<div><strong>참고사항 :</strong> ${escapeHtml(data.remark)}</div>` : ''}
-      <div><strong>납품처 :</strong> ${escapeHtml(data.client || '')}${data.deliveryAddr ? ` / ${escapeHtml(data.deliveryAddr)}` : ''}</div>
-      ${data.manager || data.managerTel ? `<div><strong>담당자 :</strong> ${escapeHtml(data.manager || '')}${data.managerTel ? ` / ${escapeHtml(data.managerTel)}` : ''}</div>` : ''}
+      <div><strong>납품처:</strong> ${escapeHtml(data.client || '')}${data.deliveryAddr ? ` / ${escapeHtml(data.deliveryAddr)}` : ''}</div>
+      ${data.manager || data.managerTel ? `<div><strong>담당자:</strong> ${escapeHtml(data.manager || '')}${data.managerTel ? ` / ${escapeHtml(data.managerTel)}` : ''}</div>` : ''}
       ${data.requestNote ? `<div><strong>요청사항 :</strong> ${escapeHtml(data.requestNote).replace(/\n/g, ' ')}</div>` : ''}
       <div class="issue-line">발급 No. ${escapeHtml(data.issueNo)}</div>
     </div>

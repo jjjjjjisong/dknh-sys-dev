@@ -18,10 +18,13 @@ type Props = {
 
 export default function DocumentPreviewModal({ type, data, onClose, description }: Props): JSX.Element {
   const title = type === 'release' ? '출고의뢰서 미리보기' : '거래명세서 미리보기';
-  const html = type === 'release' ? buildReleasePreviewHtml(data) : buildInvoicePreviewHtml(data);
+  const html =
+    type === 'release'
+      ? buildReleasePreviewHtml(data)
+      : buildInvoicePreviewHtml(data, { showPrice: true });
   const styles = type === 'release' ? getReleasePreviewStyles(true) : getInvoicePreviewStyles(false);
 
-  function handlePrint() {
+  function handlePrint(showPrice: boolean = true) {
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -33,7 +36,10 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
     document.body.appendChild(iframe);
 
     const doc = iframe.contentWindow?.document;
-    const printHtml = type === 'release' ? buildReleasePreviewHtml(data) : buildInvoicePreviewHtml(data);
+    const printHtml =
+      type === 'release'
+        ? buildReleasePreviewHtml(data)
+        : buildInvoicePreviewHtml(data, { showPrice });
     const printStyles = type === 'release' ? getReleasePreviewStyles(true) : getInvoicePreviewStyles(true);
 
     if (!doc || !iframe.contentWindow) {
@@ -74,9 +80,20 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
             <button className="btn btn-secondary" onClick={onClose}>
               닫기
             </button>
-            <button className="btn btn-primary" onClick={handlePrint}>
-              인쇄 / PDF 저장
-            </button>
+            {type === 'invoice' ? (
+              <>
+                <button className="btn btn-secondary" onClick={() => handlePrint(true)}>
+                  단가용인쇄
+                </button>
+                <button className="btn btn-primary" onClick={() => handlePrint(false)}>
+                  일반용인쇄
+                </button>
+              </>
+            ) : (
+              <button className="btn btn-primary" onClick={() => handlePrint(true)}>
+                인쇄 / PDF 저장
+              </button>
+            )}
           </div>
         </div>
         <div className={`release-preview-wrap in-modal ${type === 'invoice' ? 'invoice-preview-wrap' : ''}`}>

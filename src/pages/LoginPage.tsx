@@ -36,7 +36,7 @@ export default function LoginPage() {
     event.preventDefault();
 
     if (!id.trim() || !password) {
-      setError('아이디와 비밀번호를 모두 입력해주세요.');
+      setError('아이디와 비밀번호를 모두 입력해 주세요.');
       return;
     }
 
@@ -70,8 +70,8 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-hero">
-        <img className="login-logo-image" src={logoImage} alt="DKH 시스템" />
-        <p className="login-hero-subtitle">(주) 혜인에이치 시스템 업무 관리 시스템</p>
+        <img className="login-logo-image" src={logoImage} alt="DK&H 시스템" />
+        <p className="login-hero-subtitle">(주) 디케이앤에이치 시스템 업무 관리 시스템</p>
       </div>
 
       <form className="login-card" onSubmit={handleLogin}>
