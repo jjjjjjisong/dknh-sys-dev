@@ -2330,6 +2330,11 @@ a {
   width: 96px;
 }
 
+.dashboard-panel-table td:nth-child(2),
+.dashboard-panel-table td:nth-child(3) {
+  white-space: nowrap;
+}
+
 .dashboard-panel-table th:nth-child(3),
 .dashboard-panel-table td:nth-child(3),
 .dashboard-panel-table th:nth-child(4),
