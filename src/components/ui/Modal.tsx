@@ -8,6 +8,7 @@ type ModalProps = PropsWithChildren<{
   headerAction?: ReactNode;
   footer?: ReactNode;
   cardClassName?: string;
+  overlayClassName?: string;
   closeOnOverlayClick?: boolean;
 }>;
 
@@ -19,13 +20,17 @@ export default function Modal({
   headerAction,
   footer,
   cardClassName = '',
+  overlayClassName = '',
   closeOnOverlayClick = false,
   children,
 }: ModalProps) {
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={closeOnOverlayClick ? onClose : undefined}>
+    <div
+      className={`modal-overlay ${overlayClassName}`.trim()}
+      onClick={closeOnOverlayClick ? onClose : undefined}
+    >
       <div
         className={`modal-card ${cardClassName}`.trim()}
         onClick={(event) => event.stopPropagation()}

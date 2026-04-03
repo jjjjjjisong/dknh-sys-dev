@@ -118,6 +118,7 @@ export default function ScheduleCalendarModal({ open, onClose }: Props) {
         </button>
       }
       cardClassName="schedule-calendar-modal-card"
+      overlayClassName="schedule-calendar-modal-overlay"
       closeOnOverlayClick
     >
       <div className="schedule-calendar-layout">
