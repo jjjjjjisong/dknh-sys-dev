@@ -27,7 +27,16 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
   function handlePrint(showPrice: boolean = true) {
     const printDate = (data.arriveDate || data.orderDate || '').trim();
     const fallbackDate = new Date().toISOString().slice(0, 10);
-    const printTitle = `${type === 'release' ? '출고의뢰서' : '거래명세서'}_${printDate || fallbackDate}`;
+    const safeDate = printDate || fallbackDate;
+    const safeClient = (data.client || '납품처')
+      .trim()
+      .replace(/[\\/:*?"<>|]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const printTitle =
+      type === 'invoice'
+        ? `${safeClient || '납품처'}_거래명세서_${safeDate}`
+        : `출고의뢰서_${safeDate}`;
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
