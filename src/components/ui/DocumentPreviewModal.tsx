@@ -37,6 +37,7 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
       type === 'invoice'
         ? `${safeClient || '납품처'}_거래명세서_${safeDate}`
         : `출고의뢰서_${safeDate}`;
+    const originalTitle = document.title;
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -67,9 +68,11 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
     doc.close();
 
     iframe.onload = () => {
+      document.title = printTitle;
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
       window.setTimeout(() => {
+        document.title = originalTitle;
         document.body.removeChild(iframe);
       }, 500);
     };
