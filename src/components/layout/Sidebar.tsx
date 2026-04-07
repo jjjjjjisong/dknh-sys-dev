@@ -11,7 +11,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { group: '메인', label: '대시보드', to: '/dashboard', icon: <SidebarIconDashboard /> },
+  { group: '메인', label: '대쉬보드', to: '/dashboard', icon: <SidebarIconDashboard /> },
   { group: '문서', label: '문서 작성', to: '/doc-create', icon: <SidebarIconPen /> },
   { group: '문서', label: '발행 이력', to: '/doc-history', icon: <SidebarIconHistory /> },
   { group: '문서', label: '수주대장', to: '/order-book', icon: <SidebarIconList /> },
