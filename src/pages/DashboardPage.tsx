@@ -61,7 +61,7 @@ export default function DashboardPage() {
         }
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : '대쉬보드 정보를 불러오지 못했습니다.');
+          setError(err instanceof Error ? err.message : '대시보드 정보를 불러오지 못했습니다.');
         }
       } finally {
         if (mounted) {
@@ -225,7 +225,7 @@ export default function DashboardPage() {
 
   return (
     <div className="page-content dashboard-page">
-      <PageHeader title="대쉬보드" description="" />
+      <PageHeader title="대시보드" description="" />
 
       {error ? <div className="alert alert-error">{error}</div> : null}
 
