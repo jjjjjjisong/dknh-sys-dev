@@ -5,6 +5,7 @@ export type OrderBookEntry = {
   id: string;
   docId: string | null;
   documentItemId: string | null;
+  productId: string | null;
   issueNo: string;
   date: string | null;
   deadline: string | null;
@@ -27,6 +28,7 @@ export type OrderBookEntry = {
 };
 
 export type OrderBookInput = {
+  productId?: string | null;
   issueNo: string;
   date: string | null;
   deadline: string | null;

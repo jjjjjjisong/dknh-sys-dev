@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
 import { fetchDocuments, fetchNextIssueNo, saveDocument } from '../api/documents';
-import { fetchProductsByClient } from '../api/products';
+import { fetchProductsByClient, fetchProductsByClientId } from '../api/products';
 import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
@@ -10,13 +10,14 @@ import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
 import Modal from '../components/ui/Modal';
 import DocumentItemTable, { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
-import type { SharedItemRow as DocItem, ItemSummary } from '../components/ui/DocumentItemTable';
+import type { SharedItemRow as DocItem } from '../components/ui/DocumentItemTable';
+import { buildDocumentPayload, buildSharedPreviewData } from '../features/documents/documentPreview';
 import { useDocumentItems, createEmptySharedItem } from '../hooks/useDocumentItems';
 import type { Client } from '../types/client';
 import type { DocumentHistory, DocumentPayload } from '../types/document';
 import type { Product } from '../types/product';
 import type { Supplier } from '../types/supplier';
-import type { SharedPreviewData as PreviewData, SharedPreviewItem as PreviewItem } from '../types/documentPreview';
+import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
 import { RECEIVER_OPTIONS } from '../constants/receivers';
 import { emptyToNull, formatIntegerInput, parseNullableInteger, stripNonNumeric, formatNumber, getLocalDateInputValue } from '../utils/formatters';
 
@@ -26,6 +27,7 @@ type DocForm = {
   issueNo: string;
   orderDate: string;
   arriveDate: string;
+  clientId: string;
   client: string;
   manager: string;
   managerTel: string;
@@ -48,6 +50,7 @@ function createInitialForm(): DocForm {
     issueNo: '',
     orderDate: today,
     arriveDate: '',
+    clientId: '',
     client: '',
     manager: '',
     managerTel: '',
@@ -167,13 +170,13 @@ export default function DocCreatePage() {
     let mounted = true;
 
     async function loadProducts() {
-      if (!form.client) {
+      if (!form.clientId) {
         setProducts([]);
         return;
       }
 
       try {
-        const rows = await fetchProductsByClient(form.client);
+        const rows = await fetchProductsByClientId(form.clientId);
         if (!mounted) return;
         setProducts(rows);
       } catch (err) {
@@ -187,7 +190,7 @@ export default function DocCreatePage() {
     return () => {
       mounted = false;
     };
-  }, [form.client]);
+  }, [form.clientId]);
 
   useEffect(() => {
     const previousOrderDate = prevBaseOrderDateRef.current;
@@ -230,56 +233,7 @@ export default function DocCreatePage() {
   }, [form.receiver]);
 
   const previewData = useMemo<PreviewData | null>(() => {
-    const validItems: PreviewItem[] = itemSummaries
-      .map((summary, index) => {
-        if (!summary.name1 || summary.qty <= 0) return null;
-        const item = items[index];
-
-        return {
-          seq: index + 1,
-          name1: summary.name1,
-          name2: summary.name2,
-          gubun: summary.gubun,
-          qty: summary.qty,
-          unitPrice: summary.unitPrice,
-          supply: summary.supply,
-          vat: item.vat,
-          orderDate: emptyToNull(item.orderDate),
-          arriveDate: emptyToNull(item.arriveDate),
-          releaseNote: item.releaseNote.trim(),
-          invoiceNote: item.invoiceNote.trim(),
-          eaPerB: summary.eaPerB,
-          boxPerP: summary.boxPerP,
-          pallet: summary.pallet,
-          box: summary.box,
-        };
-      })
-      .filter((item): item is PreviewItem => item !== null);
-
-    if (validItems.length === 0) return null;
-
-    return {
-      issueNo: form.issueNo.trim(),
-      client: form.client.trim(),
-      manager: form.manager.trim(),
-      managerTel: form.managerTel.trim(),
-      receiver: form.receiver.trim(),
-      supplierBizNo: form.supplierBizNo.trim(),
-      supplierName: form.supplierName.trim(),
-      supplierOwner: form.supplierOwner.trim(),
-      supplierAddress: form.supplierAddress.trim(),
-      supplierBusinessType: form.supplierBusinessType.trim(),
-      supplierBusinessItem: form.supplierBusinessItem.trim(),
-      orderDate: emptyToNull(form.orderDate),
-      arriveDate: emptyToNull(form.arriveDate),
-      deliveryAddr: form.deliveryAddr.trim(),
-      remark: form.remark.trim(),
-      requestNote: form.requestNote.trim(),
-      totalSupply: totals.supply,
-      totalVat: totals.vat,
-      totalAmount: totals.total,
-      items: validItems,
-    };
+    return buildSharedPreviewData(form, itemSummaries, items, totals);
   }, [form, itemSummaries, items, totals]);
 
 
@@ -304,6 +258,7 @@ export default function DocCreatePage() {
     const client = clients.find((row) => row.name === clientName) ?? null;
     setForm((current) => ({
       ...current,
+      clientId: client?.id ?? '',
       client: clientName,
       manager: client?.manager ?? '',
       managerTel: client?.tel ?? '',
@@ -364,47 +319,10 @@ export default function DocCreatePage() {
       setSaving(true);
       setError(null);
 
-      const payload: DocumentPayload = {
-        issueNo: previewData.issueNo,
-        client: previewData.client,
-        manager: previewData.manager,
-        managerTel: previewData.managerTel,
-        receiver: previewData.receiver,
-        supplierBizNo: previewData.supplierBizNo,
-        supplierName: previewData.supplierName,
-        supplierOwner: previewData.supplierOwner,
-        supplierAddress: previewData.supplierAddress,
-        supplierBusinessType: previewData.supplierBusinessType,
-        supplierBusinessItem: previewData.supplierBusinessItem,
-        orderDate: previewData.orderDate,
-        arriveDate: previewData.arriveDate,
-        deliveryAddr: previewData.deliveryAddr,
-        remark: previewData.remark,
-        requestNote: previewData.requestNote,
-        totalSupply: previewData.totalSupply,
-        totalVat: previewData.totalVat,
-        totalAmount: previewData.totalAmount,
-        author: getStoredUser()?.name ?? '로컬 사용자',
-        status: 'ST00',
-        items: previewData.items.map((item) => ({
-          seq: item.seq,
-          name1: item.name1,
-          name2: item.name2,
-          gubun: item.gubun,
-          qty: item.qty,
-          unitPrice: item.unitPrice,
-          supply: item.supply,
-          vat: item.vat,
-          orderDate: item.orderDate,
-          arriveDate: item.arriveDate,
-          releaseNote: item.releaseNote,
-          invoiceNote: item.invoiceNote,
-          eaPerB: item.eaPerB,
-          boxPerP: item.boxPerP,
-          customPallet: item.pallet,
-          customBox: item.box,
-        })),
-      };
+      const payload: DocumentPayload = buildDocumentPayload(
+        previewData,
+        getStoredUser()?.name ?? '로컬 사용자',
+      );
 
       const documentId = await saveDocument(payload);
       navigate(`/doc-history/${documentId}`);
@@ -492,12 +410,17 @@ export default function DocCreatePage() {
     try {
       setImportLoading(true);
       setError(null);
-      const productRows = document.client ? await fetchProductsByClient(document.client) : [];
+      const productRows = document.clientId
+        ? await fetchProductsByClientId(document.clientId)
+        : document.client
+          ? await fetchProductsByClient(document.client)
+          : [];
       setProducts(productRows);
       setForm((current) => ({
         ...current,
         orderDate: document.orderDate ?? today,
         arriveDate: document.arriveDate ?? '',
+        clientId: document.clientId ?? '',
         client: document.client,
         manager: document.manager,
         managerTel: document.managerTel,
@@ -881,7 +804,9 @@ function mapImportedDocumentItems(document: DocumentHistory, products: Product[]
   }
 
   return document.items.map((item) => {
-    const matched = products.find((product) => product.name1 === item.name1);
+    const matched =
+      (item.productId ? products.find((product) => product.id === item.productId) : null) ??
+      products.find((product) => product.name1 === item.name1);
     const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
 
     return {

@@ -16,7 +16,7 @@ export async function saveDocument(payload: DocumentPayload) {
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const currentUser = getStoredUser();
-  const clientId = await findClientIdByName(payload.client);
+  const clientId = await resolveClientId(payload.clientId, payload.client);
   const authorId = payload.authorId ?? currentUser?.id ?? null;
 
   try {
@@ -58,6 +58,7 @@ export async function saveDocument(payload: DocumentPayload) {
     if (payload.items.length > 0) {
       const itemRows = payload.items.map((item) => ({
         document_id: documentRow.id,
+        product_id: item.productId ? Number(item.productId) : null,
         seq: item.seq,
         name1: item.name1,
         name2: item.name2,
@@ -81,7 +82,7 @@ export async function saveDocument(payload: DocumentPayload) {
       const { data: insertedItems, error: itemError } = await supabase
         .from('document_items')
         .insert(itemRows)
-        .select('id, seq, name1, qty, arrive_date');
+        .select('id, product_id, seq, name1, qty, arrive_date');
 
       if (itemError) {
         throw itemError;
@@ -97,6 +98,7 @@ export async function saveDocument(payload: DocumentPayload) {
           document_item_id: item.id,
           issue_no: payload.issueNo,
           client_id: clientId,
+          product_id: item.product_id,
           date: payload.orderDate,
           deadline: item.arrive_date ?? payload.arriveDate,
           client: payload.client,
@@ -127,7 +129,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const { data, error } = await supabase
     .from('documents')
     .select(
-      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
+      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
     )
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
@@ -175,6 +177,8 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
       .sort((a: any, b: any) => (a.seq ?? 0) - (b.seq ?? 0))
       .map((item: any) => ({
         id: String(item.id),
+        productId:
+          item.product_id === null || item.product_id === undefined ? null : String(item.product_id),
         seq: item.seq ?? 0,
         name1: item.name1 ?? '',
         name2: item.name2 ?? '',
@@ -207,7 +211,7 @@ export async function updateDocument(document: DocumentHistory) {
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const deletedAuditFields = getDeletedAuditFields();
-  const clientId = await findClientIdByName(document.client);
+  const clientId = await resolveClientId(document.clientId, document.client);
 
   try {
     const { data: updatedDocumentRows, error: docError } = await supabase
@@ -287,6 +291,7 @@ export async function updateDocument(document: DocumentHistory) {
     for (const item of nextItems) {
       const itemPayload = {
         document_id: document.id,
+        product_id: item.productId ? Number(item.productId) : null,
         seq: item.seq,
         name1: item.name1,
         name2: item.name2,
@@ -329,7 +334,7 @@ export async function updateDocument(document: DocumentHistory) {
 
     const { data: activeDocumentItemRows, error: activeDocumentItemsError } = await supabase
       .from('document_items')
-      .select('id, seq, name1, qty, arrive_date')
+      .select('id, product_id, seq, name1, qty, arrive_date')
       .eq('document_id', document.id)
       .eq('del_yn', 'N')
       .order('seq', { ascending: true })
@@ -368,6 +373,7 @@ export async function updateDocument(document: DocumentHistory) {
 
     const activeDocumentItems = (activeDocumentItemRows ?? []) as Array<{
       id: string;
+      product_id: number | string | null;
       seq: number | null;
       name1: string | null;
       qty: number | null;
@@ -392,6 +398,7 @@ export async function updateDocument(document: DocumentHistory) {
         document_item_id: item.id,
         issue_no: document.issueNo,
         client_id: clientId,
+        product_id: item.product_id,
         date: document.orderDate,
         deadline: item.arrive_date ?? document.arriveDate,
         client: document.client,
@@ -487,7 +494,10 @@ export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
   }
 }
 
-async function findClientIdByName(clientName: string) {
+async function resolveClientId(clientId: string | null | undefined, clientName: string) {
+  const normalizedId = String(clientId ?? '').trim();
+  if (normalizedId) return normalizedId;
+
   const normalizedName = clientName.trim();
   if (!normalizedName) return null;
 

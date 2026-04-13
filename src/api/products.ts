@@ -56,6 +56,25 @@ export async function fetchProductsByClient(clientName: string): Promise<Product
   return (data ?? []).map((product: ProductRow) => mapProductRow(product));
 }
 
+export async function fetchProductsByClientId(clientId: string): Promise<Product[]> {
+  const normalizedClientId = clientId.trim();
+  if (!normalizedClientId) return [];
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select(productSelectColumns)
+    .eq('del_yn', 'N')
+    .eq('client_id', Number(normalizedClientId))
+    .order('no');
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  return (data ?? []).map((product: ProductRow) => mapProductRow(product));
+}
+
 export async function createProduct(input: ProductInput): Promise<Product> {
   const supabase = getSupabaseClient();
 

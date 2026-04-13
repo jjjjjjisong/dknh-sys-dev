@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
-import { fetchProductsByClient } from '../api/products';
+import { fetchProductsByClient, fetchProductsByClientId } from '../api/products';
 import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
@@ -10,6 +10,7 @@ import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
 import DocumentItemTable, { MANUAL_PRODUCT_ID } from '../components/ui/DocumentItemTable';
 import type { SharedItemRow } from '../components/ui/DocumentItemTable';
+import { buildHistoryDraftItems, buildSharedPreviewData } from '../features/documents/documentPreview';
 import { useDocumentItems } from '../hooks/useDocumentItems';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
@@ -113,7 +114,9 @@ export default function DocHistoryPage() {
       }
 
       try {
-        const rows = await fetchProductsByClient(draft.client);
+        const rows = draft.clientId
+          ? await fetchProductsByClientId(draft.clientId)
+          : await fetchProductsByClient(draft.client);
         if (!mounted) return;
         setProducts(rows);
         setItems(mapDraftItemsToSharedRows(draft, rows));
@@ -238,55 +241,30 @@ export default function DocHistoryPage() {
 
   const previewData = useMemo<PreviewData | null>(() => {
     if (!draft) return null;
-    const validItems = itemSummaries
-      .map((summary, index) => {
-        if (!summary.name1 || summary.qty <= 0) return null;
-        const item = items[index];
-        return {
-          seq: index + 1,
-          name1: summary.name1,
-          name2: summary.name2,
-          gubun: summary.gubun,
-          qty: summary.qty,
-          unitPrice: summary.unitPrice,
-          supply: summary.supply,
-          vat: item.vat,
-          orderDate: emptyToNull(item.orderDate),
-          arriveDate: emptyToNull(item.arriveDate),
-          releaseNote: item.releaseNote.trim(),
-          invoiceNote: item.invoiceNote.trim(),
-          eaPerB: summary.eaPerB,
-          boxPerP: summary.boxPerP,
-          pallet: summary.pallet,
-          box: summary.box,
-        };
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
-
-    if (validItems.length === 0) return null;
-
-    return {
-      issueNo: draft.issueNo,
-      client: draft.client,
-      manager: draft.manager || '',
-      managerTel: draft.managerTel || '',
-      receiver: draft.receiver || '',
-      supplierBizNo: draft.supplierBizNo,
-      supplierName: draft.supplierName,
-      supplierOwner: draft.supplierOwner,
-      supplierAddress: draft.supplierAddress,
-      supplierBusinessType: draft.supplierBusinessType,
-      supplierBusinessItem: draft.supplierBusinessItem,
-      orderDate: emptyToNull(draft.orderDate || ''),
-      arriveDate: emptyToNull(draft.arriveDate || ''),
-      deliveryAddr: draft.deliveryAddr || '',
-      remark: draft.remark || '',
-      requestNote: draft.requestNote || '',
-      totalSupply: totals.supply,
-      totalVat: totals.vat,
-      totalAmount: totals.total,
-      items: validItems,
-    };
+    return buildSharedPreviewData(
+      {
+        issueNo: draft.issueNo,
+        clientId: draft.clientId,
+        client: draft.client,
+        manager: draft.manager || '',
+        managerTel: draft.managerTel || '',
+        receiver: draft.receiver || '',
+        supplierBizNo: draft.supplierBizNo,
+        supplierName: draft.supplierName,
+        supplierOwner: draft.supplierOwner,
+        supplierAddress: draft.supplierAddress,
+        supplierBusinessType: draft.supplierBusinessType,
+        supplierBusinessItem: draft.supplierBusinessItem,
+        orderDate: draft.orderDate || '',
+        arriveDate: draft.arriveDate || '',
+        deliveryAddr: draft.deliveryAddr || '',
+        remark: draft.remark || '',
+        requestNote: draft.requestNote || '',
+      },
+      itemSummaries,
+      items,
+      totals,
+    );
   }, [draft, itemSummaries, items, totals]);
 
   function openDocument(document: DocumentHistory) {
@@ -338,37 +316,7 @@ export default function DocHistoryPage() {
   }
 
   function buildDraftItems() {
-    return itemSummaries
-      .map((summary, index) => {
-        if (!summary.name1 || summary.qty <= 0) return null;
-
-        const item = items[index];
-        const existingItem = draft?.items.find((row) => row.id === item.id);
-
-        return {
-          id: existingItem?.id ?? item.id,
-          seq: index + 1,
-          name1: summary.name1,
-          name2: summary.name2,
-          gubun: summary.gubun,
-          qty: summary.qty,
-          unitPrice: summary.unitPrice,
-          supply: summary.supply,
-          vat: item.vat,
-          orderDate: emptyToNull(item.orderDate),
-          arriveDate: emptyToNull(item.arriveDate),
-          releaseNote: item.releaseNote.trim(),
-          invoiceNote: item.invoiceNote.trim(),
-          eaPerB: summary.eaPerB,
-          boxPerP: summary.boxPerP,
-          customPallet: item.customPallet,
-          customBox: item.customBox,
-          delYn: existingItem?.delYn ?? 'N',
-          updatedAt: existingItem?.updatedAt ?? null,
-          updatedBy: existingItem?.updatedBy ?? '',
-        };
-      })
-      .filter((item): item is DocumentHistoryItem => item !== null);
+    return buildHistoryDraftItems(draft, itemSummaries, items);
   }
 
   async function handleSave() {
@@ -736,7 +684,9 @@ function cloneDocument(document: DocumentHistory): DocumentHistory {
 
 function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]): SharedItemRow[] {
   return draft.items.map((item) => {
-    const matched = products.find((product) => product.name1 === item.name1);
+    const matched =
+      (item.productId ? products.find((product) => product.id === item.productId) : null) ??
+      products.find((product) => product.name1 === item.name1);
     const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
 
     return {

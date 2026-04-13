@@ -1,4 +1,5 @@
 export type SharedPreviewItem = {
+  productId: string | null;
   seq: number;
   name1: string;
   name2: string;
@@ -19,6 +20,7 @@ export type SharedPreviewItem = {
 
 export type SharedPreviewData = {
   issueNo: string;
+  clientId?: string | null;
   client: string;
   manager: string;
   managerTel: string;

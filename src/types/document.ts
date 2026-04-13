@@ -1,6 +1,7 @@
 export type DocumentStatus = 'ST00' | 'ST01';
 
 export type DocumentItemPayload = {
+  productId?: string | null;
   seq: number;
   name1: string;
   name2: string;
@@ -48,6 +49,7 @@ export type DocumentPayload = {
 
 export type DocumentHistoryItem = {
   id: string;
+  productId: string | null;
   seq: number;
   name1: string;
   name2: string;

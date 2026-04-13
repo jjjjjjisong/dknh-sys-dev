@@ -11,6 +11,7 @@ type OrderBookRow = {
   id: string;
   doc_id: string | null;
   document_item_id: string | null;
+  product_id: string | null;
   issue_no: string | null;
   date: string | null;
   deadline: string | null;
@@ -42,6 +43,7 @@ type DocumentLookupRow = {
 type DocumentItemLookupRow = {
   id: string;
   document_id: string;
+  product_id: string | null;
   seq: number | null;
   name1: string | null;
   name2: string | null;
@@ -55,7 +57,7 @@ type DocumentItemLookupRow = {
 };
 
 const ORDER_BOOK_SELECT =
-  'id, doc_id, document_item_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
+  'id, doc_id, document_item_id, product_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
 
 export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   const supabase = getSupabaseClient();
@@ -83,6 +85,7 @@ export async function createOrderBookEntry(payload: OrderBookInput) {
     .from('order_book')
     .insert({
       issue_no: payload.issueNo,
+      product_id: payload.productId ? Number(payload.productId) : null,
       date: payload.date,
       deadline: payload.deadline,
       client: payload.client,
@@ -109,6 +112,7 @@ export async function updateOrderBookEntry(id: string, payload: OrderBookInput) 
     .from('order_book')
     .update({
       issue_no: payload.issueNo,
+      product_id: payload.productId ? Number(payload.productId) : null,
       date: payload.date,
       deadline: payload.deadline,
       client: payload.client,
@@ -195,7 +199,7 @@ async function fetchDocumentItemsByDocIds(ids: string[]) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('document_items')
-    .select('id, document_id, seq, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn')
+    .select('id, document_id, product_id, seq, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, del_yn')
     .in('document_id', ids)
     .eq('del_yn', 'N');
 
@@ -217,7 +221,12 @@ function mapOrderBookRow(
 ): OrderBookEntry {
   const document = row.doc_id ? documentsById.get(row.doc_id) : undefined;
   const matchedItem = row.doc_id
-    ? findMatchingItem(itemsByDocId.get(row.doc_id) ?? [], row.document_item_id, row.product ?? '')
+    ? findMatchingItem(
+        itemsByDocId.get(row.doc_id) ?? [],
+        row.document_item_id,
+        row.product_id,
+        row.product ?? '',
+      )
     : undefined;
   const resolvedQty = row.qty ?? matchedItem?.qty ?? 0;
 
@@ -225,6 +234,7 @@ function mapOrderBookRow(
     id: String(row.id),
     docId: row.doc_id ? String(row.doc_id) : null,
     documentItemId: row.document_item_id ? String(row.document_item_id) : null,
+    productId: row.product_id ? String(row.product_id) : matchedItem?.product_id ? String(matchedItem.product_id) : null,
     issueNo: row.issue_no ?? document?.issue_no ?? '',
     date: document?.order_date ?? row.date ?? null,
     deadline: matchedItem?.arrive_date ?? document?.arrive_date ?? row.deadline ?? null,
@@ -250,20 +260,40 @@ function mapOrderBookRow(
 function findMatchingItem(
   items: DocumentItemLookupRow[],
   documentItemId: string | null | undefined,
+  productId: string | null | undefined,
   productName: string,
 ) {
   const normalizedDocumentItemId = String(documentItemId ?? '').trim();
   if (normalizedDocumentItemId) {
     const exactItem = items.find((item) => String(item.id) === normalizedDocumentItemId);
     if (exactItem) return exactItem;
+    return undefined;
+  }
+
+  const normalizedProductId = String(productId ?? '').trim();
+  if (normalizedProductId) {
+    const exactProduct = items.find((item) => String(item.product_id ?? '') === normalizedProductId);
+    if (exactProduct) return exactProduct;
   }
 
   const normalizedProduct = normalizeValue(productName);
-  return (
-    items.find((item) => normalizeValue(item.name1) === normalizedProduct) ||
-    items.find((item) => normalizeValue(item.name2) === normalizedProduct) ||
-    (items.length === 1 ? items[0] : undefined)
-  );
+  if (normalizedProduct) {
+    const matches = items.filter(
+      (item) =>
+        normalizeValue(item.name1) === normalizedProduct ||
+        normalizeValue(item.name2) === normalizedProduct,
+    );
+
+    if (matches.length === 1) {
+      return matches[0];
+    }
+
+    if (matches.length > 1) {
+      return undefined;
+    }
+  }
+
+  return items.length === 1 ? items[0] : undefined;
 }
 
 function normalizeValue(value: string | null | undefined) {
