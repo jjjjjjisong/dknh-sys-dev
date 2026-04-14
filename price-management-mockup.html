@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>단가 관리 - 목업</title>
+  <style>
+    /* ═══════════════════════════════
+       실제 globals.css 에서 복사한 디자인 시스템
+    ═══════════════════════════════ */
+    :root {
+      --bg: #f9fafc;
+      --surface: #ffffff;
+      --surface-2: #f4f6fb;
+      --border: #dde5f4;
+      --border-2: #c5d0e8;
+      --text-1: #0d1424;
+      --text-2: #44546a;
+      --text-3: #8fa0bc;
+      --accent: #2563eb;
+      --accent-s: #1d4ed8;
+      --accent-light: #eff6ff;
+      --red: #ef4444;
+      --red-bg: #fff1f1;
+      --green: #22c55e;
+      --green-bg: #f0fdf4;
+      --shadow-xs: 0 1px 3px rgba(13,20,36,0.06), 0 1px 2px rgba(13,20,36,0.04);
+      --shadow-sm: 0 4px 20px rgba(37,99,235,0.08), 0 2px 8px rgba(13,20,36,0.05);
+      --r: 10px;
+      --r-lg: 16px;
+      font-family: "Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,sans-serif;
+      color: var(--text-1);
+      background: var(--bg);
+      line-height: 1.5;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { min-height: 100vh; background: var(--bg); color: var(--text-1); font-size: 14.5px; }
+    button, input, select, textarea { font: inherit; }
+    button { transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Layout */
+    .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      height: 58px; background: var(--surface); border-bottom: none;
+      box-shadow: 0 1px 0 rgba(37,99,235,0.08), 0 4px 20px rgba(37,99,235,0.06);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px 0 0; gap: 12px; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-brand {
+      width: 210px; display: flex; align-items: center; gap: 12px;
+      justify-content: flex-start; flex-shrink: 0;
+      padding-left: 24px; border-right: 1px solid var(--border); height: 100%;
+    }
+    .topbar-logo-text {
+      font-size: 17px; font-weight: 800; letter-spacing: -0.03em; color: var(--text-1);
+    }
+    .topbar-logo-text span { color: var(--accent); }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .topbar-user { color: var(--text-2); font-size: 13px; font-weight: 500; }
+    .sidebar-user-avatar {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+      color: #fff; font-weight: 800; font-size: 14px;
+      box-shadow: 0 3px 8px rgba(37,99,235,0.3);
+    }
+    .app-body { flex: 1; display: flex; min-height: 0; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 210px; background: var(--surface); border-right: 1px solid var(--border);
+      padding: 18px 12px 16px; display: flex; flex-direction: column;
+      justify-content: space-between; gap: 14px;
+      position: sticky; top: 58px; height: calc(100vh - 58px);
+      min-height: calc(100vh - 58px); overflow-y: auto;
+    }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 14px; }
+    .sidebar-section { display: flex; flex-direction: column; gap: 6px; }
+    .sidebar-section-title {
+      padding: 0 10px; font-size: 10.5px; color: var(--text-3);
+      font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .sidebar-links { display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-link {
+      position: relative; display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 12px; color: var(--text-2);
+      font-size: 13.5px; font-weight: 500;
+      transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+      cursor: pointer;
+    }
+    .sidebar-link:hover { background: var(--bg); color: var(--text-1); transform: translateX(2px); }
+    .sidebar-link.active {
+      background: linear-gradient(135deg, #eff6ff 0%, #e0eaff 100%);
+      color: var(--accent-s); font-weight: 700;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.12);
+    }
+    .sidebar-link.active::before {
+      content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
+      width: 3px; border-radius: 999px;
+      background: linear-gradient(180deg, #2563eb, #60a5fa);
+    }
+    .sidebar-link-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; color: var(--text-3); flex-shrink: 0;
+    }
+    .sidebar-link.active .sidebar-link-icon { color: var(--accent); }
+    .sidebar-user-card {
+      display: flex; align-items: center; gap: 12px; padding: 12px 10px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #eff6ff 0%, #e0eaff 100%);
+      border: 1px solid rgba(37,99,235,0.1);
+    }
+    .sidebar-user-meta { display: flex; flex-direction: column; min-width: 0; }
+    .sidebar-user-meta strong { color: var(--text-1); font-size: 13px; }
+    .sidebar-user-meta span { color: var(--text-3); font-size: 12px; }
+
+    /* Main */
+    .app-main { flex: 1; min-width: 0; padding: 24px; }
+    .page-content { display: flex; flex-direction: column; gap: 16px; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .page-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.3; }
+    .page-description { margin: 4px 0 0; color: var(--text-3); font-size: 13.5px; }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(221,229,244,0.8);
+      border-radius: var(--r-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    /* Toolbar */
+    .toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .toolbar-meta { color: var(--text-3); white-space: nowrap; font-size: 13px; }
+    .client-toolbar-stacked { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .client-toolbar-actions { display: flex; align-items: center; justify-content: space-between; }
+    .button-row { display: flex; gap: 8px; }
+
+    /* Search input */
+    .search-input {
+      width: 100%; height: 38px; border: 1.5px solid var(--border);
+      border-radius: var(--r); padding: 0 11px;
+      background: var(--surface); color: var(--text-1); font-size: 14.5px;
+      font-family: "Pretendard Variable","Pretendard",sans-serif;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .search-input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    /* Table */
+    .table-wrap { overflow: auto; }
+    .table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+    .table th, .table td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 14px; color: var(--text-1); }
+    .table th {
+      background: #f0f2f7; color: var(--text-2); font-weight: 600;
+      font-size: 12px; white-space: nowrap; letter-spacing: 0.06em;
+      text-transform: uppercase; border-bottom: 2px solid #dde3ef;
+    }
+    .table thead tr th:first-child { border-radius: 8px 0 0 0; }
+    .table thead tr th:last-child { border-radius: 0 8px 0 0; }
+    .table tbody tr { transition: background-color 0.12s ease; cursor: default; }
+    .table tbody tr:hover td { background: #f4f7ff; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table-empty { padding: 24px 12px; text-align: center; color: var(--text-3); }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px; }
+    .pagination-controls { display: flex; align-items: center; gap: 8px; margin: 0 auto; }
+    .pagination-pages { display: flex; align-items: center; gap: 6px; }
+    .pagination-button {
+      min-width: 36px; height: 36px; padding: 0 12px;
+      border: 1px solid var(--border); border-radius: var(--r);
+      background: var(--surface); color: var(--text-2); font-size: 14px;
+      cursor: pointer; transition: all 0.16s ease;
+    }
+    .pagination-button:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--text-1); }
+    .pagination-button.active {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      border-color: #2563eb; color: #fff;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+    .pagination-summary { flex-shrink: 0; color: var(--text-3); font-size: 13px; white-space: nowrap; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      background: #eff6ff; color: var(--accent); border: 1px solid rgba(37,99,235,0.15);
+    }
+    .badge-cancel { background: var(--red-bg); color: var(--red); border-color: rgba(239,68,68,0.2); }
+    .badge-muted { background: var(--surface-2); color: var(--text-3); border-color: var(--border); }
+    .badge-green { background: var(--green-bg); color: #15803d; border-color: rgba(34,197,94,0.2); }
+    .badge-warn { background: #fffbeb; color: #b45309; border-color: rgba(245,158,11,0.25); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 38px; padding: 0 16px; border-radius: var(--r);
+      border: 1.5px solid transparent; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      font-family: "Pretendard Variable","Pretendard",sans-serif;
+      line-height: 1.2; letter-spacing: -0.01em; gap: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      color: #fff; border-color: #2563eb;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      border-color: #1d4ed8; box-shadow: 0 6px 18px rgba(37,99,235,0.35) !important;
+    }
+    .btn-secondary { background: var(--surface); color: var(--text-2); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--bg); border-color: var(--border-2); color: var(--text-1); }
+    .btn-danger { background: var(--surface); color: var(--text-2); border-color: var(--border); }
+    .btn-danger:hover { background: #fff1f1; color: var(--red); border-color: #fca5a5; }
+    .btn-warn { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
+    .btn-warn:hover { background: #fef3c7; }
+    .btn-sm { height: 32px; padding: 0 11px; font-size: 13px; font-weight: 500; }
+
+    /* Alert / Info box */
+    .alert { padding: 12px 14px; border-radius: var(--r); font-size: 13px; }
+    .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .alert-warn { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+
+    /* Tab */
+    .tab-list {
+      display: flex; gap: 2px; border-bottom: 2px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 9px 18px; font-size: 14px; font-weight: 500;
+      color: var(--text-3); border-bottom: 2px solid transparent;
+      margin-bottom: -2px; border-radius: 6px 6px 0 0;
+      transition: color 0.15s;
+    }
+    .tab-btn:hover { color: var(--accent); background: var(--accent-light); }
+    .tab-btn.active { color: var(--accent-s); font-weight: 700; border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Form util */
+    .form-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
+    .doc-cell-control {
+      width: 100%; min-height: 38px; border: 1.5px solid var(--border);
+      border-radius: var(--r); padding: 0 11px; font-size: 14.5px;
+      font-family: "Pretendard Variable","Pretendard",sans-serif;
+      background: var(--surface);
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .doc-cell-control:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+    }
+    .price-input-inline {
+      width: 90px; min-height: 32px; border: 1.5px solid var(--border);
+      border-radius: 6px; padding: 0 8px; font-size: 13.5px; text-align: right;
+      background: var(--surface);
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .price-input-inline:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+    }
+    /* 자동저장 상태 피드백 */
+    .save-status {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; white-space: nowrap;
+      min-width: 70px; height: 28px;
+      transition: opacity 0.2s;
+    }
+    .save-status-idle { color: transparent; }
+    .save-status-saving { color: var(--text-3); }
+    .save-status-done {
+      color: #15803d; font-weight: 600;
+      animation: fade-out 2s ease forwards;
+    }
+    .save-status-error { color: var(--red); font-weight: 600; }
+    @keyframes fade-out {
+      0%   { opacity: 1; }
+      60%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .td-right { text-align: right; }
+    .text-muted { color: var(--text-3); }
+    .text-danger { color: var(--red); font-weight: 600; }
+    .text-green { color: #15803d; font-weight: 600; }
+
+    /* Bulk step panel */
+    .step-panel {
+      background: var(--surface); border: 1px solid rgba(221,229,244,0.8);
+      border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow-xs);
+    }
+    .step-title {
+      font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 14px;
+    }
+
+    /* preview result bar */
+    .preview-bar {
+      display: flex; align-items: center; gap: 20px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 12px 16px;
+      font-size: 13.5px; color: var(--text-2);
+    }
+    .preview-bar strong { color: var(--accent); }
+
+    /* toolbar grid shortcut for this page */
+    .price-toolbar { display: grid; grid-template-columns: 1.2fr 1fr 2fr auto; gap: 12px; }
+    .doc-toolbar { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-logo-text">DK<span>NH</span></span>
+    </div>
+    <div class="topbar-actions">
+      <span class="topbar-user">2025-04-14 (월) 16:07</span>
+      <span class="topbar-user">관리자</span>
+      <div class="sidebar-user-avatar">관</div>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-section">
+          <span class="sidebar-section-title">업무</span>
+          <div class="sidebar-links">
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">📊</span> 대시보드
+            </a>
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">📝</span> 문서 작성
+            </a>
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">📂</span> 문서 내역
+            </a>
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">📒</span> 발주장
+            </a>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <span class="sidebar-section-title">기준정보</span>
+          <div class="sidebar-links">
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">🏢</span> 거래처 관리
+            </a>
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">🏭</span> 공급처 관리
+            </a>
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">📦</span> 품목 관리
+            </a>
+            <a class="sidebar-link active" href="#">
+              <span class="sidebar-link-icon">💰</span> 단가 관리
+            </a>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <span class="sidebar-section-title">설정</span>
+          <div class="sidebar-links">
+            <a class="sidebar-link" href="#">
+              <span class="sidebar-link-icon">👤</span> 계정 관리
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-user-card">
+        <div class="sidebar-user-avatar">관</div>
+        <div class="sidebar-user-meta">
+          <strong>관리자</strong>
+          <span>admin</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="app-main">
+      <div class="page-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">단가 관리</h1>
+            <p class="page-description">품목별 기준 단가를 관리하고, 저장된 문서의 단가를 수정합니다.</p>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-list">
+          <button class="tab-btn active" onclick="switchTab('tab-base', this)">품목 기준 단가</button>
+          <button class="tab-btn" onclick="switchTab('tab-doc', this)">문서 단가 수정</button>
+          <button class="tab-btn" onclick="switchTab('tab-bulk', this)">일괄 수정</button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             TAB 1 : 품목 기준 단가
+             거래처(원)별 품목의 입고/판매 단가 관리
+             → 품목 관리에 반영 / 이후 문서에 자동 적용
+        ═══════════════════════════════════════════════ -->
+        <div id="tab-base" class="tab-panel active">
+
+          <div class="alert alert-info">
+            여기서 수정한 단가는 <strong>품목 관리에 반영</strong>되며, 이후 작성하는 문서에 자동 적용됩니다. 이미 저장된 문서는 영향을 받지 않습니다.
+          </div>
+
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="padding:16px 20px 0;">
+              <div class="client-toolbar-stacked">
+                <div class="toolbar price-toolbar">
+                  <select class="search-input">
+                    <option value="">전체 거래처</option>
+                    <option>거래처 A</option>
+                    <option>거래처 B</option>
+                  </select>
+                  <select class="search-input">
+                    <option value="">전체 구분</option>
+                    <option>컵</option>
+                    <option>컵뚜껑</option>
+                    <option>비닐</option>
+                    <option>스트로우</option>
+                    <option>기타</option>
+                  </select>
+                  <input class="search-input" placeholder="품목명으로 검색하세요." />
+                </div>
+                <div class="client-toolbar-actions">
+                  <span class="toolbar-meta">검색 결과 24건</span>
+                  <div class="button-row">
+                    <button class="btn btn-secondary btn-sm">엑셀 다운</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:46px">No</th>
+                    <th style="width:80px">구분</th>
+                    <th style="width:150px">거래처</th>
+                    <th>품목명</th>
+                    <th style="width:110px;text-align:right">입고 단가</th>
+                    <th style="width:110px;text-align:right">판매 단가</th>
+                    <th style="width:110px">최종 수정일</th>
+                    <th style="width:80px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-row-id="p1">
+                    <td>1</td>
+                    <td><span class="badge">컵</span></td>
+                    <td>거래처 A</td>
+                    <td>500ml 아이스컵 (투명)</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="38" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="45" /></td>
+                    <td class="text-muted">2025-04-10</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                  <tr data-row-id="p2">
+                    <td>2</td>
+                    <td><span class="badge">컵</span></td>
+                    <td>거래처 A</td>
+                    <td>700ml 아이스컵 (흑색)</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="42" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="50" /></td>
+                    <td class="text-muted">2025-04-08</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                  <tr data-row-id="p3">
+                    <td>3</td>
+                    <td><span class="badge badge-warn">비닐</span></td>
+                    <td>거래처 B</td>
+                    <td>냉동 포장용 비닐백 A형</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="120" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="145" /></td>
+                    <td class="text-muted">2025-03-22</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                  <tr data-row-id="p4">
+                    <td>4</td>
+                    <td><span class="badge badge-muted">기타</span></td>
+                    <td>거래처 B</td>
+                    <td>멀티 패키지 세트 (소)</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" placeholder="-" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" placeholder="-" /></td>
+                    <td class="text-muted">-</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="padding:0 20px;">
+              <div class="pagination">
+                <div></div>
+                <div class="pagination-controls">
+                  <div class="pagination-pages">
+                    <button class="pagination-button">«</button>
+                    <button class="pagination-button active">1</button>
+                    <button class="pagination-button">2</button>
+                    <button class="pagination-button">»</button>
+                  </div>
+                </div>
+                <span class="pagination-summary">총 24건</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             TAB 2 : 문서 단가 수정
+             저장된 개별 문서의 품목 단가 직접 수정
+        ═══════════════════════════════════════════════ -->
+        <div id="tab-doc" class="tab-panel">
+
+          <div class="alert alert-warn">
+            저장된 문서의 단가를 직접 수정합니다. 수정 시 해당 문서의 <strong>공급가액 및 합계가 재계산</strong>됩니다.
+          </div>
+
+          <div class="card" style="padding:0; overflow:hidden;">
+            <div style="padding:16px 20px 0;">
+              <div class="client-toolbar-stacked">
+                <div class="toolbar doc-toolbar">
+                  <select class="search-input">
+                    <option value="">전체 거래처</option>
+                    <option>거래처 A</option>
+                    <option>거래처 B</option>
+                  </select>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="date" class="search-input" value="2025-04-01" style="min-width:140px;" />
+                    <span class="text-muted" style="white-space:nowrap">~</span>
+                    <input type="date" class="search-input" value="2025-04-14" style="min-width:140px;" />
+                  </div>
+                  <input class="search-input" placeholder="문서번호, 품목명 검색" />
+                </div>
+                <div class="client-toolbar-actions">
+                  <span class="toolbar-meta">검색 결과 8건</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table" style="min-width:1000px;">
+                <thead>
+                  <tr>
+                    <th style="width:40px">No</th>
+                    <th style="width:160px">문서번호</th>
+                    <th style="width:130px">거래처</th>
+                    <th style="width:100px">입고일자</th>
+                    <th>품목명</th>
+                    <th style="width:55px;text-align:right">수량</th>
+                    <th style="width:90px;text-align:right">현재 단가</th>
+                    <th style="width:110px;text-align:right">수정 단가</th>
+                    <th style="width:100px;text-align:right">공급가액</th>
+                    <th style="width:80px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-row-id="d1">
+                    <td>1</td>
+                    <td style="font-family:monospace;font-size:12.5px">DOC-20250412-001</td>
+                    <td>거래처 A</td>
+                    <td>2025-04-12</td>
+                    <td>500ml 아이스컵 (투명)</td>
+                    <td class="td-right">200</td>
+                    <td class="td-right">38</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="unitPrice" value="40" /></td>
+                    <td class="td-right text-green">8,000</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                  <tr data-row-id="d2">
+                    <td>2</td>
+                    <td style="font-family:monospace;font-size:12.5px">DOC-20250412-001</td>
+                    <td>거래처 A</td>
+                    <td>2025-04-12</td>
+                    <td>700ml 아이스컵 (흑색)</td>
+                    <td class="td-right">100</td>
+                    <td class="td-right">42</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="unitPrice" value="42" /></td>
+                    <td class="td-right">4,200</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                  <tr data-row-id="d3">
+                    <td>3</td>
+                    <td style="font-family:monospace;font-size:12.5px">DOC-20250410-003</td>
+                    <td>거래처 B</td>
+                    <td>2025-04-10</td>
+                    <td>냉동 포장용 비닐백 A형</td>
+                    <td class="td-right">500</td>
+                    <td class="td-right text-danger">130</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="unitPrice" value="120" /></td>
+                    <td class="td-right">60,000</td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="padding:0 20px;">
+              <div class="pagination">
+                <div></div>
+                <div class="pagination-controls">
+                  <div class="pagination-pages">
+                    <button class="pagination-button">«</button>
+                    <button class="pagination-button active">1</button>
+                    <button class="pagination-button">»</button>
+                  </div>
+                </div>
+                <span class="pagination-summary">총 8건</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             TAB 3 : 일괄 수정
+             입고일자 기준 문서 단가 일괄 변경
+        ═══════════════════════════════════════════════ -->
+        <div id="tab-bulk" class="tab-panel">
+
+          <div class="alert alert-warn">
+            입고일자 범위 + 조건에 해당하는 모든 문서의 단가를 일괄 변경합니다. <strong>되돌리기가 어려우니 신중하게 적용</strong>하세요.
+          </div>
+
+          <!-- Step 1 -->
+          <div class="step-panel">
+            <p class="step-title">① 수정 조건 설정</p>
+            <div class="form-row">
+              <span class="form-label">입고일자</span>
+              <input type="date" class="doc-cell-control" value="2025-04-01" style="width:150px;" />
+              <span class="text-muted">~</span>
+              <input type="date" class="doc-cell-control" value="2025-04-14" style="width:150px;" />
+
+              <span class="form-label" style="margin-left:8px;">거래처</span>
+              <select class="doc-cell-control" style="width:160px;">
+                <option value="">전체</option>
+                <option>거래처 A</option>
+                <option>거래처 B</option>
+              </select>
+
+              <span class="form-label">품목</span>
+              <input class="doc-cell-control" placeholder="품목명 (선택)" style="width:180px;" />
+
+              <button class="btn btn-primary">조회</button>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-panel">
+            <p class="step-title">② 품목별 목표 단가 입력</p>
+            <div class="alert alert-info" style="margin-bottom:12px;">
+              빈칸으로 두면 해당 품목의 단가는 수정되지 않습니다. 체크된 항목만 적용됩니다.
+            </div>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:36px"><input type="checkbox" checked /></th>
+                    <th>품목명</th>
+                    <th style="width:110px">거래처</th>
+                    <th style="width:100px;text-align:right">현재 입고단가</th>
+                    <th style="width:100px;text-align:right">현재 판매단가</th>
+                    <th style="width:115px;text-align:right">변경할 입고단가</th>
+                    <th style="width:115px;text-align:right">변경할 판매단가</th>
+                    <th style="width:90px;text-align:center">영향 문서수</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="checkbox" checked /></td>
+                    <td>500ml 아이스컵 (투명)</td>
+                    <td>거래처 A</td>
+                    <td class="td-right">38</td>
+                    <td class="td-right">45</td>
+                    <td class="td-right"><input class="price-input-inline" value="40" /></td>
+                    <td class="td-right"><input class="price-input-inline" value="48" /></td>
+                    <td style="text-align:center"><span class="badge badge-warn">3건</span></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" checked /></td>
+                    <td>700ml 아이스컵 (흑색)</td>
+                    <td>거래처 A</td>
+                    <td class="td-right">42</td>
+                    <td class="td-right">50</td>
+                    <td class="td-right"><input class="price-input-inline" placeholder="-" /></td>
+                    <td class="td-right"><input class="price-input-inline" placeholder="-" /></td>
+                    <td style="text-align:center"><span class="badge badge-muted">1건</span></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" /></td>
+                    <td>냉동 포장용 비닐백 A형</td>
+                    <td>거래처 B</td>
+                    <td class="td-right">120</td>
+                    <td class="td-right">145</td>
+                    <td class="td-right"><input class="price-input-inline" placeholder="-" /></td>
+                    <td class="td-right"><input class="price-input-inline" placeholder="-" /></td>
+                    <td style="text-align:center"><span class="badge badge-muted">2건</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-panel">
+            <p class="step-title">③ 변경 미리보기 및 실행</p>
+
+            <div class="preview-bar" style="margin-bottom:12px;">
+              영향 받는 문서: <strong>4건</strong> &nbsp;|&nbsp; 영향 받는 품목 라인: <strong>6건</strong>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table" style="min-width:900px;">
+                <thead>
+                  <tr>
+                    <th style="width:155px">문서번호</th>
+                    <th style="width:100px">입고일자</th>
+                    <th style="width:120px">거래처</th>
+                    <th>품목명</th>
+                    <th style="width:60px;text-align:right">수량</th>
+                    <th style="width:90px;text-align:right">현재 단가</th>
+                    <th style="width:90px;text-align:right">변경 단가</th>
+                    <th style="width:100px;text-align:right">공급가액 변동</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-family:monospace;font-size:12.5px">DOC-20250412-001</td>
+                    <td>2025-04-12</td>
+                    <td>거래처 A</td>
+                    <td>500ml 아이스컵 (투명)</td>
+                    <td class="td-right">200</td>
+                    <td class="td-right text-danger">38</td>
+                    <td class="td-right text-green">40</td>
+                    <td class="td-right text-green">+400</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:12.5px">DOC-20250410-005</td>
+                    <td>2025-04-10</td>
+                    <td>거래처 A</td>
+                    <td>500ml 아이스컵 (투명)</td>
+                    <td class="td-right">300</td>
+                    <td class="td-right text-danger">38</td>
+                    <td class="td-right text-green">40</td>
+                    <td class="td-right text-green">+600</td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:12.5px">DOC-20250408-002</td>
+                    <td>2025-04-08</td>
+                    <td>거래처 A</td>
+                    <td>500ml 아이스컵 (투명)</td>
+                    <td class="td-right">150</td>
+                    <td class="td-right text-danger">38</td>
+                    <td class="td-right text-green">40</td>
+                    <td class="td-right text-green">+300</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="button-row" style="justify-content:flex-end;margin-top:16px;">
+              <button class="btn btn-secondary">초기화</button>
+              <button class="btn btn-danger" style="background:#fff1f1;color:#ef4444;border-color:#fca5a5;">
+                일괄 단가 수정 실행
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-content -->
+    </main>
+  </div>
+</div>
+
+<script>
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── 자동 저장 (blur 시) ──────────────────────────────
+  // 행의 save-status 셀을 찾아 상태를 표시하고, 1.5초 후 초기화
+  function getStatusEl(input) {
+    return input.closest('tr').querySelector('.save-status');
+  }
+
+  function setStatus(el, state, text) {
+    el.className = 'save-status save-status-' + state;
+    el.textContent = text;
+    // done 상태는 CSS animation으로 fade-out → 완료 후 idle로 복귀
+    if (state === 'done') {
+      el.addEventListener('animationend', () => {
+        el.className = 'save-status save-status-idle';
+        el.textContent = '';
+      }, { once: true });
+    }
+  }
+
+  document.querySelectorAll('.auto-save').forEach(input => {
+    // 포커스 시 원본값 기록
+    input.addEventListener('focus', () => {
+      input.dataset.original = input.value;
+    });
+
+    input.addEventListener('blur', () => {
+      // 값이 바뀌지 않았으면 아무 것도 안 함
+      if (input.value === input.dataset.original) return;
+      // 빈 값이면 저장하지 않음
+      if (input.value.trim() === '') return;
+
+      const statusEl = getStatusEl(input);
+      setStatus(statusEl, 'saving', '저장 중...');
+
+      // 실제 API 호출 자리 (목업에서는 setTimeout으로 흉내)
+      setTimeout(() => {
+        const ok = true; // 실제 구현 시 API 성공 여부로 대체
+        if (ok) {
+          setStatus(statusEl, 'done', '✓ 저장됨');
+          input.dataset.original = input.value; // 원본 갱신
+        } else {
+          setStatus(statusEl, 'error', '저장 실패');
+        }
+      }, 600);
+    });
+  });
+</script>
+</body>
+</html>
