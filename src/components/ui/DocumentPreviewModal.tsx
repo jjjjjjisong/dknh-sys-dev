@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { SharedPreviewData } from '../../types/documentPreview';
+import { splitInvoiceDataByArriveDate } from '../../utils/invoiceGrouping';
 import {
   buildReleasePreviewHtml,
   buildInvoicePreviewHtml,
@@ -25,7 +26,10 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
   const styles = type === 'release' ? getReleasePreviewStyles(true) : getInvoicePreviewStyles(false);
 
   function handlePrint(showPrice: boolean = true) {
-    const printDate = (data.arriveDate || data.orderDate || '').trim();
+    const groupedInvoices = type === 'invoice' ? splitInvoiceDataByArriveDate(data) : [];
+    const singleInvoiceDate =
+      groupedInvoices.length === 1 ? groupedInvoices[0].arriveDate || groupedInvoices[0].orderDate || '' : '';
+    const printDate = (singleInvoiceDate || data.arriveDate || data.orderDate || '').trim();
     const fallbackDate = new Date().toISOString().slice(0, 10);
     const safeDate = formatFileDate(printDate || fallbackDate);
     const safeClient = (data.client || '납품처')
@@ -35,7 +39,9 @@ export default function DocumentPreviewModal({ type, data, onClose, description 
       .trim();
     const printTitle =
       type === 'invoice'
-        ? `${safeClient || '납품처'}_거래명세서_${safeDate}`
+        ? groupedInvoices.length > 1
+          ? `${safeClient || '납품처'}_거래명세서_${data.issueNo || 'multi'}`
+          : `${safeClient || '납품처'}_거래명세서_${safeDate}`
         : `출고의뢰서_${safeDate}`;
     const originalTitle = document.title;
     const iframe = document.createElement('iframe');

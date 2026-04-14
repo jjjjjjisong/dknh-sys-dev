@@ -1,6 +1,6 @@
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import type { OrderBookEntry } from '../types/order-book';
+import { splitInvoiceDataByArriveDate } from './invoiceGrouping';
 
 export interface InvoiceItem {
   name1: string;
@@ -55,9 +55,8 @@ function formatMonthDay(value: string) {
 function getVisualLength(str: string): number {
   let len = 0;
   for (const ch of str) {
-    // 한국어(KS X 1001), 한자, CJK 등 2바이트 문자
     const code = ch.charCodeAt(0);
-    len += (code > 0x3000) ? 2 : 1;
+    len += code > 0x3000 ? 2 : 1;
   }
   return len;
 }
@@ -120,24 +119,23 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
   });
 
   ws.columns = [
-    { width: 10 }, // A
-    { width: 24 }, // B
-    { width: 6 },  // C
-    { width: 4 },  // D
-    { width: 11 }, // E
-    { width: 18 }, // F
-    { width: 5 },  // G
-    { width: 11 }, // H
-    { width: 7 },  // I
-    { width: 15 }, // J
+    { width: 10 },
+    { width: 24 },
+    { width: 6 },
+    { width: 4 },
+    { width: 11 },
+    { width: 18 },
+    { width: 5 },
+    { width: 11 },
+    { width: 7 },
+    { width: 15 },
   ];
 
   const font10 = { name: '맑은 고딕', size: 10 as const };
   const font10Bold = { name: '맑은 고딕', size: 10 as const, bold: true };
-  const font11 = { name: '맑은 고딕', size: 11 as const };
   const font11Bold = { name: '맑은 고딕', size: 11 as const, bold: true };
 
-  const drawInvoicePart = (startRow: number, suffix: string) => {
+  const drawInvoicePart = (invoiceData: InvoiceData, startRow: number, suffix: string) => {
     ws.mergeCells(startRow, 1, startRow, 10);
     const titleCell = ws.getCell(startRow, 1);
     titleCell.value = `거 래 명 세 서 ${suffix}`;
@@ -155,14 +153,14 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
       ws.getRow(r).height = 35;
     }
 
-    const issueDate = formatKoreanDate(data.arriveDate || data.orderDate || '');
+    const issueDate = formatKoreanDate(invoiceData.arriveDate || invoiceData.orderDate || '');
 
     ws.mergeCells(startRow + 1, 1, startRow + 1, 3);
     ws.getCell(startRow + 1, 1).value = issueDate;
     ws.getCell(startRow + 1, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow + 2, 1, startRow + 2, 2);
-    ws.getCell(startRow + 2, 1).value = data.client || '';
+    ws.getCell(startRow + 2, 1).value = invoiceData.client || '';
     ws.getCell(startRow + 2, 1).font = { name: '맑은 고딕', size: 12, bold: true };
     ws.getCell(startRow + 2, 1).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell(startRow + 2, 3).value = '귀하';
@@ -173,7 +171,7 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     ws.getCell(startRow + 3, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow + 4, 1, startRow + 4, 3);
-    ws.getCell(startRow + 4, 1).value = `( ${formatNumber(data.totalAmount)} ) VAT 포함`;
+    ws.getCell(startRow + 4, 1).value = `( ${formatNumber(invoiceData.totalAmount)} ) VAT 포함`;
     ws.getCell(startRow + 4, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow + 1, 4, startRow + 4, 4);
@@ -183,35 +181,35 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     ws.getCell(startRow + 1, 5).value = '등록\n번호';
     ws.getCell(startRow + 1, 5).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     ws.mergeCells(startRow + 1, 6, startRow + 1, 10);
-    ws.getCell(startRow + 1, 6).value = data.supplierBizNo;
+    ws.getCell(startRow + 1, 6).value = invoiceData.supplierBizNo;
     ws.getCell(startRow + 1, 6).font = font11Bold;
     ws.getCell(startRow + 1, 6).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.getCell(startRow + 2, 5).value = '상호';
     ws.getCell(startRow + 2, 5).alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getCell(startRow + 2, 6).value = data.supplierName;
+    ws.getCell(startRow + 2, 6).value = invoiceData.supplierName;
     ws.getCell(startRow + 2, 6).font = font11Bold;
     ws.getCell(startRow + 2, 6).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell(startRow + 2, 7).value = '성명';
     ws.getCell(startRow + 2, 7).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.mergeCells(startRow + 2, 8, startRow + 2, 10);
-    ws.getCell(startRow + 2, 8).value = data.supplierOwner;
+    ws.getCell(startRow + 2, 8).value = invoiceData.supplierOwner;
     ws.getCell(startRow + 2, 8).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.getCell(startRow + 3, 5).value = '사업장\n주소';
     ws.getCell(startRow + 3, 5).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     ws.mergeCells(startRow + 3, 6, startRow + 3, 10);
-    ws.getCell(startRow + 3, 6).value = data.supplierAddress;
+    ws.getCell(startRow + 3, 6).value = invoiceData.supplierAddress;
     ws.getCell(startRow + 3, 6).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.getCell(startRow + 4, 5).value = '업태';
     ws.getCell(startRow + 4, 5).alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getCell(startRow + 4, 6).value = data.supplierBusinessType;
+    ws.getCell(startRow + 4, 6).value = invoiceData.supplierBusinessType;
     ws.getCell(startRow + 4, 6).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell(startRow + 4, 7).value = '종목';
     ws.getCell(startRow + 4, 7).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.mergeCells(startRow + 4, 8, startRow + 4, 10);
-    ws.getCell(startRow + 4, 8).value = data.supplierBusinessItem;
+    ws.getCell(startRow + 4, 8).value = invoiceData.supplierBusinessItem;
     ws.getCell(startRow + 4, 8).alignment = { horizontal: 'center', vertical: 'middle' };
 
     applyOuterMediumBorder(ws, startRow + 1, startRow + 4, 1, 10);
@@ -224,7 +222,7 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow, 4, startRow, 10);
-    ws.getCell(startRow, 4).value = data.totalAmount > 0 ? `${formatNumber(data.totalAmount)} 원` : '';
+    ws.getCell(startRow, 4).value = invoiceData.totalAmount > 0 ? `${formatNumber(invoiceData.totalAmount)} 원` : '';
     ws.getCell(startRow, 4).font = font10Bold;
     ws.getCell(startRow, 4).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getRow(startRow).height = 25;
@@ -253,16 +251,16 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     startRow += 1;
 
     let totalQty = 0;
-    const itemRowsCount = Math.max(data.items.length, 1);
+    const itemRowsCount = Math.max(invoiceData.items.length, 1);
 
     for (let i = 0; i < itemRowsCount; i += 1) {
-      const item = data.items[i];
+      const item = invoiceData.items[i];
 
       if (item) {
         const vatAmount = item.vat ? Math.round((item.supply || 0) * 0.1) : 0;
         totalQty += item.qty || 0;
 
-        ws.getCell(startRow, 1).value = formatMonthDay(item.arriveDate || data.arriveDate || data.orderDate || '');
+        ws.getCell(startRow, 1).value = formatMonthDay(item.arriveDate || invoiceData.arriveDate || invoiceData.orderDate || '');
         ws.mergeCells(startRow, 2, startRow, 4);
         ws.getCell(startRow, 2).value = item.name2 || item.name1;
         ws.getCell(startRow, 5).value = item.qty ? Number(item.qty) : '';
@@ -305,8 +303,8 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell(startRow, 5).value = totalQty;
     ws.mergeCells(startRow, 6, startRow, 7);
-    ws.getCell(startRow, 8).value = data.totalSupply > 0 ? data.totalSupply : '';
-    ws.getCell(startRow, 9).value = data.totalVat > 0 ? data.totalVat : '';
+    ws.getCell(startRow, 8).value = invoiceData.totalSupply > 0 ? invoiceData.totalSupply : '';
+    ws.getCell(startRow, 9).value = invoiceData.totalVat > 0 ? invoiceData.totalVat : '';
 
     for (let c = 1; c <= 10; c += 1) {
       ws.getCell(startRow, c).border = createThinBorder();
@@ -329,7 +327,7 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     ws.getCell(startRow, 1).value = '총 합 계';
     ws.getCell(startRow, 1).font = font10Bold;
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getCell(startRow, 5).value = data.totalAmount > 0 ? data.totalAmount : '';
+    ws.getCell(startRow, 5).value = invoiceData.totalAmount > 0 ? invoiceData.totalAmount : '';
     ws.getCell(startRow, 5).font = font10Bold;
     ws.getCell(startRow, 5).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getCell(startRow, 5).numFmt = '#,##0';
@@ -347,39 +345,37 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
 
     startRow += 2;
 
-    // 높이 계산용 문자열
     let noteText = '';
-    if (data.remark) noteText += `참고사항 : ${data.remark}\n`;
-    noteText += `납품처 : ${data.client || ''}${data.deliveryAddr ? ` / ${data.deliveryAddr}` : ''}\n`;
-    if (data.manager || data.managerTel) {
-      noteText += `담당자 : ${data.manager || ''}${data.managerTel ? ` / ${data.managerTel}` : ''}\n`;
+    if (invoiceData.remark) noteText += `참고사항 : ${invoiceData.remark}\n`;
+    noteText += `납품처 : ${invoiceData.client || ''}${invoiceData.deliveryAddr ? ` / ${invoiceData.deliveryAddr}` : ''}\n`;
+    if (invoiceData.manager || invoiceData.managerTel) {
+      noteText += `담당자 : ${invoiceData.manager || ''}${invoiceData.managerTel ? ` / ${invoiceData.managerTel}` : ''}\n`;
     }
-    if (data.requestNote) noteText += `요청사항 : ${data.requestNote || ''}`;
+    if (invoiceData.requestNote) noteText += `요청사항 : ${invoiceData.requestNote || ''}`;
 
-    // Rich Text: 레이블만 볼드 처리
     const boldFont = { name: '맑은 고딕', size: 11, bold: true } as const;
     const normalFont = { name: '맑은 고딕', size: 11 } as const;
 
     const richTexts: ExcelJS.RichText[] = [];
-    if (data.remark) {
+    if (invoiceData.remark) {
       richTexts.push({ text: '참고사항', font: boldFont });
-      richTexts.push({ text: ` : ${data.remark}\n`, font: normalFont });
+      richTexts.push({ text: ` : ${invoiceData.remark}\n`, font: normalFont });
     }
     richTexts.push({ text: '납품처', font: boldFont });
     richTexts.push({
-      text: ` : ${data.client || ''}${data.deliveryAddr ? ` / ${data.deliveryAddr}` : ''}\n`,
+      text: ` : ${invoiceData.client || ''}${invoiceData.deliveryAddr ? ` / ${invoiceData.deliveryAddr}` : ''}\n`,
       font: normalFont,
     });
-    if (data.manager || data.managerTel) {
+    if (invoiceData.manager || invoiceData.managerTel) {
       richTexts.push({ text: '담당자', font: boldFont });
       richTexts.push({
-        text: ` : ${data.manager || ''}${data.managerTel ? ` / ${data.managerTel}` : ''}\n`,
+        text: ` : ${invoiceData.manager || ''}${invoiceData.managerTel ? ` / ${invoiceData.managerTel}` : ''}\n`,
         font: normalFont,
       });
     }
-    if (data.requestNote) {
+    if (invoiceData.requestNote) {
       richTexts.push({ text: '요청사항', font: boldFont });
-      richTexts.push({ text: ` : ${data.requestNote || ''}`, font: normalFont });
+      richTexts.push({ text: ` : ${invoiceData.requestNote || ''}`, font: normalFont });
     }
 
     ws.mergeCells(startRow, 1, startRow, 10);
@@ -389,10 +385,9 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     ws.getRow(startRow).height = Math.max(22, estimateWrappedLineCount(noteText) * 20 + 10);
     startRow += 1;
 
-
     ws.mergeCells(startRow, 1, startRow, 10);
     const issueCell = ws.getCell(startRow, 1);
-    issueCell.value = `발급 No. ${data.issueNo}`;
+    issueCell.value = `발급 No. ${invoiceData.issueNo}`;
     issueCell.font = { name: '맑은 고딕', size: 11 };
     issueCell.alignment = { vertical: 'middle' };
     ws.getRow(startRow).height = 22;
@@ -400,16 +395,27 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     return startRow + 2;
   };
 
-  let nextRow = drawInvoicePart(1, '(공급자용)');
+  const groupedDocs = splitInvoiceDataByArriveDate(data);
+  let nextRow = 1;
 
-  ws.mergeCells(nextRow, 1, nextRow, 10);
-  ws.getCell(nextRow, 1).border = {
-    bottom: { style: 'dashed', color: { argb: 'FFAAAAAA' } },
-  };
-  ws.getRow(nextRow).height = 10;
-  nextRow += 2;
+  groupedDocs.forEach((group, index) => {
+    nextRow = drawInvoicePart(group, nextRow, '(공급자용)');
 
-  drawInvoicePart(nextRow, '(공급받는자용)');
+    ws.mergeCells(nextRow, 1, nextRow, 10);
+    ws.getCell(nextRow, 1).border = {
+      bottom: { style: 'dashed', color: { argb: 'FFAAAAAA' } },
+    };
+    ws.getRow(nextRow).height = 10;
+    nextRow += 2;
+
+    nextRow = drawInvoicePart(group, nextRow, '(공급받는자용)');
+
+    if (index < groupedDocs.length - 1) {
+      nextRow += 2;
+      ws.getRow(nextRow).addPageBreak();
+      nextRow += 1;
+    }
+  });
 
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], {

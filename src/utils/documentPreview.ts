@@ -1,6 +1,6 @@
 import { SharedPreviewData } from '../types/documentPreview';
-
 import { getLocalDateInputValue } from './formatters';
+import { splitInvoiceDataByArriveDate } from './invoiceGrouping';
 
 const today = getLocalDateInputValue();
 
@@ -90,82 +90,95 @@ export function buildInvoicePreviewHtml(
   data: SharedPreviewData,
   { showPrice = true }: InvoicePreviewOptions = {},
 ) {
-  const rows = data.items
-    .map((item) => {
-      const vatAmount = showPrice && item.vat ? Math.round(item.supply * 0.1) : 0;
-      const unitPriceDisplay =
-        showPrice && item.unitPrice > 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
-      const supplyDisplay =
-        showPrice && item.supply > 0 ? escapeHtml(formatNumber(item.supply)) : '';
-      const vatDisplay = showPrice && vatAmount > 0 ? escapeHtml(formatNumber(vatAmount)) : '';
+  const groupedDocs = splitInvoiceDataByArriveDate(data);
 
-      return `<tr>
-        <td class="c date-col">${escapeHtml(formatMonthDay(item.arriveDate || data.arriveDate || ''))}</td>
-        <td class="l product-col">${escapeHtml(item.name2 || item.name1)}</td>
-        <td class="r qty-col">${escapeHtml(formatNumber(item.qty))}</td>
-        <td class="r price-col">${unitPriceDisplay}</td>
-        <td class="r supply-col">${supplyDisplay}</td>
-        <td class="r vat-col">${vatDisplay}</td>
-        <td class="l note-col">${escapeHtml(item.invoiceNote || '')}</td>
-      </tr>`;
-    })
+  const invoicePiece = (group: SharedPreviewData, suffix: string) => {
+    const rows = group.items
+      .map((item) => {
+        const vatAmount = showPrice && item.vat ? Math.round(item.supply * 0.1) : 0;
+        const unitPriceDisplay =
+          showPrice && item.unitPrice > 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
+        const supplyDisplay =
+          showPrice && item.supply > 0 ? escapeHtml(formatNumber(item.supply)) : '';
+        const vatDisplay = showPrice && vatAmount > 0 ? escapeHtml(formatNumber(vatAmount)) : '';
+
+        return `<tr>
+          <td class="c date-col">${escapeHtml(formatMonthDay(item.arriveDate || group.arriveDate || ''))}</td>
+          <td class="l product-col">${escapeHtml(item.name2 || item.name1)}</td>
+          <td class="r qty-col">${escapeHtml(formatNumber(item.qty))}</td>
+          <td class="r price-col">${unitPriceDisplay}</td>
+          <td class="r supply-col">${supplyDisplay}</td>
+          <td class="r vat-col">${vatDisplay}</td>
+          <td class="l note-col">${escapeHtml(item.invoiceNote || '')}</td>
+        </tr>`;
+      })
+      .join('');
+
+    const totalQty = group.items.reduce((sum, item) => sum + item.qty, 0);
+    const totalSupplyDisplay =
+      showPrice && group.totalSupply > 0 ? escapeHtml(formatNumber(group.totalSupply)) : '';
+    const totalVatDisplay =
+      showPrice && group.totalVat > 0 ? escapeHtml(formatNumber(group.totalVat)) : '';
+    const totalAmountDisplay =
+      showPrice && group.totalAmount > 0 ? escapeHtml(formatNumber(group.totalAmount)) : '';
+    const amountText =
+      showPrice && group.totalAmount > 0 ? escapeHtml(formatNumber(group.totalAmount)) : '';
+    const issueDateFmt = group.arriveDate ? formatKoreanDate(group.arriveDate) : formatKoreanDate(today);
+
+    return `<div class="invoice-doc">
+      <div class="invoice-title">거래명세표<span>${suffix}</span></div>
+      <table class="invoice-head-table">
+        <tr>
+          <td class="buyer-cell">
+            <table class="inner-table">
+              <tr><td colspan="2" class="c">${escapeHtml(issueDateFmt)}</td></tr>
+              <tr><td class="c strong">${escapeHtml(group.client || '')}</td><td class="c narrow">귀하</td></tr>
+              <tr><td colspan="2" class="c">아래와 같이 계산합니다.</td></tr>
+              <tr><td colspan="2" class="c">( 금${amountText} 원) VAT 포함</td></tr>
+            </table>
+          </td>
+          <td class="seller-cell">
+            <table class="inner-table">
+              <tr><td rowspan="4" class="vertical">공<br>급<br>자</td><td class="c label">등록<br>번호</td><td colspan="3" class="c strong">${escapeHtml(group.supplierBizNo)}</td></tr>
+              <tr><td class="c label">상호</td><td class="c strong">${escapeHtml(group.supplierName)}</td><td class="c label narrow">성명</td><td class="c">${escapeHtml(group.supplierOwner)}</td></tr>
+              <tr><td class="c label">사업장<br>주소</td><td colspan="3" class="c">${escapeHtml(group.supplierAddress)}</td></tr>
+              <tr><td class="c label">업태</td><td class="c">${escapeHtml(group.supplierBusinessType)}</td><td class="c label narrow">종목</td><td class="c">${escapeHtml(group.supplierBusinessItem)}</td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <table class="invoice-total-table">
+        <tr><td class="label-cell">합계금액</td><td class="value-cell">${totalAmountDisplay ? `${totalAmountDisplay} 원` : ''}</td></tr>
+      </table>
+      <table class="invoice-items-table">
+        <thead>
+          <tr><th class="date-col">입고일</th><th class="product-col">품목명</th><th class="qty-col">수량</th><th class="price-col">단가</th><th class="supply-col">공급가액</th><th class="vat-col">세액</th><th class="note-col">비고</th></tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r">${escapeHtml(formatNumber(totalQty))}</td><td></td><td class="r">${totalSupplyDisplay}</td><td class="r">${totalVatDisplay}</td><td></td></tr>
+          <tr class="grand-row"><td colspan="4" class="c">총 금액</td><td class="r">${totalAmountDisplay}</td><td class="c">인수자</td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="invoice-note-area">
+        ${group.remark ? `<div><strong>참고사항 :</strong> ${escapeHtml(group.remark)}</div>` : ''}
+        <div><strong>납품처:</strong> ${escapeHtml(group.client || '')}${group.deliveryAddr ? ` / ${escapeHtml(group.deliveryAddr)}` : ''}</div>
+        ${group.manager || group.managerTel ? `<div><strong>담당자:</strong> ${escapeHtml(group.manager || '')}${group.managerTel ? ` / ${escapeHtml(group.managerTel)}` : ''}</div>` : ''}
+        ${group.requestNote ? `<div><strong>요청사항 :</strong> ${escapeHtml(group.requestNote).replace(/\n/g, ' ')}</div>` : ''}
+        <div class="issue-line">발급 No. ${escapeHtml(group.issueNo)}</div>
+      </div>
+    </div>`;
+  };
+
+  return groupedDocs
+    .map(
+      (group, index) => `<div class="invoice-page">
+        ${invoicePiece(group, '(공급자용)')}
+        <div class="invoice-break"></div>
+        ${invoicePiece(group, '(공급받는자용)')}
+      </div>${index < groupedDocs.length - 1 ? '<div class="invoice-group-break"></div>' : ''}`,
+    )
     .join('');
-
-  const totalQty = data.items.reduce((sum, item) => sum + item.qty, 0);
-  const totalSupplyDisplay =
-    showPrice && data.totalSupply > 0 ? escapeHtml(formatNumber(data.totalSupply)) : '';
-  const totalVatDisplay =
-    showPrice && data.totalVat > 0 ? escapeHtml(formatNumber(data.totalVat)) : '';
-  const totalAmountDisplay =
-    showPrice && data.totalAmount > 0 ? escapeHtml(formatNumber(data.totalAmount)) : '';
-  const amountText = showPrice && data.totalAmount > 0 ? escapeHtml(formatNumber(data.totalAmount)) : '';
-  const issueDateFmt = data.arriveDate ? formatKoreanDate(data.arriveDate) : formatKoreanDate(today);
-
-  const invoicePiece = (suffix: string) => `<div class="invoice-doc">
-    <div class="invoice-title">거래명세표<span>${suffix}</span></div>
-    <table class="invoice-head-table">
-      <tr>
-        <td class="buyer-cell">
-          <table class="inner-table">
-            <tr><td colspan="2" class="c">${escapeHtml(issueDateFmt)}</td></tr>
-            <tr><td class="c strong">${escapeHtml(data.client || '')}</td><td class="c narrow">귀하</td></tr>
-            <tr><td colspan="2" class="c">아래와 같이 계산합니다.</td></tr>
-            <tr><td colspan="2" class="c">( 금${amountText} 원) VAT 포함</td></tr>
-          </table>
-        </td>
-        <td class="seller-cell">
-          <table class="inner-table">
-            <tr><td rowspan="4" class="vertical">공<br>급<br>자</td><td class="c label">등록<br>번호</td><td colspan="3" class="c strong">${escapeHtml(data.supplierBizNo)}</td></tr>
-            <tr><td class="c label">상호</td><td class="c strong">${escapeHtml(data.supplierName)}</td><td class="c label narrow">성명</td><td class="c">${escapeHtml(data.supplierOwner)}</td></tr>
-            <tr><td class="c label">사업장<br>주소</td><td colspan="3" class="c">${escapeHtml(data.supplierAddress)}</td></tr>
-            <tr><td class="c label">업태</td><td class="c">${escapeHtml(data.supplierBusinessType)}</td><td class="c label narrow">종목</td><td class="c">${escapeHtml(data.supplierBusinessItem)}</td></tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-    <table class="invoice-total-table">
-      <tr><td class="label-cell">합계금액</td><td class="value-cell">${totalAmountDisplay ? `${totalAmountDisplay} 원` : ''}</td></tr>
-    </table>
-    <table class="invoice-items-table">
-      <thead>
-        <tr><th class="date-col">입고일</th><th class="product-col">품목명</th><th class="qty-col">수량</th><th class="price-col">단가</th><th class="supply-col">공급가액</th><th class="vat-col">세액</th><th class="note-col">비고</th></tr>
-      </thead>
-      <tbody>
-        ${rows}
-        <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r">${escapeHtml(formatNumber(totalQty))}</td><td></td><td class="r">${totalSupplyDisplay}</td><td class="r">${totalVatDisplay}</td><td></td></tr>
-        <tr class="grand-row"><td colspan="4" class="c">총 금액</td><td class="r">${totalAmountDisplay}</td><td class="c">인수자</td><td></td></tr>
-      </tbody>
-    </table>
-    <div class="invoice-note-area">
-      ${data.remark ? `<div><strong>참고사항 :</strong> ${escapeHtml(data.remark)}</div>` : ''}
-      <div><strong>납품처:</strong> ${escapeHtml(data.client || '')}${data.deliveryAddr ? ` / ${escapeHtml(data.deliveryAddr)}` : ''}</div>
-      ${data.manager || data.managerTel ? `<div><strong>담당자:</strong> ${escapeHtml(data.manager || '')}${data.managerTel ? ` / ${escapeHtml(data.managerTel)}` : ''}</div>` : ''}
-      ${data.requestNote ? `<div><strong>요청사항 :</strong> ${escapeHtml(data.requestNote).replace(/\n/g, ' ')}</div>` : ''}
-      <div class="issue-line">발급 No. ${escapeHtml(data.issueNo)}</div>
-    </div>
-  </div>`;
-
-  return `<div class="invoice-page">${invoicePiece('(공급자용)')}<div class="invoice-break"></div>${invoicePiece('(공급받는자용)')}</div>`;
 }
 
 export function getReleasePreviewStyles(printMode: boolean) {
@@ -173,7 +186,7 @@ export function getReleasePreviewStyles(printMode: boolean) {
 }
 
 export function getInvoicePreviewStyles(printMode: boolean) {
-  return `body{margin:0;background:${printMode ? '#fff' : '#f3f4f6'};font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#111}.invoice-page{width:${printMode ? '100%' : '210mm'};margin:${printMode ? '0' : '0 auto'};background:#fff;padding:${printMode ? '0' : '6mm 8mm'};box-sizing:border-box}.invoice-doc{page-break-inside:avoid;break-inside:avoid}.invoice-break{border-top:1px dashed #aaa;margin:10px 0;padding-top:10px}.invoice-title{text-align:center;font-size:12pt;font-weight:900;margin-bottom:6px;letter-spacing:.1em}.invoice-title span{font-size:9pt;font-weight:400}.invoice-head-table,.invoice-total-table,.invoice-items-table,.inner-table{width:100%;border-collapse:collapse}.invoice-head-table{border:2px solid #000;margin-bottom:0}.invoice-head-table td{vertical-align:middle;padding:0}.buyer-cell{width:40%;border-right:1px solid #000}.seller-cell{width:60%}.inner-table td{border-bottom:1px solid #000;border-right:1px solid #000;padding:2px 3px;font-size:9pt;vertical-align:middle}.inner-table tr:last-child td{border-bottom:0}.inner-table td:last-child{border-right:0}.inner-table .narrow{width:28px}.inner-table .label{width:48px}.inner-table .strong{font-weight:700}.inner-table .vertical{width:20px;text-align:center;line-height:1.4;vertical-align:middle}.inner-table .c{text-align:center}.invoice-total-table{border:2px solid #000;border-top:0}.invoice-total-table td{padding:4px 8px;font-size:9pt;font-weight:700;vertical-align:middle}.invoice-total-table .label-cell{width:20%;border-right:1px solid #000}.invoice-total-table .value-cell{text-align:right}.invoice-items-table{border:2px solid #000;border-top:0;text-align:center;table-layout:fixed}.invoice-items-table th,.invoice-items-table td{border-right:1px solid #000;border-bottom:1px solid #000;padding:4px 2px;font-size:9pt;vertical-align:middle}.invoice-items-table th:last-child,.invoice-items-table td:last-child{border-right:0}.invoice-items-table tbody tr:last-child td{border-bottom:0}.invoice-items-table .l{text-align:left}.invoice-items-table .r{text-align:right}.invoice-items-table .c{text-align:center}.invoice-items-table .sum-row td,.invoice-items-table .grand-row td{font-weight:700}.invoice-items-table .date-col{width:62px}.invoice-items-table .product-col{width:auto}.invoice-items-table .qty-col{width:72px}.invoice-items-table .price-col{width:68px}.invoice-items-table .supply-col{width:92px}.invoice-items-table .vat-col{width:72px}.invoice-items-table .note-col{width:92px}.invoice-note-area{margin-top:6px;font-size:9pt;line-height:1.4;text-align:left;padding:0 3px}.invoice-note-area .issue-line{margin-top:6px;color:#666}@media print{@page{margin:6mm 8mm;size:A4 portrait}body{background:#fff}.invoice-page{width:100%;margin:0;padding:0}.invoice-break{page-break-before:avoid;break-before:avoid}}`;
+  return `body{margin:0;background:${printMode ? '#fff' : '#f3f4f6'};font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#111}.invoice-page{width:${printMode ? '100%' : '210mm'};margin:${printMode ? '0' : '0 auto'};background:#fff;padding:${printMode ? '0' : '6mm 8mm'};box-sizing:border-box}.invoice-doc{page-break-inside:avoid;break-inside:avoid}.invoice-break{border-top:1px dashed #aaa;margin:10px 0;padding-top:10px}.invoice-group-break{height:${printMode ? '0' : '16px'}}.invoice-title{text-align:center;font-size:12pt;font-weight:900;margin-bottom:6px;letter-spacing:.1em}.invoice-title span{font-size:9pt;font-weight:400}.invoice-head-table,.invoice-total-table,.invoice-items-table,.inner-table{width:100%;border-collapse:collapse}.invoice-head-table{border:2px solid #000;margin-bottom:0}.invoice-head-table td{vertical-align:middle;padding:0}.buyer-cell{width:40%;border-right:1px solid #000}.seller-cell{width:60%}.inner-table td{border-bottom:1px solid #000;border-right:1px solid #000;padding:2px 3px;font-size:9pt;vertical-align:middle}.inner-table tr:last-child td{border-bottom:0}.inner-table td:last-child{border-right:0}.inner-table .narrow{width:28px}.inner-table .label{width:48px}.inner-table .strong{font-weight:700}.inner-table .vertical{width:20px;text-align:center;line-height:1.4;vertical-align:middle}.inner-table .c{text-align:center}.invoice-total-table{border:2px solid #000;border-top:0}.invoice-total-table td{padding:4px 8px;font-size:9pt;font-weight:700;vertical-align:middle}.invoice-total-table .label-cell{width:20%;border-right:1px solid #000}.invoice-total-table .value-cell{text-align:right}.invoice-items-table{border:2px solid #000;border-top:0;text-align:center;table-layout:fixed}.invoice-items-table th,.invoice-items-table td{border-right:1px solid #000;border-bottom:1px solid #000;padding:4px 2px;font-size:9pt;vertical-align:middle}.invoice-items-table th:last-child,.invoice-items-table td:last-child{border-right:0}.invoice-items-table tbody tr:last-child td{border-bottom:0}.invoice-items-table .l{text-align:left}.invoice-items-table .r{text-align:right}.invoice-items-table .c{text-align:center}.invoice-items-table .sum-row td,.invoice-items-table .grand-row td{font-weight:700}.invoice-items-table .date-col{width:62px}.invoice-items-table .product-col{width:auto}.invoice-items-table .qty-col{width:72px}.invoice-items-table .price-col{width:68px}.invoice-items-table .supply-col{width:92px}.invoice-items-table .vat-col{width:72px}.invoice-items-table .note-col{width:92px}.invoice-note-area{margin-top:6px;font-size:9pt;line-height:1.4;text-align:left;padding:0 3px}.invoice-note-area .issue-line{margin-top:6px;color:#666}@media print{@page{margin:6mm 8mm;size:A4 portrait}body{background:#fff}.invoice-page{width:100%;margin:0;padding:0}.invoice-break{page-break-before:avoid;break-before:avoid}.invoice-group-break{page-break-after:always;break-after:page}}`;
 }
 
 export function formatNumber(value: number) {
