@@ -684,15 +684,14 @@ function cloneDocument(document: DocumentHistory): DocumentHistory {
 
 function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]): SharedItemRow[] {
   return draft.items.map((item) => {
-    const matched =
-      (item.productId ? products.find((product) => product.id === item.productId) : null) ??
-      products.find((product) => product.name1 === item.name1);
-    const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
+    const matched = item.productId ? products.find((product) => product.id === item.productId) ?? null : null;
+    const productId = matched ? matched.id : item.productId ? '' : item.name1 ? MANUAL_PRODUCT_ID : '';
+    const manualName = item.name2 || item.name1;
 
     return {
       id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       productId,
-      manualName: productId === MANUAL_PRODUCT_ID ? item.name1 : '',
+      manualName: productId === MANUAL_PRODUCT_ID ? manualName : '',
       manualGubun: productId === MANUAL_PRODUCT_ID ? item.gubun || '기타' : '',
       orderDate: item.orderDate || draft.orderDate || '',
       arriveDate: item.arriveDate || draft.arriveDate || '',

@@ -276,29 +276,7 @@ function findMatchingItem(
     const exactProduct = items.find((item) => String(item.product_id ?? '') === normalizedProductId);
     if (exactProduct) return exactProduct;
   }
-
-  const normalizedProduct = normalizeValue(productName);
-  if (normalizedProduct) {
-    const matches = items.filter(
-      (item) =>
-        normalizeValue(item.name1) === normalizedProduct ||
-        normalizeValue(item.name2) === normalizedProduct,
-    );
-
-    if (matches.length === 1) {
-      return matches[0];
-    }
-
-    if (matches.length > 1) {
-      return undefined;
-    }
-  }
-
-  return items.length === 1 ? items[0] : undefined;
-}
-
-function normalizeValue(value: string | null | undefined) {
-  return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  return undefined;
 }
 
 function getBoxValue(item: DocumentItemLookupRow | undefined, qty: number) {
