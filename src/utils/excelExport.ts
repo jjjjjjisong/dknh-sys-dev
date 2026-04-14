@@ -98,7 +98,26 @@ function applyOuterMediumBorder(
   }
 }
 
-export async function exportInvoiceToExcel(data: InvoiceData) {
+function sanitizeFilePart(value: string) {
+  return (value || '')
+    .replace(/[\\/:*?"<>|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatFileDate(value: string | null | undefined) {
+  const digits = (value || '').replace(/[^0-9]/g, '');
+  if (digits.length === 8) return digits;
+  return digits || '미정';
+}
+
+function buildInvoiceFileName(data: InvoiceData) {
+  const client = sanitizeFilePart(data.client || '납품처');
+  const arriveDate = formatFileDate(data.arriveDate || data.orderDate);
+  return `DKH거래명세서_${client || '납품처'}_${arriveDate}.xlsx`;
+}
+
+function createInvoiceWorkbook(data: InvoiceData) {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('거래명세서', {
     pageSetup: {
@@ -417,9 +436,18 @@ export async function exportInvoiceToExcel(data: InvoiceData) {
     }
   });
 
-  const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  saveAs(blob, `거래명세서_${data.issueNo}.xlsx`);
+  return wb;
+}
+
+export async function exportInvoiceToExcel(data: InvoiceData) {
+  const groupedDocs = splitInvoiceDataByArriveDate(data);
+
+  for (const group of groupedDocs) {
+    const wb = createInvoiceWorkbook(group);
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    saveAs(blob, buildInvoiceFileName(group));
+  }
 }
