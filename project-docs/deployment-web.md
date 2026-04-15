@@ -1,5 +1,7 @@
 # Web Deployment Guide
 
+For Git remote setup and which repository/branch deploys each environment, use [`deployment-targets.md`](./deployment-targets.md) as the source of truth. Remote configuration is local to each clone, so every new PC should run `.\scripts\setup-git-remotes.ps1` once after cloning.
+
 ## Why the white screen happened
 
 The source `index.html` in the repository points to the Vite development entry:
