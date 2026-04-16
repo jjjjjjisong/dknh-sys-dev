@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { fetchClients } from '../api/clients';
 import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
-import { fetchProductsByClient, fetchProductsByClientId } from '../api/products';
+import { fetchProductsByClientId } from '../api/products';
 import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
@@ -12,6 +13,7 @@ import DocumentItemTable, { MANUAL_PRODUCT_ID } from '../components/ui/DocumentI
 import type { SharedItemRow } from '../components/ui/DocumentItemTable';
 import { buildHistoryDraftItems, buildSharedPreviewData } from '../features/documents/documentPreview';
 import { useDocumentItems } from '../hooks/useDocumentItems';
+import type { Client } from '../types/client';
 import type { DocumentHistory, DocumentHistoryItem } from '../types/document';
 import type { SharedPreviewData as PreviewData } from '../types/documentPreview';
 import { RECEIVER_OPTIONS } from '../constants/receivers';
@@ -25,9 +27,22 @@ const today = getLocalDateInputValue();
 const oneYearAgo = getDateOneYearAgo(today);
 const oneYearLater = getDateOneYearLater(today);
 
+function buildClientRemark(client: Client | null) {
+  if (!client) return '';
+
+  const parts = [
+    client.time ? `입고시간 : ${client.time}` : '',
+    client.lunch ? `점심시간 : ${client.lunch}` : '',
+    client.note ? client.note : '',
+  ].filter(Boolean);
+
+  return parts.join(' / ');
+}
+
 export default function DocHistoryPage() {
   const navigate = useNavigate();
   const { documentId } = useParams();
+  const [clients, setClients] = useState<Client[]>([]);
   const [documents, setDocuments] = useState<DocumentHistory[]>([]);
   const [draft, setDraft] = useState<DocumentHistory | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -45,6 +60,7 @@ export default function DocHistoryPage() {
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [supplierLoading, setSupplierLoading] = useState(false);
   const [supplierKeyword, setSupplierKeyword] = useState('');
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const [receiverDropdownOpen, setReceiverDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const saveLockRef = useRef(false);
@@ -53,6 +69,27 @@ export default function DocHistoryPage() {
 
   useEffect(() => {
     void reload();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadClients() {
+      try {
+        const rows = await fetchClients();
+        if (!mounted) return;
+        setClients(rows.filter((client) => client.active !== false));
+      } catch (err) {
+        if (!mounted) return;
+        setError(getErrorMessage(err, '납품처 목록을 불러오지 못했습니다.'));
+      }
+    }
+
+    void loadClients();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -108,15 +145,13 @@ export default function DocHistoryPage() {
     let mounted = true;
 
     async function loadProducts() {
-      if (!draft?.client) {
+      if (!draft?.clientId) {
         setProducts([]);
         return;
       }
 
       try {
-        const rows = draft.clientId
-          ? await fetchProductsByClientId(draft.clientId)
-          : await fetchProductsByClient(draft.client);
+        const rows = await fetchProductsByClientId(draft.clientId);
         if (!mounted) return;
         setProducts(rows);
         setItems(mapDraftItemsToSharedRows(draft, rows));
@@ -131,7 +166,7 @@ export default function DocHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, [draft?.client, setItems]);
+  }, [draft?.clientId, draft?.id, setItems]);
 
   useEffect(() => {
     if (!draft) {
@@ -233,6 +268,12 @@ export default function DocHistoryPage() {
     );
   }, [supplierKeyword, suppliers]);
 
+  const filteredClients = useMemo(() => {
+    const keyword = draft?.client.trim().toLowerCase() ?? '';
+    if (!keyword) return clients;
+    return clients.filter((client) => client.name.toLowerCase().includes(keyword));
+  }, [clients, draft?.client]);
+
   const filteredReceivers = useMemo(() => {
     const keyword = draft?.receiver.trim().toLowerCase() ?? '';
     if (!keyword) return RECEIVER_OPTIONS;
@@ -275,7 +316,46 @@ export default function DocHistoryPage() {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
   }
 
+  function resetDraftProducts() {
+    setItems((current) =>
+      current.map((item) =>
+        item.productId && item.productId !== MANUAL_PRODUCT_ID
+          ? { ...item, productId: '', unitPrice: null, customSupply: null }
+          : item,
+      ),
+    );
+  }
+
+  function applyDraftClient(client: Client | null, clientName?: string) {
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            clientId: client?.id ?? null,
+            client: client?.name ?? clientName ?? '',
+            manager: client?.manager ?? '',
+            managerTel: client?.tel ?? '',
+            deliveryAddr: client?.addr ?? '',
+            remark: client ? buildClientRemark(client) : '',
+          }
+        : current,
+    );
+    resetDraftProducts();
+  }
+
+  function handleDraftClientInputChange(clientName: string) {
+    applyDraftClient(null, clientName);
+  }
+
+  function handleDraftClientSelect(client: Client) {
+    applyDraftClient(client);
+  }
+
   function addDraftItem() {
+    if (!draft?.clientId) {
+      window.alert('납품처를 목록에서 다시 선택해 주세요.');
+      return;
+    }
     addItem(draft?.orderDate || '', draft?.arriveDate || '');
   }
 
@@ -321,6 +401,10 @@ export default function DocHistoryPage() {
 
   async function handleSave() {
     if (!draft || saveLockRef.current || saving) return;
+    if (!draft.clientId) {
+      window.alert('납품처를 목록에서 다시 선택해 주세요.');
+      return;
+    }
 
     try {
       saveLockRef.current = true;
@@ -492,7 +576,41 @@ export default function DocHistoryPage() {
                 <label className="field"><span>발주일</span><input type="date" value={draft.orderDate || ''} onChange={(event) => updateDraft('orderDate', emptyToNull(event.target.value))} /></label>
                 <label className="field"><span>입고일</span><input type="date" value={draft.arriveDate || ''} onChange={(event) => updateDraft('arriveDate', emptyToNull(event.target.value))} /></label>
                 <label className="field"><span>발급번호</span><input value={draft.issueNo} onChange={(event) => updateDraft('issueNo', event.target.value)} /></label>
-                <label className="field"><span>거래처</span><input value={draft.client} onChange={(event) => updateDraft('client', event.target.value)} /></label>
+                <label className="field">
+                  <span>거래처</span>
+                  <div className="client-search-box">
+                    <input
+                      className="search-input"
+                      value={draft.client}
+                      onChange={(event) => {
+                        handleDraftClientInputChange(event.target.value);
+                        setClientDropdownOpen(true);
+                      }}
+                      onFocus={() => setClientDropdownOpen(true)}
+                      onBlur={() => window.setTimeout(() => setClientDropdownOpen(false), 120)}
+                      placeholder="납품처 검색 또는 선택"
+                    />
+                    <span className="client-search-caret" aria-hidden="true" />
+                    {clientDropdownOpen && filteredClients.length > 0 ? (
+                      <div className="client-search-dropdown">
+                        {filteredClients.map((client) => (
+                          <button
+                            key={client.id}
+                            type="button"
+                            className="client-search-option"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              handleDraftClientSelect(client);
+                              setClientDropdownOpen(false);
+                            }}
+                          >
+                            {client.name}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </label>
                 <label className="field"><span>담당자</span><input value={draft.manager} onChange={(event) => updateDraft('manager', event.target.value)} /></label>
                 <label className="field"><span>담당자 연락처</span><input value={draft.managerTel} onChange={(event) => updateDraft('managerTel', event.target.value)} /></label>
                 <label className="field">
@@ -687,15 +805,14 @@ function cloneDocument(document: DocumentHistory): DocumentHistory {
 
 function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]): SharedItemRow[] {
   return draft.items.map((item) => {
-    const matched =
-      (item.productId ? products.find((product) => product.id === item.productId) : null) ??
-      products.find((product) => product.name1 === item.name1);
-    const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
+    const matched = item.productId ? products.find((product) => product.id === item.productId) ?? null : null;
+    const productId = matched ? matched.id : item.productId ? '' : item.name1 ? MANUAL_PRODUCT_ID : '';
+    const manualName = item.name2 || item.name1;
 
     return {
       id: item.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       productId,
-      manualName: productId === MANUAL_PRODUCT_ID ? item.name1 : '',
+      manualName: productId === MANUAL_PRODUCT_ID ? manualName : '',
       manualGubun: productId === MANUAL_PRODUCT_ID ? item.gubun || '기타' : '',
       orderDate: item.orderDate || draft.orderDate || '',
       arriveDate: item.arriveDate || draft.arriveDate || '',

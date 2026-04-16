@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
 import { fetchDocuments, fetchNextIssueNo, saveDocument } from '../api/documents';
-import { fetchProductsByClient, fetchProductsByClientId } from '../api/products';
+import { fetchProductsByClientId } from '../api/products';
 import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
 import { getStoredUser } from '../lib/session';
@@ -254,21 +254,7 @@ export default function DocCreatePage() {
     }));
   }
 
-  function handleClientChange(clientName: string) {
-    const client = clients.find((row) => row.name === clientName) ?? null;
-    setForm((current) => ({
-      ...current,
-      clientId: client?.id ?? '',
-      client: clientName,
-      manager: client?.manager ?? '',
-      managerTel: client?.tel ?? '',
-      deliveryAddr: client?.addr ?? '',
-      remark:
-        client && (client.time || client.lunch)
-          ? `입고시간 : ${client.time || '-'} / 점심 ${client.lunch || '-'}` 
-          : '',
-    }));
-
+  function resetClientItems() {
     setItems((current) =>
       current.map((item) =>
         item.productId && item.productId !== MANUAL_PRODUCT_ID
@@ -276,15 +262,32 @@ export default function DocCreatePage() {
           : item,
       ),
     );
+  }
 
+  function applyClient(client: Client | null, clientName?: string) {
+    const nextClientName = client?.name ?? clientName ?? '';
     setForm((current) => ({
       ...current,
+      clientId: client?.id ?? '',
+      client: nextClientName,
+      manager: client?.manager ?? '',
+      managerTel: client?.tel ?? '',
+      deliveryAddr: client?.addr ?? '',
       remark: buildClientRemark(client),
     }));
+    resetClientItems();
+  }
+
+  function handleClientInputChange(clientName: string) {
+    applyClient(null, clientName);
+  }
+
+  function handleClientSelect(client: Client) {
+    applyClient(client);
   }
 
   function addItem() {
-    if (!form.client) {
+    if (!form.clientId) {
       window.alert('먼저 납품처를 선택해 주세요.');
       return;
     }
@@ -295,6 +298,7 @@ export default function DocCreatePage() {
     if (!form.orderDate) return '발주일을 입력해 주세요.';
     if (!form.arriveDate) return '입고일을 입력해 주세요.';
     if (!form.client.trim()) return '납품처를 선택해 주세요.';
+    if (!form.clientId) return '납품처를 목록에서 선택해 주세요.';
     if (!form.receiver.trim()) return '수신처를 입력해 주세요.';
     if (!form.deliveryAddr.trim()) return '납품주소를 입력해 주세요.';
     if (!previewData) return '저장할 품목을 1개 이상 입력해 주세요.';
@@ -410,11 +414,7 @@ export default function DocCreatePage() {
     try {
       setImportLoading(true);
       setError(null);
-      const productRows = document.clientId
-        ? await fetchProductsByClientId(document.clientId)
-        : document.client
-          ? await fetchProductsByClient(document.client)
-          : [];
+      const productRows = document.clientId ? await fetchProductsByClientId(document.clientId) : [];
       setProducts(productRows);
       setForm((current) => ({
         ...current,
@@ -518,7 +518,7 @@ export default function DocCreatePage() {
                     required
                     value={form.client}
                     onChange={(event) => {
-                      handleClientChange(event.target.value);
+                      handleClientInputChange(event.target.value);
                       setClientDropdownOpen(true);
                     }}
                     onFocus={() => setClientDropdownOpen(true)}
@@ -535,7 +535,7 @@ export default function DocCreatePage() {
                           className="client-search-option"
                           onMouseDown={(event) => {
                             event.preventDefault();
-                            handleClientChange(client.name);
+                            handleClientSelect(client);
                             setClientDropdownOpen(false);
                           }}
                         >
@@ -804,15 +804,14 @@ function mapImportedDocumentItems(document: DocumentHistory, products: Product[]
   }
 
   return document.items.map((item) => {
-    const matched =
-      (item.productId ? products.find((product) => product.id === item.productId) : null) ??
-      products.find((product) => product.name1 === item.name1);
-    const productId = matched ? matched.id : item.name1 ? MANUAL_PRODUCT_ID : '';
+    const matched = item.productId ? products.find((product) => product.id === item.productId) ?? null : null;
+    const productId = matched ? matched.id : item.productId ? '' : item.name1 ? MANUAL_PRODUCT_ID : '';
+    const manualName = item.name2 || item.name1;
 
     return {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       productId,
-      manualName: productId === MANUAL_PRODUCT_ID ? item.name1 : '',
+      manualName: productId === MANUAL_PRODUCT_ID ? manualName : '',
       manualGubun:
         productId === MANUAL_PRODUCT_ID
           ? item.gubun || DEFAULT_GUBUN_OPTIONS[0]

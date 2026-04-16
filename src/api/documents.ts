@@ -17,7 +17,7 @@ export async function saveDocument(payload: DocumentPayload) {
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const currentUser = getStoredUser();
-  const clientId = await resolveClientId(payload.clientId, payload.client);
+  const clientId = requireClientId(payload.clientId);
   const authorId = payload.authorId ?? currentUser?.id ?? null;
   let createdDocumentId: string | null = null;
 
@@ -221,7 +221,7 @@ export async function updateDocument(document: DocumentHistory) {
   const supabase = getSupabaseClient();
   const auditFields = getActiveAuditFields();
   const deletedAuditFields = getDeletedAuditFields();
-  const clientId = await resolveClientId(document.clientId, document.client);
+  const clientId = requireClientId(document.clientId);
 
   try {
     const { data: updatedDocumentRows, error: docError } = await supabase
@@ -504,28 +504,10 @@ export async function toggleDocumentCancelled(id: string, cancelled: boolean) {
   }
 }
 
-async function resolveClientId(clientId: string | null | undefined, clientName: string) {
+function requireClientId(clientId: string | null | undefined) {
   const normalizedId = String(clientId ?? '').trim();
   if (normalizedId) return normalizedId;
-
-  const normalizedName = clientName.trim();
-  if (!normalizedName) return null;
-
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('clients')
-    .select('id')
-    .eq('name', normalizedName)
-    .eq('del_yn', 'N')
-    .order('id', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data?.id ?? null;
+  throw new Error('유효한 납품처 ID가 없습니다. 납품처를 목록에서 다시 선택해 주세요.');
 }
 
 export async function fetchNextIssueNo() {
