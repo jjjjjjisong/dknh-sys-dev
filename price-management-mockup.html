@@ -316,6 +316,65 @@
     /* toolbar grid shortcut for this page */
     .price-toolbar { display: grid; grid-template-columns: 1.2fr 1fr 2fr auto; gap: 12px; }
     .doc-toolbar { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; }
+
+    /* ── 월 네비게이터 ── */
+    .month-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(135deg, #eff6ff 0%, #e0eaff 100%);
+      border: 1px solid rgba(37,99,235,0.15);
+      border-radius: var(--r-lg); padding: 14px 20px;
+      gap: 16px;
+    }
+    .month-nav-center { display: flex; align-items: center; gap: 16px; }
+    .month-nav-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1.5px solid rgba(37,99,235,0.25);
+      background: rgba(255,255,255,0.8); color: var(--accent);
+      cursor: pointer; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s ease; flex-shrink: 0;
+    }
+    .month-nav-btn:hover {
+      background: var(--accent); color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+      transform: scale(1.08);
+    }
+    .month-nav-label {
+      font-size: 20px; font-weight: 800; letter-spacing: -0.03em;
+      color: var(--text-1); min-width: 140px; text-align: center;
+    }
+    .month-nav-label span { color: var(--accent); }
+    .month-nav-meta { font-size: 13px; color: var(--text-3); }
+    .month-nav-today {
+      height: 32px; padding: 0 14px;
+      border: 1.5px solid rgba(37,99,235,0.25);
+      border-radius: 999px; background: rgba(255,255,255,0.8);
+      color: var(--accent-s); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.18s ease;
+    }
+    .month-nav-today:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .month-nav-right { display: flex; align-items: center; gap: 10px; }
+    .month-stat-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 12.5px; font-weight: 600;
+    }
+    .pill-set { background: #eff6ff; color: var(--accent); border: 1px solid rgba(37,99,235,0.2); }
+    .pill-inherit { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+
+    /* ── 행 상태 표시 ── */
+    .price-state-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11.5px; font-weight: 600; padding: 2px 8px;
+      border-radius: 999px; white-space: nowrap;
+    }
+    .ps-set   { background: #eff6ff; color: var(--accent); border: 1px solid rgba(37,99,235,0.2); }
+    .ps-inherit { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+    .ps-new   { background: var(--green-bg); color: #15803d; border: 1px solid rgba(34,197,94,0.2); }
+    tr.row-inherited .price-input-inline { color: var(--text-3); background: var(--surface-2); }
+    tr.row-changed td { background: #f0fdf4 !important; }
+    tr.row-changed td:first-child { box-shadow: inset 3px 0 0 var(--green); }
   </style>
 </head>
 <body>
@@ -413,26 +472,43 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════
-             TAB 1 : 품목 기준 단가
-             거래처(원)별 품목의 입고/판매 단가 관리
-             → 품목 관리에 반영 / 이후 문서에 자동 적용
+             TAB 1 : 품목 기준 단가 (월별)
+             거래처(원)별 품목의 월 단가 관리
+             → 선택한 달의 단가를 조회/편집
         ═══════════════════════════════════════════════ -->
         <div id="tab-base" class="tab-panel active">
 
-          <div class="alert alert-info">
-            여기서 수정한 단가는 <strong>품목 관리에 반영</strong>되며, 이후 작성하는 문서에 자동 적용됩니다. 이미 저장된 문서는 영향을 받지 않습니다.
+          <!-- 월 네비게이터 -->
+          <div class="month-nav">
+            <div class="month-nav-center">
+              <button class="month-nav-btn" id="btn-prev-month" title="이전 달">←</button>
+              <div class="month-nav-label" id="month-label">2025년 <span>04</span>월</div>
+              <button class="month-nav-btn" id="btn-next-month" title="다음 달">→</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="month-nav-meta" id="month-meta">이 달에 단가가 설정된 품목</span>
+              <span class="month-stat-pill pill-set" id="pill-set">직접 설정 <strong id="cnt-set">7</strong>건</span>
+              <span class="month-stat-pill pill-inherit" id="pill-inherit">이전 달 승계 <strong id="cnt-inherit">17</strong>건</span>
+            </div>
+            <div class="month-nav-right">
+              <button class="month-nav-today" id="btn-this-month">이번 달로</button>
+            </div>
+          </div>
+
+          <div class="alert alert-info" id="base-alert">
+            <strong>2025년 04월</strong> 단가를 조회·편집합니다. 회색으로 표시된 항목은 이전 달 단가를 <strong>승계</strong>중입니다 — 값을 입력하면 이 달 전용 단가로 설정됩니다.
           </div>
 
           <div class="card" style="padding:0; overflow:hidden;">
             <div style="padding:16px 20px 0;">
               <div class="client-toolbar-stacked">
                 <div class="toolbar price-toolbar">
-                  <select class="search-input">
+                  <select class="search-input" id="filter-client-base">
                     <option value="">전체 거래처</option>
                     <option>거래처 A</option>
                     <option>거래처 B</option>
                   </select>
-                  <select class="search-input">
+                  <select class="search-input" id="filter-cat-base">
                     <option value="">전체 구분</option>
                     <option>컵</option>
                     <option>컵뚜껑</option>
@@ -440,11 +516,12 @@
                     <option>스트로우</option>
                     <option>기타</option>
                   </select>
-                  <input class="search-input" placeholder="품목명으로 검색하세요." />
+                  <input class="search-input" id="filter-keyword-base" placeholder="품목명으로 검색하세요." />
                 </div>
                 <div class="client-toolbar-actions">
                   <span class="toolbar-meta">검색 결과 24건</span>
                   <div class="button-row">
+                    <button class="btn btn-warn btn-sm" id="btn-copy-prev" title="이전 달 단가를 이번 달로 전체 복사">📋 이전 달 복사</button>
                     <button class="btn btn-secondary btn-sm">엑셀 다운</button>
                   </div>
                 </div>
@@ -452,7 +529,7 @@
             </div>
 
             <div class="table-wrap">
-              <table class="table">
+              <table class="table" id="base-price-table">
                 <thead>
                   <tr>
                     <th style="width:46px">No</th>
@@ -461,49 +538,61 @@
                     <th>품목명</th>
                     <th style="width:110px;text-align:right">입고 단가</th>
                     <th style="width:110px;text-align:right">판매 단가</th>
-                    <th style="width:110px">최종 수정일</th>
-                    <th style="width:80px"></th>
+                    <th style="width:90px;text-align:center">상태</th>
+                    <th style="width:90px"></th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr data-row-id="p1">
+                <tbody id="base-tbody">
+                  <!-- 2025-04 직접 설정 -->
+                  <tr data-row-id="p1" data-state="set">
                     <td>1</td>
                     <td><span class="badge">컵</span></td>
                     <td>거래처 A</td>
                     <td>500ml 아이스컵 (투명)</td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="38" /></td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="45" /></td>
-                    <td class="text-muted">2025-04-10</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="40" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="47" /></td>
+                    <td style="text-align:center"><span class="price-state-badge ps-set">✓ 설정됨</span></td>
                     <td><span class="save-status save-status-idle"></span></td>
                   </tr>
-                  <tr data-row-id="p2">
+                  <tr data-row-id="p2" data-state="set">
                     <td>2</td>
                     <td><span class="badge">컵</span></td>
                     <td>거래처 A</td>
                     <td>700ml 아이스컵 (흑색)</td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="42" /></td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="50" /></td>
-                    <td class="text-muted">2025-04-08</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="44" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="52" /></td>
+                    <td style="text-align:center"><span class="price-state-badge ps-set">✓ 설정됨</span></td>
                     <td><span class="save-status save-status-idle"></span></td>
                   </tr>
-                  <tr data-row-id="p3">
+                  <!-- 2025-04 이전 달(03월) 단가 승계 -->
+                  <tr data-row-id="p3" data-state="inherit" class="row-inherited">
                     <td>3</td>
                     <td><span class="badge badge-warn">비닐</span></td>
                     <td>거래처 B</td>
                     <td>냉동 포장용 비닐백 A형</td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="120" /></td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="145" /></td>
-                    <td class="text-muted">2025-03-22</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="120" title="03월 단가 승계" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="145" title="03월 단가 승계" /></td>
+                    <td style="text-align:center"><span class="price-state-badge ps-inherit">↑ 03월 승계</span></td>
                     <td><span class="save-status save-status-idle"></span></td>
                   </tr>
-                  <tr data-row-id="p4">
+                  <tr data-row-id="p4" data-state="set">
                     <td>4</td>
                     <td><span class="badge badge-muted">기타</span></td>
                     <td>거래처 B</td>
                     <td>멀티 패키지 세트 (소)</td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" placeholder="-" /></td>
-                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" placeholder="-" /></td>
-                    <td class="text-muted">-</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="210" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="250" /></td>
+                    <td style="text-align:center"><span class="price-state-badge ps-set">✓ 설정됨</span></td>
+                    <td><span class="save-status save-status-idle"></span></td>
+                  </tr>
+                  <tr data-row-id="p5" data-state="inherit" class="row-inherited">
+                    <td>5</td>
+                    <td><span class="badge badge-muted">스트로우</span></td>
+                    <td>거래처 A</td>
+                    <td>개인용 친환경 스트로우</td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="15" title="03월 단가 승계" /></td>
+                    <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="20" title="03월 단가 승계" /></td>
+                    <td style="text-align:center"><span class="price-state-badge ps-inherit">↑ 03월 승계</span></td>
                     <td><span class="save-status save-status-idle"></span></td>
                   </tr>
                 </tbody>
@@ -794,6 +883,7 @@
 </div>
 
 <script>
+  // ── 탭 전환 ─────────────────────────────────────────
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -802,7 +892,6 @@
   }
 
   // ── 자동 저장 (blur 시) ──────────────────────────────
-  // 행의 save-status 셀을 찾아 상태를 표시하고, 1.5초 후 초기화
   function getStatusEl(input) {
     return input.closest('tr').querySelector('.save-status');
   }
@@ -810,7 +899,6 @@
   function setStatus(el, state, text) {
     el.className = 'save-status save-status-' + state;
     el.textContent = text;
-    // done 상태는 CSS animation으로 fade-out → 완료 후 idle로 복귀
     if (state === 'done') {
       el.addEventListener('animationend', () => {
         el.className = 'save-status save-status-idle';
@@ -819,33 +907,226 @@
     }
   }
 
-  document.querySelectorAll('.auto-save').forEach(input => {
-    // 포커스 시 원본값 기록
+  // 승계 행: 입력 시 "이 달 설정됨"으로 상태 변경
+  function attachInheritUpgrade(input) {
     input.addEventListener('focus', () => {
       input.dataset.original = input.value;
     });
-
-    input.addEventListener('blur', () => {
-      // 값이 바뀌지 않았으면 아무 것도 안 함
-      if (input.value === input.dataset.original) return;
-      // 빈 값이면 저장하지 않음
-      if (input.value.trim() === '') return;
-
-      const statusEl = getStatusEl(input);
-      setStatus(statusEl, 'saving', '저장 중...');
-
-      // 실제 API 호출 자리 (목업에서는 setTimeout으로 흉내)
-      setTimeout(() => {
-        const ok = true; // 실제 구현 시 API 성공 여부로 대체
-        if (ok) {
-          setStatus(statusEl, 'done', '✓ 저장됨');
-          input.dataset.original = input.value; // 원본 갱신
-        } else {
-          setStatus(statusEl, 'error', '저장 실패');
+    input.addEventListener('input', () => {
+      const tr = input.closest('tr');
+      if (tr.dataset.state === 'inherit') {
+        tr.dataset.state = 'set';
+        tr.classList.remove('row-inherited');
+        const badge = tr.querySelector('.price-state-badge');
+        if (badge) {
+          badge.className = 'price-state-badge ps-new';
+          badge.textContent = '★ 신규 설정';
         }
-      }, 600);
+        updateMonthStats();
+      }
     });
+  }
+
+  // ── 월 관리 데이터 (목업) ────────────────────────────
+  // key: 'YYYY-MM', value: { rows: [...] }
+  const MONTHS_DATA = {
+    '2025-02': {
+      setCnt: 4, inheritCnt: 20,
+      rows: [
+        { id:'p1', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'500ml 아이스컵 (투명)',     cost:'36', sell:'43', state:'set'    },
+        { id:'p2', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'700ml 아이스컵 (흑색)',     cost:'40', sell:'48', state:'set'    },
+        { id:'p3', cat:'비닐',  cat_cls:'badge-warn', client:'거래처 B', name:'냉동 포장용 비닐백 A형',   cost:'118', sell:'140', state:'set'  },
+        { id:'p4', cat:'기타',  cat_cls:'badge-muted',client:'거래처 B', name:'멀티 패키지 세트 (소)',     cost:'',   sell:'',   state:'inherit'},
+        { id:'p5', cat:'스트로우',cat_cls:'badge-muted',client:'거래처 A',name:'개인용 친환경 스트로우',  cost:'15', sell:'20', state:'set'    },
+      ]
+    },
+    '2025-03': {
+      setCnt: 5, inheritCnt: 19,
+      rows: [
+        { id:'p1', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'500ml 아이스컵 (투명)',     cost:'38', sell:'45', state:'set'    },
+        { id:'p2', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'700ml 아이스컵 (흑색)',     cost:'42', sell:'50', state:'set'    },
+        { id:'p3', cat:'비닐',  cat_cls:'badge-warn', client:'거래처 B', name:'냉동 포장용 비닐백 A형',   cost:'120', sell:'145', state:'set'  },
+        { id:'p4', cat:'기타',  cat_cls:'badge-muted',client:'거래처 B', name:'멀티 패키지 세트 (소)',     cost:'200', sell:'240', state:'set'  },
+        { id:'p5', cat:'스트로우',cat_cls:'badge-muted',client:'거래처 A',name:'개인용 친환경 스트로우',  cost:'15', sell:'20', state:'set'    },
+      ]
+    },
+    '2025-04': {
+      setCnt: 3, inheritCnt: 21,
+      rows: [
+        { id:'p1', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'500ml 아이스컵 (투명)',     cost:'40', sell:'47', state:'set'    },
+        { id:'p2', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'700ml 아이스컵 (흑색)',     cost:'44', sell:'52', state:'set'    },
+        { id:'p3', cat:'비닐',  cat_cls:'badge-warn', client:'거래처 B', name:'냉동 포장용 비닐백 A형',   cost:'120', sell:'145', state:'inherit'},
+        { id:'p4', cat:'기타',  cat_cls:'badge-muted',client:'거래처 B', name:'멀티 패키지 세트 (소)',     cost:'210', sell:'250', state:'set'    },
+        { id:'p5', cat:'스트로우',cat_cls:'badge-muted',client:'거래처 A',name:'개인용 친환경 스트로우',  cost:'15', sell:'20', state:'inherit'},
+      ]
+    },
+    '2025-05': {
+      setCnt: 0, inheritCnt: 24,
+      rows: [
+        { id:'p1', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'500ml 아이스컵 (투명)',     cost:'40', sell:'47', state:'inherit'},
+        { id:'p2', cat:'컵',    cat_cls:'',           client:'거래처 A', name:'700ml 아이스컵 (흑색)',     cost:'44', sell:'52', state:'inherit'},
+        { id:'p3', cat:'비닐',  cat_cls:'badge-warn', client:'거래처 B', name:'냉동 포장용 비닐백 A형',   cost:'120', sell:'145', state:'inherit'},
+        { id:'p4', cat:'기타',  cat_cls:'badge-muted',client:'거래처 B', name:'멀티 패키지 세트 (소)',     cost:'210', sell:'250', state:'inherit'},
+        { id:'p5', cat:'스트로우',cat_cls:'badge-muted',client:'거래처 A',name:'개인용 친환경 스트로우',  cost:'15', sell:'20', state:'inherit'},
+      ]
+    },
+  };
+
+  // ── 현재 월 상태 ─────────────────────────────────────
+  const today = new Date();
+  let curYear  = 2025;
+  let curMonth = 4; // 1-indexed
+  const THIS_YEAR  = today.getFullYear();
+  const THIS_MONTH = today.getMonth() + 1;
+
+  function monthKey(y, m) { return `${y}-${String(m).padStart(2,'0')}`; }
+
+  function getMonthData(y, m) {
+    const key = monthKey(y, m);
+    return MONTHS_DATA[key] || {
+      setCnt: 0, inheritCnt: 24,
+      rows: (MONTHS_DATA['2025-04']?.rows || []).map(r => ({ ...r, state: 'inherit' }))
+    };
+  }
+
+  function updateMonthStats() {
+    const tbody = document.getElementById('base-tbody');
+    const rows = tbody.querySelectorAll('tr');
+    let setCnt = 0, inheritCnt = 0;
+    rows.forEach(tr => {
+      if (tr.dataset.state === 'set' || tr.dataset.state === 'new') setCnt++;
+      else inheritCnt++;
+    });
+    document.getElementById('cnt-set').textContent = setCnt;
+    document.getElementById('cnt-inherit').textContent = inheritCnt;
+  }
+
+  function renderMonth(y, m) {
+    curYear = y; curMonth = m;
+    const key = monthKey(y, m);
+    const isThisMonth = (y === THIS_YEAR && m === THIS_MONTH);
+    const prevM = m === 1 ? 12 : m - 1;
+    const prevY = m === 1 ? y - 1 : y;
+
+    // 라벨 업데이트
+    document.getElementById('month-label').innerHTML =
+      `${y}년 <span>${String(m).padStart(2,'0')}</span>월` +
+      (isThisMonth ? ' <span style="font-size:13px;font-weight:600;color:#15803d;background:#f0fdf4;padding:2px 8px;border-radius:999px;border:1px solid rgba(34,197,94,0.2);vertical-align:middle;">이번 달</span>' : '');
+
+    document.getElementById('base-alert').innerHTML =
+      `<strong>${y}년 ${String(m).padStart(2,'0')}월</strong> 단가를 조회·편집합니다. ` +
+      `회색으로 표시된 항목은 <strong>${prevY}년 ${String(prevM).padStart(2,'0')}월 단가를 승계</strong>중입니다 — 값을 입력하면 이 달 전용 단가로 설정됩니다.`;
+
+    // 테이블 렌더
+    const data = getMonthData(y, m);
+    const tbody = document.getElementById('base-tbody');
+    tbody.innerHTML = '';
+
+    data.rows.forEach((r, idx) => {
+      const isInherit = r.state === 'inherit';
+      const badgeCls = isInherit
+        ? 'price-state-badge ps-inherit'
+        : 'price-state-badge ps-set';
+      const badgeTxt = isInherit
+        ? `↑ ${String(prevM).padStart(2,'0')}월 승계`
+        : '✓ 설정됨';
+      const trCls = isInherit ? 'row-inherited' : '';
+      const inputStyle = isInherit ? 'color:var(--text-3);background:var(--surface-2);' : '';
+
+      const tr = document.createElement('tr');
+      tr.dataset.rowId = r.id;
+      tr.dataset.state = r.state;
+      if (trCls) tr.className = trCls;
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td><span class="badge ${r.cat_cls}">${r.cat}</span></td>
+        <td>${r.client}</td>
+        <td>${r.name}</td>
+        <td class="td-right"><input class="price-input-inline auto-save" data-field="cost" value="${r.cost}" placeholder="-" style="${inputStyle}" /></td>
+        <td class="td-right"><input class="price-input-inline auto-save" data-field="sell" value="${r.sell}" placeholder="-" style="${inputStyle}" /></td>
+        <td style="text-align:center"><span class="${badgeCls}">${badgeTxt}</span></td>
+        <td><span class="save-status save-status-idle"></span></td>
+      `;
+      tbody.appendChild(tr);
+
+      // 자동 저장 + 승계→설정 전환
+      tr.querySelectorAll('.auto-save').forEach(inp => {
+        attachInheritUpgrade(inp);
+        inp.addEventListener('blur', () => {
+          if (inp.value === inp.dataset.original) return;
+          if (inp.value.trim() === '') return;
+          const statusEl = getStatusEl(inp);
+          setStatus(statusEl, 'saving', '저장 중...');
+          setTimeout(() => {
+            setStatus(statusEl, 'done', '✓ 저장됨');
+            inp.dataset.original = inp.value;
+          }, 600);
+        });
+      });
+    });
+
+    // 통계 pill
+    document.getElementById('cnt-set').textContent = data.setCnt;
+    document.getElementById('cnt-inherit').textContent = data.inheritCnt;
+  }
+
+  // ── 버튼 이벤트 ──────────────────────────────────────
+  document.getElementById('btn-prev-month').addEventListener('click', () => {
+    let m = curMonth - 1, y = curYear;
+    if (m < 1) { m = 12; y--; }
+    renderMonth(y, m);
   });
+  document.getElementById('btn-next-month').addEventListener('click', () => {
+    let m = curMonth + 1, y = curYear;
+    if (m > 12) { m = 1; y++; }
+    renderMonth(y, m);
+  });
+  document.getElementById('btn-this-month').addEventListener('click', () => {
+    renderMonth(THIS_YEAR, THIS_MONTH);
+  });
+
+  document.getElementById('btn-copy-prev').addEventListener('click', () => {
+    const pm = curMonth === 1 ? 12 : curMonth - 1;
+    const py = curMonth === 1 ? curYear - 1 : curYear;
+    if (!confirm(`${py}년 ${String(pm).padStart(2,'0')}월 단가를 ${curYear}년 ${String(curMonth).padStart(2,'0')}월로 전체 복사하시겠습니까?`)) return;
+    // 목업: 현재 승계 행들을 "설정됨"으로 변경
+    document.querySelectorAll('#base-tbody tr[data-state="inherit"]').forEach(tr => {
+      tr.dataset.state = 'set';
+      tr.classList.remove('row-inherited');
+      tr.querySelectorAll('.price-input-inline').forEach(inp => {
+        inp.style.color = '';
+        inp.style.background = '';
+      });
+      const badge = tr.querySelector('.price-state-badge');
+      if (badge) {
+        badge.className = 'price-state-badge ps-set';
+        badge.textContent = '✓ 설정됨';
+      }
+    });
+    updateMonthStats();
+    alert('이전 달 단가가 이번 달에 복사되었습니다.');
+  });
+
+  // 기존 auto-save (tab-doc 등 동적으로 추가되지 않은 입력에 대한 fallback)
+  document.querySelectorAll('.auto-save').forEach(input => {
+    if (!input.dataset.listenerAttached) {
+      input.dataset.listenerAttached = 'true';
+      input.addEventListener('focus', () => { input.dataset.original = input.value; });
+      input.addEventListener('blur', () => {
+        if (input.value === input.dataset.original) return;
+        if (input.value.trim() === '') return;
+        const statusEl = getStatusEl(input);
+        setStatus(statusEl, 'saving', '저장 중...');
+        setTimeout(() => {
+          setStatus(statusEl, 'done', '✓ 저장됨');
+          input.dataset.original = input.value;
+        }, 600);
+      });
+    }
+  });
+
+  // 초기 렌더
+  renderMonth(2025, 4);
 </script>
 </body>
 </html>
