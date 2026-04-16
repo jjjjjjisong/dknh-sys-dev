@@ -82,7 +82,7 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
       ${data.remark ? `<tr><td class="lbl">비고</td><td>${escapeHtml(data.remark)}</td></tr>` : ''}
     </table>
     ${data.requestNote ? `<div class="request-box"><strong>요청사항</strong>${escapeHtml(data.requestNote).replace(/\n/g, '<br>')}</div>` : ''}
-    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>대보산업주식회사</strong></div>
+    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>(주)디케이앤에이치</strong></div>
   </div>`;
 }
 
