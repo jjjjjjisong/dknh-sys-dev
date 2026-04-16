@@ -54,13 +54,13 @@ export function useDocumentItems(initialItems: SharedItemRow[], clientProducts: 
             item.customPallet !== null
               ? item.customPallet
               : eaPerP
-                ? Math.ceil(qty / eaPerP)
+                ? getSignedPackageCount(qty, eaPerP)
                 : null,
           box:
             item.customBox !== null
               ? item.customBox
               : eaPerB
-                ? Math.ceil(qty / eaPerB)
+                ? getSignedPackageCount(qty, eaPerB)
                 : null,
           eaPerB,
           boxPerP,
@@ -95,4 +95,10 @@ export function useDocumentItems(initialItems: SharedItemRow[], clientProducts: 
   }
 
   return { items, setItems, itemSummaries, totals, addItem, removeItem, updateItem };
+}
+
+function getSignedPackageCount(qty: number, unitSize: number) {
+  if (!Number.isFinite(qty) || !Number.isFinite(unitSize) || unitSize <= 0) return null;
+  if (qty <= 0) return null;
+  return Math.ceil(qty / unitSize);
 }

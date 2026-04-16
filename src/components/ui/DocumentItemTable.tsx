@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Product } from '../../types/product';
 import {
   formatDecimalInput,
@@ -6,7 +6,7 @@ import {
   formatNumber,
   parseNullableDecimal,
   parseNullableInteger,
-  stripNonNumeric,
+  stripNonNumericAllowNegative,
 } from '../../utils/formatters';
 
 export const MANUAL_PRODUCT_ID = '__manual__';
@@ -53,6 +53,8 @@ interface DocumentItemTableProps {
   onAddItem: () => void;
 }
 
+type IntegerFieldKey = 'qty' | 'customPallet' | 'customBox' | 'customSupply';
+
 export default function DocumentItemTable({
   items,
   clientProducts,
@@ -62,6 +64,20 @@ export default function DocumentItemTable({
   onRemoveItem,
   onAddItem,
 }: DocumentItemTableProps) {
+  const [integerEditingValues, setIntegerEditingValues] = useState<Record<string, string>>({});
+
+  function getIntegerFieldStateKey(id: string, key: IntegerFieldKey) {
+    return `${id}:${key}`;
+  }
+
+  function getIntegerDisplayValue(id: string, key: IntegerFieldKey, value: number | null) {
+    const stateKey = getIntegerFieldStateKey(id, key);
+    if (Object.prototype.hasOwnProperty.call(integerEditingValues, stateKey)) {
+      return integerEditingValues[stateKey];
+    }
+    return formatIntegerInput(value);
+  }
+
   function handleNumericFocus(
     id: string,
     key: 'qty' | 'customPallet' | 'customBox' | 'unitPrice' | 'customSupply',
@@ -73,6 +89,45 @@ export default function DocumentItemTable({
       }
       return current;
     });
+  }
+
+  function handleIntegerFocus(id: string, key: IntegerFieldKey, value: number | null) {
+    handleNumericFocus(id, key);
+    setIntegerEditingValues((current) => ({
+      ...current,
+      [getIntegerFieldStateKey(id, key)]: value === null || value === 0 ? '' : String(value),
+    }));
+  }
+
+  function handleIntegerBlur(id: string, key: IntegerFieldKey) {
+    const stateKey = getIntegerFieldStateKey(id, key);
+    setIntegerEditingValues((current) => {
+      const next = { ...current };
+      delete next[stateKey];
+      return next;
+    });
+  }
+
+  function handleIntegerChange(id: string, key: IntegerFieldKey, rawValue: string) {
+    const sanitized = stripNonNumericAllowNegative(rawValue);
+    const stateKey = getIntegerFieldStateKey(id, key);
+
+    setIntegerEditingValues((current) => ({
+      ...current,
+      [stateKey]: sanitized,
+    }));
+
+    onUpdateItem(id, (current) => ({
+      ...current,
+      [key]: sanitized === '' || sanitized === '-' ? null : parseNullableInteger(sanitized),
+      ...(key === 'qty'
+        ? {
+            customPallet: null,
+            customBox: null,
+            customSupply: null,
+          }
+        : {}),
+    }));
   }
 
   return (
@@ -194,32 +249,25 @@ export default function DocumentItemTable({
                       <input
                         className="doc-cell-control doc-number-input-qty"
                         type="text"
-                        inputMode="numeric"
-                        value={formatIntegerInput(item.qty)}
-                        onFocus={() => handleNumericFocus(item.id, 'qty')}
-                        onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({
-                            ...current,
-                            qty: parseNullableInteger(stripNonNumeric(event.target.value)),
-                            customPallet: null,
-                            customBox: null,
-                            customSupply: null,
-                          }))
-                        }
+                        inputMode="text"
+                        value={getIntegerDisplayValue(item.id, 'qty', item.qty)}
+                        onFocus={() => handleIntegerFocus(item.id, 'qty', item.qty)}
+                        onBlur={() => handleIntegerBlur(item.id, 'qty')}
+                        onChange={(event) => handleIntegerChange(item.id, 'qty', event.target.value)}
                       />
                     </td>
                     <td className="doc-pallet-col">
                       <input
                         className="doc-cell-control doc-number-input-pallet-box"
                         type="text"
-                        inputMode="numeric"
-                        value={formatIntegerInput(item.customPallet)}
-                        onFocus={() => handleNumericFocus(item.id, 'customPallet')}
+                        inputMode="text"
+                        value={getIntegerDisplayValue(item.id, 'customPallet', item.customPallet)}
+                        onFocus={() =>
+                          handleIntegerFocus(item.id, 'customPallet', item.customPallet)
+                        }
+                        onBlur={() => handleIntegerBlur(item.id, 'customPallet')}
                         onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({
-                            ...current,
-                            customPallet: parseNullableInteger(stripNonNumeric(event.target.value)),
-                          }))
+                          handleIntegerChange(item.id, 'customPallet', event.target.value)
                         }
                         placeholder={summary.pallet !== null ? String(summary.pallet) : '자동'}
                       />
@@ -228,14 +276,12 @@ export default function DocumentItemTable({
                       <input
                         className="doc-cell-control doc-number-input-pallet-box"
                         type="text"
-                        inputMode="numeric"
-                        value={formatIntegerInput(item.customBox)}
-                        onFocus={() => handleNumericFocus(item.id, 'customBox')}
+                        inputMode="text"
+                        value={getIntegerDisplayValue(item.id, 'customBox', item.customBox)}
+                        onFocus={() => handleIntegerFocus(item.id, 'customBox', item.customBox)}
+                        onBlur={() => handleIntegerBlur(item.id, 'customBox')}
                         onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({
-                            ...current,
-                            customBox: parseNullableInteger(stripNonNumeric(event.target.value)),
-                          }))
+                          handleIntegerChange(item.id, 'customBox', event.target.value)
                         }
                         placeholder={summary.box !== null ? String(summary.box) : '자동'}
                       />
@@ -261,14 +307,14 @@ export default function DocumentItemTable({
                       <input
                         className="doc-cell-control doc-number-input-supply"
                         type="text"
-                        inputMode="numeric"
-                        value={formatIntegerInput(item.customSupply)}
-                        onFocus={() => handleNumericFocus(item.id, 'customSupply')}
+                        inputMode="text"
+                        value={getIntegerDisplayValue(item.id, 'customSupply', item.customSupply)}
+                        onFocus={() =>
+                          handleIntegerFocus(item.id, 'customSupply', item.customSupply)
+                        }
+                        onBlur={() => handleIntegerBlur(item.id, 'customSupply')}
                         onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({
-                            ...current,
-                            customSupply: parseNullableInteger(stripNonNumeric(event.target.value)),
-                          }))
+                          handleIntegerChange(item.id, 'customSupply', event.target.value)
                         }
                         placeholder={formatNumber(summary.supply)}
                       />
