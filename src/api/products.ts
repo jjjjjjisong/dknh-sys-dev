@@ -1,11 +1,27 @@
 import { getActiveAuditFields, getDeletedAuditFields } from './audit';
 import { getSupabaseClient } from './supabase/client';
-import type { Product, ProductInput } from '../types/product';
+import type {
+  Product,
+  ProductInput,
+  ProductMaster,
+  ProductMasterInput,
+} from '../types/product';
 import { toNullableDbId } from '../utils/dbIds';
+
+type ProductMasterRow = {
+  id: number | string;
+  name1: string | null;
+  name2: string | null;
+  gubun: string | null;
+  del_yn?: string | null;
+  updated_at?: string | null;
+  updated_by?: string | null;
+};
 
 type ProductRow = {
   id: number | string;
   no: number | null;
+  product_master_id: number | string | null;
   client_id: number | string | null;
   gubun: string | null;
   client: string | null;
@@ -21,10 +37,13 @@ type ProductRow = {
   del_yn?: string | null;
   updated_at?: string | null;
   updated_by?: string | null;
+  product_master?: ProductMasterRow | ProductMasterRow[] | null;
 };
 
 const productSelectColumns =
-  'id, no, client_id, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by';
+  'id, no, product_master_id, client_id, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by, product_master:product_masters(id, name1, name2, gubun, del_yn, updated_at, updated_by)';
+
+const productMasterSelectColumns = 'id, name1, name2, gubun, del_yn, updated_at, updated_by';
 
 export async function fetchProducts(): Promise<Product[]> {
   const supabase = getSupabaseClient();
@@ -32,22 +51,8 @@ export async function fetchProducts(): Promise<Product[]> {
     .from('products')
     .select(productSelectColumns)
     .eq('del_yn', 'N')
-    .order('no');
-
-  if (error) {
-    throw toReadableError(error);
-  }
-
-  return (data ?? []).map((product: ProductRow) => mapProductRow(product));
-}
-
-export async function fetchProductsByClient(clientName: string): Promise<Product[]> {
-  const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select(productSelectColumns)
-    .eq('del_yn', 'N')
-    .eq('client', clientName)
+    .order('name1')
+    .order('client')
     .order('no');
 
   if (error) {
@@ -67,6 +72,7 @@ export async function fetchProductsByClientId(clientId: string): Promise<Product
     .select(productSelectColumns)
     .eq('del_yn', 'N')
     .eq('client_id', normalizedClientId)
+    .order('name1')
     .order('no');
 
   if (error) {
@@ -76,12 +82,106 @@ export async function fetchProductsByClientId(clientId: string): Promise<Product
   return (data ?? []).map((product: ProductRow) => mapProductRow(product));
 }
 
+export async function fetchProductMasters(): Promise<ProductMaster[]> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('product_masters')
+    .select(productMasterSelectColumns)
+    .eq('del_yn', 'N')
+    .order('name1')
+    .order('id');
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  const linkedCounts = await fetchLinkedProductCounts();
+  return (data ?? []).map((master: ProductMasterRow) => mapProductMasterRow(master, linkedCounts));
+}
+
+export async function createProductMaster(input: ProductMasterInput): Promise<ProductMaster> {
+  const supabase = getSupabaseClient();
+  const payload = {
+    name1: input.name1,
+    name2: input.name2 || input.name1,
+    gubun: input.gubun,
+    ...getActiveAuditFields(),
+  };
+
+  const { data, error } = await supabase
+    .from('product_masters')
+    .insert(payload)
+    .select(productMasterSelectColumns)
+    .single();
+
+  if (error || !data) {
+    throw toReadableError(error);
+  }
+
+  return mapProductMasterRow(data, new Map());
+}
+
+export async function updateProductMaster(id: string, input: ProductMasterInput): Promise<ProductMaster> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('product_masters')
+    .update({
+      name1: input.name1,
+      name2: input.name2 || input.name1,
+      gubun: input.gubun,
+      ...getActiveAuditFields(),
+    })
+    .eq('id', id)
+    .eq('del_yn', 'N')
+    .select(productMasterSelectColumns)
+    .single();
+
+  if (error || !data) {
+    throw toReadableError(error);
+  }
+
+  const linkedCounts = await fetchLinkedProductCounts();
+  return mapProductMasterRow(data, linkedCounts);
+}
+
+export async function removeProductMaster(id: string) {
+  const supabase = getSupabaseClient();
+  const { count, error: countError } = await supabase
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('product_master_id', id)
+    .eq('del_yn', 'N');
+
+  if (countError) {
+    throw toReadableError(countError);
+  }
+
+  if ((count ?? 0) > 0) {
+    throw new Error('연결된 거래처별 품목이 있어 공통 품목을 삭제할 수 없습니다.');
+  }
+
+  const { error } = await supabase
+    .from('product_masters')
+    .update(getDeletedAuditFields())
+    .eq('id', id)
+    .eq('del_yn', 'N');
+
+  if (error) {
+    throw toReadableError(error);
+  }
+}
+
 export async function createProduct(input: ProductInput): Promise<Product> {
   const supabase = getSupabaseClient();
+  const productMasterId = toNullableDbId(input.productMasterId);
+  if (productMasterId === null) {
+    throw new Error('공통 품목을 먼저 선택해 주세요.');
+  }
 
   const nextNo = await fetchNextProductNo();
   const payload = {
     no: nextNo,
+    product_master_id: productMasterId,
     client_id: toNullableDbId(input.clientId),
     client: input.client,
     gubun: input.gubun,
@@ -130,10 +230,16 @@ export async function createProduct(input: ProductInput): Promise<Product> {
 
 export async function updateProduct(id: string, currentNo: number | null, input: ProductInput): Promise<Product> {
   const supabase = getSupabaseClient();
+  const productMasterId = toNullableDbId(input.productMasterId);
+  if (productMasterId === null) {
+    throw new Error('공통 품목을 먼저 선택해 주세요.');
+  }
+
   const { data, error } = await supabase
     .from('products')
     .update({
       no: currentNo,
+      product_master_id: productMasterId,
       client_id: toNullableDbId(input.clientId),
       client: input.client,
       gubun: input.gubun,
@@ -166,6 +272,27 @@ export async function removeProduct(id: string) {
   if (error) {
     throw toReadableError(error);
   }
+}
+
+async function fetchLinkedProductCounts() {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select('product_master_id')
+    .eq('del_yn', 'N');
+
+  if (error) {
+    throw toReadableError(error);
+  }
+
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    const productMasterId = String((row as { product_master_id?: string | number | null }).product_master_id ?? '').trim();
+    if (!productMasterId) continue;
+    counts.set(productMasterId, (counts.get(productMasterId) ?? 0) + 1);
+  }
+
+  return counts;
 }
 
 async function fetchNextProductNo() {
@@ -208,10 +335,42 @@ function isProductsPrimaryKeyError(error: unknown) {
   return maybeError.code === '23505' && String(maybeError.message ?? '').includes('products_pkey');
 }
 
+function mapProductMasterRow(productMaster: ProductMasterRow, linkedCounts: Map<string, number>): ProductMaster {
+  const id = String(productMaster.id);
+  return {
+    id,
+    name1: productMaster.name1 ?? '',
+    name2: productMaster.name2 ?? '',
+    gubun: productMaster.gubun ?? '',
+    linkedProductCount: linkedCounts.get(id) ?? 0,
+    delYn: (productMaster.del_yn ?? 'N') as ProductMaster['delYn'],
+    updatedAt: productMaster.updated_at ?? null,
+    updatedBy: productMaster.updated_by ?? '',
+  };
+}
+
+function normalizeProductMasterRelation(
+  productMaster: ProductRow['product_master'],
+): ProductMasterRow | null {
+  if (Array.isArray(productMaster)) {
+    return productMaster[0] ?? null;
+  }
+  return productMaster ?? null;
+}
+
 function mapProductRow(product: ProductRow): Product {
+  const productMaster = normalizeProductMasterRelation(product.product_master);
+
   return {
     id: String(product.id),
     no: product.no ?? null,
+    productMasterId:
+      product.product_master_id === null || product.product_master_id === undefined
+        ? null
+        : String(product.product_master_id),
+    masterName1: productMaster?.name1 ?? product.name1 ?? '',
+    masterName2: productMaster?.name2 ?? product.name2 ?? '',
+    masterGubun: productMaster?.gubun ?? product.gubun ?? '',
     clientId: product.client_id === null || product.client_id === undefined ? null : String(product.client_id),
     gubun: product.gubun ?? '',
     client: product.client ?? '',
@@ -239,5 +398,5 @@ function toReadableError(error: unknown) {
     return new Error(String(error.message));
   }
 
-  return new Error('품목 저장 중 알 수 없는 오류가 발생했습니다.');
+  return new Error('품목 처리 중 알 수 없는 오류가 발생했습니다.');
 }
