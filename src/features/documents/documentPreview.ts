@@ -30,7 +30,7 @@ export function buildSharedPreviewItems(
 ): SharedPreviewItem[] {
   return itemSummaries
     .map((summary, index) => {
-      if (!summary.name1 || summary.qty <= 0) return null;
+      if (!summary.name1 || summary.qty === 0) return null;
       const item = items[index];
 
       return {
@@ -94,6 +94,7 @@ export function buildSharedPreviewData(
 export function buildDocumentPayload(
   previewData: SharedPreviewData,
   author: string,
+  issueNoEditHistory = '',
 ): DocumentPayload {
   return {
     issueNo: previewData.issueNo,
@@ -111,6 +112,7 @@ export function buildDocumentPayload(
     orderDate: previewData.orderDate,
     arriveDate: previewData.arriveDate,
     deliveryAddr: previewData.deliveryAddr,
+    issueNoEditHistory,
     remark: previewData.remark,
     requestNote: previewData.requestNote,
     totalSupply: previewData.totalSupply,
@@ -147,7 +149,7 @@ export function buildHistoryDraftItems(
 ): DocumentHistoryItem[] {
   return itemSummaries
     .map((summary, index) => {
-      if (!summary.name1 || summary.qty <= 0) return null;
+      if (!summary.name1 || summary.qty === 0) return null;
 
       const item = items[index];
       const existingItem = draft?.items.find((row) => row.id === item.id);

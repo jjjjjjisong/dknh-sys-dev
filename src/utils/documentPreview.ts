@@ -97,10 +97,10 @@ export function buildInvoicePreviewHtml(
       .map((item) => {
         const vatAmount = showPrice && item.vat ? Math.round(item.supply * 0.1) : 0;
         const unitPriceDisplay =
-          showPrice && item.unitPrice > 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
+          showPrice && item.unitPrice !== 0 ? escapeHtml(formatNumber(item.unitPrice)) : '';
         const supplyDisplay =
-          showPrice && item.supply > 0 ? escapeHtml(formatNumber(item.supply)) : '';
-        const vatDisplay = showPrice && vatAmount > 0 ? escapeHtml(formatNumber(vatAmount)) : '';
+          showPrice && item.supply !== 0 ? escapeHtml(formatNumber(item.supply)) : '';
+        const vatDisplay = showPrice && vatAmount !== 0 ? escapeHtml(formatNumber(vatAmount)) : '';
 
         return `<tr>
           <td class="c date-col">${escapeHtml(formatMonthDay(item.arriveDate || group.arriveDate || ''))}</td>
@@ -116,13 +116,13 @@ export function buildInvoicePreviewHtml(
 
     const totalQty = group.items.reduce((sum, item) => sum + item.qty, 0);
     const totalSupplyDisplay =
-      showPrice && group.totalSupply > 0 ? escapeHtml(formatNumber(group.totalSupply)) : '';
+      showPrice && group.totalSupply !== 0 ? escapeHtml(formatNumber(group.totalSupply)) : '';
     const totalVatDisplay =
-      showPrice && group.totalVat > 0 ? escapeHtml(formatNumber(group.totalVat)) : '';
+      showPrice && group.totalVat !== 0 ? escapeHtml(formatNumber(group.totalVat)) : '';
     const totalAmountDisplay =
-      showPrice && group.totalAmount > 0 ? escapeHtml(formatNumber(group.totalAmount)) : '';
+      showPrice && group.totalAmount !== 0 ? escapeHtml(formatNumber(group.totalAmount)) : '';
     const amountText =
-      showPrice && group.totalAmount > 0 ? escapeHtml(formatNumber(group.totalAmount)) : '';
+      showPrice && group.totalAmount !== 0 ? escapeHtml(formatNumber(group.totalAmount)) : '';
     const issueDateFmt = group.arriveDate ? formatKoreanDate(group.arriveDate) : formatKoreanDate(today);
 
     return `<div class="invoice-doc">

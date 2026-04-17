@@ -651,6 +651,7 @@ export default function DocHistoryPage() {
                 <label className="field field-span-2-cols"><span>납품주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
                 <label className="field field-span-2"><span>유의사항</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
                 <label className="field field-span-2"><span>요청사항</span><textarea rows={2} value={draft.requestNote} onChange={(event) => updateDraft('requestNote', event.target.value)} /></label>
+                <label className="field field-span-2"><span>발급번호 수정이력</span><textarea rows={2} value={draft.issueNoEditHistory} onChange={(event) => updateDraft('issueNoEditHistory', event.target.value)} /></label>
               </div>
             </section>
 
@@ -816,7 +817,7 @@ function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]):
       manualGubun: productId === MANUAL_PRODUCT_ID ? item.gubun || '기타' : '',
       orderDate: item.orderDate || draft.orderDate || '',
       arriveDate: item.arriveDate || draft.arriveDate || '',
-      qty: item.qty || 0,
+      qty: item.qty ?? 0,
       customPallet: item.customPallet ?? null,
       customBox: item.customBox ?? null,
       unitPrice: item.unitPrice ?? null,
@@ -830,11 +831,11 @@ function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]):
 
 function calculatePallet(item: DocumentHistoryItem) {
   const eaPerP = item.eaPerB && item.boxPerP ? item.eaPerB * item.boxPerP : null;
-  return eaPerP ? Math.ceil(item.qty / eaPerP) : '';
+  return eaPerP ? getSignedPackageCount(item.qty, eaPerP) : '';
 }
 
 function calculateBox(item: DocumentHistoryItem) {
-  return item.eaPerB ? Math.ceil(item.qty / item.eaPerB) : '';
+  return item.eaPerB ? getSignedPackageCount(item.qty, item.eaPerB) : '';
 }
 
 function sumItemQty(items: DocumentHistoryItem[]) {
@@ -881,4 +882,10 @@ function getDateOneYearLater(baseDate: string) {
   const date = new Date(baseDate);
   date.setFullYear(date.getFullYear() + 1);
   return date.toISOString().slice(0, 10);
+}
+
+function getSignedPackageCount(qty: number, unitSize: number) {
+  if (!Number.isFinite(qty) || !Number.isFinite(unitSize) || unitSize <= 0) return '';
+  if (qty <= 0) return '';
+  return Math.ceil(qty / unitSize);
 }

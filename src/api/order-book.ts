@@ -283,7 +283,7 @@ function getBoxValue(item: DocumentItemLookupRow | undefined, qty: number) {
   if (!item) return null;
   if (typeof item.custom_box === 'number') return item.custom_box;
   if (typeof item.ea_per_b === 'number' && item.ea_per_b > 0) {
-    return Math.ceil(qty / item.ea_per_b);
+    return getSignedPackageCount(qty, item.ea_per_b);
   }
   return null;
 }
@@ -297,9 +297,15 @@ function getPalletValue(item: DocumentItemLookupRow | undefined, qty: number) {
     typeof item.box_per_p === 'number' &&
     item.box_per_p > 0
   ) {
-    return Math.ceil(qty / (item.ea_per_b * item.box_per_p));
+    return getSignedPackageCount(qty, item.ea_per_b * item.box_per_p);
   }
   return null;
+}
+
+function getSignedPackageCount(qty: number, unitSize: number) {
+  if (!Number.isFinite(qty) || !Number.isFinite(unitSize) || unitSize <= 0) return null;
+  if (qty <= 0) return null;
+  return Math.ceil(qty / unitSize);
 }
 
 function mapOrderBookShippingStatus(shippedStatus: string | null | undefined): OrderBookShippingStatus {

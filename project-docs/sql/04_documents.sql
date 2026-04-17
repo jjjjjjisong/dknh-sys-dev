@@ -16,6 +16,7 @@ create table if not exists public.documents (
   order_date date null,
   arrive_date date null,
   delivery_addr text not null default '',
+  issue_no_edit_history text not null default '',
   remark text not null default '',
   request_note text not null default '',
   total_supply numeric not null default 0,

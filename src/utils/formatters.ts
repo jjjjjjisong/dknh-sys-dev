@@ -43,6 +43,14 @@ export function stripNonNumeric(value: string) {
   return value.replace(/[^0-9]/g, '');
 }
 
+export function stripNonNumericAllowNegative(value: string) {
+  const trimmed = value.trim();
+  const negative = trimmed.startsWith('-');
+  const digits = trimmed.replace(/[^0-9]/g, '');
+  if (!digits) return negative ? '-' : '';
+  return `${negative ? '-' : ''}${digits}`;
+}
+
 export function getErrorMessage(err: unknown, fallback: string) {
   if (err instanceof Error && err.message) {
     return err.message;

@@ -241,7 +241,7 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow, 4, startRow, 10);
-    ws.getCell(startRow, 4).value = invoiceData.totalAmount > 0 ? `${formatNumber(invoiceData.totalAmount)} 원` : '';
+    ws.getCell(startRow, 4).value = invoiceData.totalAmount !== 0 ? `${formatNumber(invoiceData.totalAmount)} 원` : '';
     ws.getCell(startRow, 4).font = font10Bold;
     ws.getCell(startRow, 4).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getRow(startRow).height = 25;
@@ -284,9 +284,9 @@ function createInvoiceWorkbook(data: InvoiceData) {
         ws.getCell(startRow, 2).value = item.name2 || item.name1;
         ws.getCell(startRow, 5).value = item.qty ? Number(item.qty) : '';
         ws.mergeCells(startRow, 6, startRow, 7);
-        ws.getCell(startRow, 6).value = item.unitPrice > 0 ? Number(item.unitPrice) : '';
-        ws.getCell(startRow, 8).value = item.supply > 0 ? Number(item.supply) : '';
-        ws.getCell(startRow, 9).value = vatAmount > 0 ? vatAmount : '';
+        ws.getCell(startRow, 6).value = item.unitPrice !== 0 ? Number(item.unitPrice) : '';
+        ws.getCell(startRow, 8).value = item.supply !== 0 ? Number(item.supply) : '';
+        ws.getCell(startRow, 9).value = vatAmount !== 0 ? vatAmount : '';
         ws.getCell(startRow, 10).value = item.invoiceNote || '';
       } else {
         ws.mergeCells(startRow, 2, startRow, 4);
@@ -322,8 +322,8 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell(startRow, 5).value = totalQty;
     ws.mergeCells(startRow, 6, startRow, 7);
-    ws.getCell(startRow, 8).value = invoiceData.totalSupply > 0 ? invoiceData.totalSupply : '';
-    ws.getCell(startRow, 9).value = invoiceData.totalVat > 0 ? invoiceData.totalVat : '';
+    ws.getCell(startRow, 8).value = invoiceData.totalSupply !== 0 ? invoiceData.totalSupply : '';
+    ws.getCell(startRow, 9).value = invoiceData.totalVat !== 0 ? invoiceData.totalVat : '';
 
     for (let c = 1; c <= 10; c += 1) {
       ws.getCell(startRow, c).border = createThinBorder();
@@ -346,7 +346,7 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow, 1).value = '총 합 계';
     ws.getCell(startRow, 1).font = font10Bold;
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getCell(startRow, 5).value = invoiceData.totalAmount > 0 ? invoiceData.totalAmount : '';
+    ws.getCell(startRow, 5).value = invoiceData.totalAmount !== 0 ? invoiceData.totalAmount : '';
     ws.getCell(startRow, 5).font = font10Bold;
     ws.getCell(startRow, 5).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getCell(startRow, 5).numFmt = '#,##0';
