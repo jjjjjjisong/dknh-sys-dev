@@ -13,6 +13,10 @@ type ProductMasterRow = {
   name1: string | null;
   name2: string | null;
   gubun: string | null;
+  ea_per_b: number | null;
+  box_per_p: number | null;
+  ea_per_p: number | null;
+  pallets_per_truck: number | null;
   del_yn?: string | null;
   updated_at?: string | null;
   updated_by?: string | null;
@@ -23,6 +27,7 @@ type ProductRow = {
   no: number | null;
   product_master_id: number | string | null;
   client_id: number | string | null;
+  receiver: string | null;
   gubun: string | null;
   client: string | null;
   name1: string | null;
@@ -41,9 +46,10 @@ type ProductRow = {
 };
 
 const productSelectColumns =
-  'id, no, product_master_id, client_id, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by, product_master:product_masters(id, name1, name2, gubun, del_yn, updated_at, updated_by)';
+  'id, no, product_master_id, client_id, receiver, gubun, client, name1, name2, supplier, cost_price, sell_price, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by, product_master:product_masters(id, name1, name2, gubun, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by)';
 
-const productMasterSelectColumns = 'id, name1, name2, gubun, del_yn, updated_at, updated_by';
+const productMasterSelectColumns =
+  'id, name1, name2, gubun, ea_per_b, box_per_p, ea_per_p, pallets_per_truck, del_yn, updated_at, updated_by';
 
 export async function fetchProducts(): Promise<Product[]> {
   const supabase = getSupabaseClient();
@@ -51,8 +57,6 @@ export async function fetchProducts(): Promise<Product[]> {
     .from('products')
     .select(productSelectColumns)
     .eq('del_yn', 'N')
-    .order('name1')
-    .order('client')
     .order('no');
 
   if (error) {
@@ -72,7 +76,6 @@ export async function fetchProductsByClientId(clientId: string): Promise<Product
     .select(productSelectColumns)
     .eq('del_yn', 'N')
     .eq('client_id', normalizedClientId)
-    .order('name1')
     .order('no');
 
   if (error) {
@@ -88,7 +91,6 @@ export async function fetchProductMasters(): Promise<ProductMaster[]> {
     .from('product_masters')
     .select(productMasterSelectColumns)
     .eq('del_yn', 'N')
-    .order('name1')
     .order('id');
 
   if (error) {
@@ -105,6 +107,10 @@ export async function createProductMaster(input: ProductMasterInput): Promise<Pr
     name1: input.name1,
     name2: input.name2 || input.name1,
     gubun: input.gubun,
+    ea_per_b: input.ea_per_b,
+    box_per_p: input.box_per_p,
+    ea_per_p: input.ea_per_p,
+    pallets_per_truck: input.pallets_per_truck,
     ...getActiveAuditFields(),
   };
 
@@ -129,6 +135,10 @@ export async function updateProductMaster(id: string, input: ProductMasterInput)
       name1: input.name1,
       name2: input.name2 || input.name1,
       gubun: input.gubun,
+      ea_per_b: input.ea_per_b,
+      box_per_p: input.box_per_p,
+      ea_per_p: input.ea_per_p,
+      pallets_per_truck: input.pallets_per_truck,
       ...getActiveAuditFields(),
     })
     .eq('id', id)
@@ -183,6 +193,7 @@ export async function createProduct(input: ProductInput): Promise<Product> {
     no: nextNo,
     product_master_id: productMasterId,
     client_id: toNullableDbId(input.clientId),
+    receiver: input.receiver,
     client: input.client,
     gubun: input.gubun,
     supplier: input.supplier,
@@ -241,6 +252,7 @@ export async function updateProduct(id: string, currentNo: number | null, input:
       no: currentNo,
       product_master_id: productMasterId,
       client_id: toNullableDbId(input.clientId),
+      receiver: input.receiver,
       client: input.client,
       gubun: input.gubun,
       supplier: input.supplier,
@@ -287,7 +299,9 @@ async function fetchLinkedProductCounts() {
 
   const counts = new Map<string, number>();
   for (const row of data ?? []) {
-    const productMasterId = String((row as { product_master_id?: string | number | null }).product_master_id ?? '').trim();
+    const productMasterId = String(
+      (row as { product_master_id?: string | number | null }).product_master_id ?? '',
+    ).trim();
     if (!productMasterId) continue;
     counts.set(productMasterId, (counts.get(productMasterId) ?? 0) + 1);
   }
@@ -335,13 +349,20 @@ function isProductsPrimaryKeyError(error: unknown) {
   return maybeError.code === '23505' && String(maybeError.message ?? '').includes('products_pkey');
 }
 
-function mapProductMasterRow(productMaster: ProductMasterRow, linkedCounts: Map<string, number>): ProductMaster {
+function mapProductMasterRow(
+  productMaster: ProductMasterRow,
+  linkedCounts: Map<string, number>,
+): ProductMaster {
   const id = String(productMaster.id);
   return {
     id,
     name1: productMaster.name1 ?? '',
     name2: productMaster.name2 ?? '',
     gubun: productMaster.gubun ?? '',
+    ea_per_b: productMaster.ea_per_b ?? null,
+    box_per_p: productMaster.box_per_p ?? null,
+    ea_per_p: productMaster.ea_per_p ?? null,
+    pallets_per_truck: productMaster.pallets_per_truck ?? null,
     linkedProductCount: linkedCounts.get(id) ?? 0,
     delYn: (productMaster.del_yn ?? 'N') as ProductMaster['delYn'],
     updatedAt: productMaster.updated_at ?? null,
@@ -371,18 +392,23 @@ function mapProductRow(product: ProductRow): Product {
     masterName1: productMaster?.name1 ?? product.name1 ?? '',
     masterName2: productMaster?.name2 ?? product.name2 ?? '',
     masterGubun: productMaster?.gubun ?? product.gubun ?? '',
-    clientId: product.client_id === null || product.client_id === undefined ? null : String(product.client_id),
-    gubun: product.gubun ?? '',
+    clientId:
+      product.client_id === null || product.client_id === undefined
+        ? null
+        : String(product.client_id),
+    receiver: product.receiver ?? '',
+    gubun: productMaster?.gubun ?? product.gubun ?? '',
     client: product.client ?? '',
     name1: product.name1 ?? '',
     name2: product.name2 ?? '',
     supplier: product.supplier ?? '',
     cost_price: product.cost_price ?? null,
     sell_price: product.sell_price ?? null,
-    ea_per_b: product.ea_per_b ?? null,
-    box_per_p: product.box_per_p ?? null,
-    ea_per_p: product.ea_per_p ?? null,
-    pallets_per_truck: product.pallets_per_truck ?? null,
+    ea_per_b: productMaster?.ea_per_b ?? product.ea_per_b ?? null,
+    box_per_p: productMaster?.box_per_p ?? product.box_per_p ?? null,
+    ea_per_p: productMaster?.ea_per_p ?? product.ea_per_p ?? null,
+    pallets_per_truck:
+      productMaster?.pallets_per_truck ?? product.pallets_per_truck ?? null,
     delYn: (product.del_yn ?? 'N') as Product['delYn'],
     updatedAt: product.updated_at ?? null,
     updatedBy: product.updated_by ?? '',

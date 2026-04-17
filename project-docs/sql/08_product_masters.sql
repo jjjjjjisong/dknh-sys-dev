@@ -5,12 +5,31 @@ create table if not exists public.product_masters (
   gubun text not null,
   name1 text not null,
   name2 text not null default '',
+  ea_per_b integer null,
+  box_per_p integer null,
+  ea_per_p integer null,
+  pallets_per_truck integer null,
   del_yn text not null default 'N',
   updated_by text not null default ''
 );
 
 alter table public.products
   add column if not exists product_master_id bigint null;
+
+alter table public.products
+  add column if not exists receiver text not null default '';
+
+alter table public.product_masters
+  add column if not exists ea_per_b integer null;
+
+alter table public.product_masters
+  add column if not exists box_per_p integer null;
+
+alter table public.product_masters
+  add column if not exists ea_per_p integer null;
+
+alter table public.product_masters
+  add column if not exists pallets_per_truck integer null;
 
 do $$
 begin

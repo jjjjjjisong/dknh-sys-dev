@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+﻿import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import * as XLSX from 'xlsx';
 import { fetchClients } from '../api/clients';
 import {
@@ -13,11 +13,16 @@ import {
 } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
+import {
+  ProductItemModal,
+  ProductMasterModal,
+} from '../components/products/ProductManagementModals';
+import {
+  MasterProductsTable,
+  ProductsTable,
+} from '../components/products/ProductManagementTables';
 import Alert from '../components/ui/Alert';
 import Button from '../components/ui/Button';
-import FormField from '../components/ui/FormField';
-import Modal from '../components/ui/Modal';
-import TableActionButton from '../components/ui/TableActionButton';
 import type { Client } from '../types/client';
 import type {
   Product,
@@ -34,11 +39,16 @@ const emptyMasterForm: ProductMasterInput = {
   gubun: DEFAULT_GUBUN,
   name1: '',
   name2: '',
+  ea_per_b: null,
+  box_per_p: null,
+  ea_per_p: null,
+  pallets_per_truck: null,
 };
 
 const emptyProductForm: ProductInput = {
   productMasterId: '',
   clientId: '',
+  receiver: '',
   gubun: DEFAULT_GUBUN,
   client: '',
   supplier: '',
@@ -66,7 +76,7 @@ function formatNullableNumber(value: number | null) {
 }
 
 export default function MasterProductPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('products');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('masters');
   const [products, setProducts] = useState<Product[]>([]);
   const [productMasters, setProductMasters] = useState<ProductMaster[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -85,6 +95,7 @@ export default function MasterProductPage() {
   const [saving, setSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+  const [expandedMasterIds, setExpandedMasterIds] = useState<string[]>([]);
   const clientSearchBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -150,6 +161,23 @@ export default function MasterProductPage() {
     });
   }, [clientFilter, products, query]);
 
+  const productsByMasterId = useMemo(() => {
+    const next = new Map<string, Product[]>();
+    for (const product of products) {
+      const masterId = product.productMasterId ?? '';
+      if (!masterId) continue;
+      const rows = next.get(masterId) ?? [];
+      rows.push(product);
+      next.set(masterId, rows);
+    }
+
+    for (const rows of next.values()) {
+      rows.sort((a, b) => (a.no ?? Number.MAX_SAFE_INTEGER) - (b.no ?? Number.MAX_SAFE_INTEGER));
+    }
+
+    return next;
+  }, [products]);
+
   const activeRows = activeTab === 'masters' ? filteredMasters : filteredProducts;
   const pagedRows = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
@@ -180,7 +208,16 @@ export default function MasterProductPage() {
   }, [clientDropdownOpen]);
 
   function updateMasterForm<K extends keyof ProductMasterInput>(key: K, value: ProductMasterInput[K]) {
-    setMasterForm((current) => ({ ...current, [key]: value }));
+    setMasterForm((current) => {
+      const next = { ...current, [key]: value };
+      if (key === 'ea_per_b' || key === 'box_per_p') {
+        next.ea_per_p =
+          next.ea_per_b !== null && next.box_per_p !== null
+            ? next.ea_per_b * next.box_per_p
+            : null;
+      }
+      return next;
+    });
   }
 
   function updateProductForm<K extends keyof ProductInput>(key: K, value: ProductInput[K]) {
@@ -209,17 +246,31 @@ export default function MasterProductPage() {
       gubun: master.gubun || DEFAULT_GUBUN,
       name1: master.name1,
       name2: master.name2,
+      ea_per_b: master.ea_per_b,
+      box_per_p: master.box_per_p,
+      ea_per_p: master.ea_per_p,
+      pallets_per_truck: master.pallets_per_truck,
     });
     setMasterFormError(null);
     setMasterModalOpen(true);
   }
 
-  function openCreateProductModal() {
+  function openCreateProductModal(masterId?: string) {
     setEditingProduct(null);
-    setProductForm(emptyProductForm);
+    setProductForm(
+      masterId
+        ? {
+            ...emptyProductForm,
+            productMasterId: masterId,
+          }
+        : emptyProductForm,
+    );
     setProductFormError(null);
     setClientDropdownOpen(false);
     setProductModalOpen(true);
+    if (masterId) {
+      applyProductMasterDefaults(masterId);
+    }
   }
 
   function openEditProductModal(product: Product) {
@@ -227,6 +278,7 @@ export default function MasterProductPage() {
     setProductForm({
       productMasterId: product.productMasterId ?? '',
       clientId: product.clientId ?? '',
+      receiver: product.receiver,
       gubun: product.gubun || product.masterGubun || DEFAULT_GUBUN,
       client: product.client,
       supplier: product.supplier,
@@ -272,9 +324,19 @@ export default function MasterProductPage() {
       ...current,
       productMasterId: selectedMaster.id,
       gubun: selectedMaster.gubun || current.gubun || DEFAULT_GUBUN,
-      name1: selectedMaster.name1,
-      name2: selectedMaster.name2 || selectedMaster.name1,
+      ea_per_b: selectedMaster.ea_per_b,
+      box_per_p: selectedMaster.box_per_p,
+      ea_per_p: selectedMaster.ea_per_p,
+      pallets_per_truck: selectedMaster.pallets_per_truck,
     }));
+  }
+
+  function toggleMasterAccordion(masterId: string) {
+    setExpandedMasterIds((current) =>
+      current.includes(masterId)
+        ? current.filter((id) => id !== masterId)
+        : [...current, masterId],
+    );
   }
 
   async function handleMasterSubmit(event: FormEvent) {
@@ -293,6 +355,13 @@ export default function MasterProductPage() {
         gubun: masterForm.gubun.trim() || DEFAULT_GUBUN,
         name1: masterForm.name1.trim(),
         name2: masterForm.name2.trim() || masterForm.name1.trim(),
+        ea_per_b: masterForm.ea_per_b,
+        box_per_p: masterForm.box_per_p,
+        ea_per_p:
+          masterForm.ea_per_b !== null && masterForm.box_per_p !== null
+            ? masterForm.ea_per_b * masterForm.box_per_p
+            : masterForm.ea_per_p,
+        pallets_per_truck: masterForm.pallets_per_truck,
       };
 
       if (editingMaster) {
@@ -335,6 +404,7 @@ export default function MasterProductPage() {
       const payload: ProductInput = {
         productMasterId: productForm.productMasterId,
         clientId: productForm.clientId,
+        receiver: productForm.receiver.trim(),
         gubun: productForm.gubun.trim() || DEFAULT_GUBUN,
         client: productForm.client.trim(),
         supplier: productForm.supplier.trim(),
@@ -492,7 +562,9 @@ export default function MasterProductPage() {
               <Button
                 type="button"
                 variant="primary"
-                onClick={activeTab === 'masters' ? openCreateMasterModal : openCreateProductModal}
+                onClick={
+                  activeTab === 'masters' ? openCreateMasterModal : () => openCreateProductModal()
+                }
               >
                 {activeTab === 'masters' ? '공통 품목 추가' : '거래처별 품목 추가'}
               </Button>
@@ -503,123 +575,29 @@ export default function MasterProductPage() {
         {loading ? (
           <div className="empty-state">품목 목록을 불러오는 중입니다...</div>
         ) : activeTab === 'masters' ? (
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th style={{ width: 46 }}>No</th>
-                  <th style={{ width: 80 }}>구분</th>
-                  <th style={{ minWidth: 260 }}>품목 정보</th>
-                  <th style={{ width: 110 }}>연결 개수</th>
-                  <th style={{ width: 80 }}>상태</th>
-                  <th style={{ width: 60 }}>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMasters.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="table-empty">검색 결과가 없습니다.</td>
-                  </tr>
-                ) : (
-                  (pagedRows as ProductMaster[]).map((master, index) => (
-                    <tr
-                      key={master.id}
-                      className="history-clickable-row"
-                      onClick={() => openEditMasterModal(master)}
-                    >
-                      <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
-                      <td><div className="table-clamp-2" title={master.gubun || '-'}>{master.gubun || '-'}</div></td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <div className="table-clamp-2" style={{ fontWeight: 500, color: 'var(--text-1)' }} title={master.name1 || '-'}>
-                            {master.name1 || '-'}
-                          </div>
-                          <div className="table-clamp-2" style={{ fontSize: '12.5px', color: 'var(--text-3)' }} title={`기본명: ${master.name2 || '-'}`}>
-                            명세서 기본명: {master.name2 || '-'}
-                          </div>
-                        </div>
-                      </td>
-                      <td>{master.linkedProductCount}</td>
-                      <td>
-                        <span className={master.delYn === 'Y' ? 'badge badge-muted' : 'badge'}>
-                          {master.delYn === 'Y' ? '비활성' : '사용중'}
-                        </span>
-                      </td>
-                      <td onClick={(event) => event.stopPropagation()}>
-                        <div className="button-row">
-                          <TableActionButton variant="danger" onClick={() => void handleDeleteMaster(master)}>
-                            삭제
-                          </TableActionButton>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <MasterProductsTable
+            filteredMasters={filteredMasters}
+            pagedMasters={pagedRows as ProductMaster[]}
+            currentPage={currentPage}
+            pageSize={PAGE_SIZE}
+            expandedMasterIds={expandedMasterIds}
+            productsByMasterId={productsByMasterId}
+            onToggleMaster={toggleMasterAccordion}
+            onCreateChild={openCreateProductModal}
+            onEditMaster={openEditMasterModal}
+            onDeleteMaster={(master) => void handleDeleteMaster(master)}
+            onEditChild={openEditProductModal}
+            onDeleteChild={(product) => void handleDeleteProduct(product)}
+          />
         ) : (
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th style={{ width: 46 }}>No</th>
-                  <th style={{ width: 80 }}>구분</th>
-                  <th style={{ width: 150 }}>거래처</th>
-                  <th style={{ minWidth: 260 }}>품목 정보</th>
-                  <th style={{ width: 120 }}>공급처</th>
-                  <th style={{ width: 90, textAlign: 'right' }}>입고 단가</th>
-                  <th style={{ width: 90, textAlign: 'right' }}>판매 단가</th>
-                  <th style={{ width: 80 }}>상태</th>
-                  <th style={{ width: 60 }}>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="table-empty">검색 결과가 없습니다.</td>
-                  </tr>
-                ) : (
-                  (pagedRows as Product[]).map((product, index) => (
-                    <tr
-                      key={product.id}
-                      className="history-clickable-row"
-                      onClick={() => openEditProductModal(product)}
-                    >
-                      <td>{(currentPage - 1) * PAGE_SIZE + index + 1}</td>
-                      <td><div className="table-clamp-2" title={product.gubun || '-'}>{product.gubun || '-'}</div></td>
-                      <td><div className="table-clamp-2" title={product.client || '-'}>{product.client || '-'}</div></td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <div className="table-clamp-2" style={{ fontWeight: 500, color: 'var(--text-1)' }} title={product.name1 || '-'}>
-                            {product.name1 || '-'}
-                          </div>
-                          <div className="table-clamp-2" style={{ fontSize: '12.5px', color: 'var(--text-3)' }} title={`공통: ${product.masterName1 || '-'}`}>
-                            공통: {product.masterName1 || '-'}
-                          </div>
-                        </div>
-                      </td>
-                      <td><div className="table-clamp-2" title={product.supplier || '-'}>{product.supplier || '-'}</div></td>
-                      <td style={{ textAlign: 'right' }}>{product.cost_price ?? '-'}</td>
-                      <td style={{ textAlign: 'right' }}>{product.sell_price ?? '-'}</td>
-                      <td>
-                        <span className={product.delYn === 'Y' ? 'badge badge-muted' : 'badge'}>
-                          {product.delYn === 'Y' ? '비활성' : '사용중'}
-                        </span>
-                      </td>
-                      <td onClick={(event) => event.stopPropagation()}>
-                        <div className="button-row">
-                          <TableActionButton variant="danger" onClick={() => void handleDeleteProduct(product)}>
-                            삭제
-                          </TableActionButton>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ProductsTable
+            filteredProducts={filteredProducts}
+            pagedProducts={pagedRows as Product[]}
+            currentPage={currentPage}
+            pageSize={PAGE_SIZE}
+            onEditProduct={openEditProductModal}
+            onDeleteProduct={(product) => void handleDeleteProduct(product)}
+          />
         )}
 
         <Pagination
@@ -630,243 +608,40 @@ export default function MasterProductPage() {
         />
       </section>
 
-      <Modal
+      <ProductMasterModal
         open={masterModalOpen}
-        title={editingMaster ? '공통 품목 수정' : '공통 품목 추가'}
+        editingMaster={editingMaster}
+        masterForm={masterForm}
+        masterFormError={masterFormError}
+        saving={saving}
+        linkedProductsCount={linkedProductsForEditingMaster.length}
+        gubunChoices={GUBUN_CHOICES}
         onClose={closeMasterModal}
-        closeOnOverlayClick={false}
-        footer={
-          <>
-            <Button type="button" variant="secondary" onClick={closeMasterModal}>
-              취소
-            </Button>
-            <Button type="submit" variant="primary" form="product-master-form" disabled={saving}>
-              {saving ? '저장 중...' : '저장'}
-            </Button>
-          </>
-        }
-      >
-        <form id="product-master-form" className="form-grid" onSubmit={handleMasterSubmit}>
-          <FormField label="구분 *">
-            <select
-              value={masterForm.gubun}
-              onChange={(event) => updateMasterForm('gubun', event.target.value)}
-            >
-              {GUBUN_CHOICES.map((choice) => (
-                <option key={choice} value={choice}>
-                  {choice}
-                </option>
-              ))}
-            </select>
-          </FormField>
+        onSubmit={handleMasterSubmit}
+        onUpdateForm={updateMasterForm}
+        formatNullableNumber={formatNullableNumber}
+        parseNullableNumber={parseNullableNumber}
+      />
 
-          <FormField label="공통 품목명 *">
-            <input
-              value={masterForm.name1}
-              onChange={(event) => updateMasterForm('name1', event.target.value)}
-              placeholder="공통 품목명 입력"
-            />
-          </FormField>
-
-          <FormField label="거래명세서 기본명">
-            <input
-              value={masterForm.name2}
-              onChange={(event) => updateMasterForm('name2', event.target.value)}
-              placeholder="비워두면 공통 품목명과 동일하게 저장"
-            />
-          </FormField>
-
-          {editingMaster ? (
-            <div className="field">
-              <span>연결된 거래처별 품목</span>
-              <div>
-                {linkedProductsForEditingMaster.length === 0 ? (
-                  <span style={{ color: 'var(--text-3)', fontSize: 13 }}>연결된 거래처별 품목이 없습니다.</span>
-                ) : (
-                  <span className="badge">{linkedProductsForEditingMaster.length}개 연결됨</span>
-                )}
-              </div>
-            </div>
-          ) : null}
-
-          {masterFormError ? <Alert>{masterFormError}</Alert> : null}
-        </form>
-      </Modal>
-
-      <Modal
+      <ProductItemModal
         open={productModalOpen}
-        title={editingProduct ? '거래처별 품목 수정' : '거래처별 품목 추가'}
+        editingProduct={editingProduct}
+        productForm={productForm}
+        productFormError={productFormError}
+        saving={saving}
+        productMasters={productMasters}
+        clients={clients}
+        filteredFormClientOptions={filteredFormClientOptions}
+        clientDropdownOpen={clientDropdownOpen}
+        clientSearchBoxRef={clientSearchBoxRef}
         onClose={closeProductModal}
-        closeOnOverlayClick={false}
-        footer={
-          <>
-            <Button type="button" variant="secondary" onClick={closeProductModal}>
-              취소
-            </Button>
-            <Button type="submit" variant="primary" form="product-form" disabled={saving}>
-              {saving ? '저장 중...' : '저장'}
-            </Button>
-          </>
-        }
-      >
-        <form id="product-form" className="form-grid" onSubmit={handleProductSubmit}>
-
-          {/* ── 기본 정보 ── */}
-          <FormField label="공통 품목 *">
-            <select
-              value={productForm.productMasterId}
-              onChange={(event) => {
-                const nextId = event.target.value;
-                updateProductForm('productMasterId', nextId);
-                applyProductMasterDefaults(nextId);
-              }}
-            >
-              <option value="">공통 품목 선택</option>
-              {productMasters.map((master) => (
-                <option key={master.id} value={master.id}>
-                  {master.name1}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="거래처 *">
-            <div className="client-search-box" ref={clientSearchBoxRef}>
-              <input
-                className="search-input"
-                value={productForm.client}
-                onChange={(event) => {
-                  const nextClientName = event.target.value;
-                  const matchedClient = clients.find((client) => client.name === nextClientName);
-                  updateProductForm('client', nextClientName);
-                  updateProductForm('clientId', matchedClient?.id ?? '');
-                  setClientDropdownOpen(true);
-                }}
-                onFocus={() => setClientDropdownOpen(true)}
-                placeholder="거래처를 선택하세요."
-              />
-              <span className="client-search-caret" aria-hidden="true" />
-              {clientDropdownOpen ? (
-                <div className="client-search-dropdown">
-                  {filteredFormClientOptions.length > 0 ? (
-                    filteredFormClientOptions.map((client) => (
-                      <button
-                        key={client.id}
-                        type="button"
-                        className="client-search-option"
-                        onClick={() => handleClientSelect(client.name)}
-                      >
-                        {client.name}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="client-search-option disabled">검색 결과가 없습니다.</div>
-                  )}
-                </div>
-              ) : null}
-            </div>
-          </FormField>
-
-          {/* ── 공통품목 선택 시 자동완성되는 필드 ── */}
-          <div className="product-form-section field-span-2">
-            <p className="product-form-section-label">품목명</p>
-          </div>
-
-          <FormField label="거래처별 품목명 *">
-            <input
-              value={productForm.name1}
-              onChange={(event) => updateProductForm('name1', event.target.value)}
-              placeholder="거래처별 품목명 입력"
-            />
-          </FormField>
-
-          <FormField label="거래명세서명">
-            <input
-              value={productForm.name2}
-              onChange={(event) => updateProductForm('name2', event.target.value)}
-              placeholder="비워두면 거래처별 품목명과 동일하게 저장"
-            />
-          </FormField>
-
-          <FormField label="구분 *">
-            <select
-              value={productForm.gubun}
-              onChange={(event) => updateProductForm('gubun', event.target.value)}
-            >
-              {GUBUN_CHOICES.map((choice) => (
-                <option key={choice} value={choice}>
-                  {choice}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField label="공급처">
-            <input
-              value={productForm.supplier}
-              onChange={(event) => updateProductForm('supplier', event.target.value)}
-              placeholder="공급처 입력"
-            />
-          </FormField>
-
-          <div className="product-form-section field-span-2">
-            <p className="product-form-section-label">단가 / 수량</p>
-          </div>
-
-          <FormField label="입고 단가">
-            <input
-              value={formatNullableNumber(productForm.cost_price)}
-              onChange={(event) => updateProductForm('cost_price', parseNullableNumber(event.target.value))}
-              inputMode="decimal"
-              placeholder="입고 단가"
-            />
-          </FormField>
-
-          <FormField label="판매 단가">
-            <input
-              value={formatNullableNumber(productForm.sell_price)}
-              onChange={(event) => updateProductForm('sell_price', parseNullableNumber(event.target.value))}
-              inputMode="decimal"
-              placeholder="판매 단가"
-            />
-          </FormField>
-
-          <FormField label="1B=ea">
-            <input
-              value={formatNullableNumber(productForm.ea_per_b)}
-              onChange={(event) => updateProductForm('ea_per_b', parseNullableNumber(event.target.value))}
-              inputMode="numeric"
-              placeholder="1B ea"
-            />
-          </FormField>
-
-          <FormField label="1P=BOX">
-            <input
-              value={formatNullableNumber(productForm.box_per_p)}
-              onChange={(event) => updateProductForm('box_per_p', parseNullableNumber(event.target.value))}
-              inputMode="numeric"
-              placeholder="1P BOX"
-            />
-          </FormField>
-
-          <FormField label="1P=ea">
-            <input value={formatNullableNumber(productForm.ea_per_p)} readOnly placeholder="자동 계산" />
-          </FormField>
-
-          <FormField label="1대당 팔레트">
-            <input
-              value={formatNullableNumber(productForm.pallets_per_truck)}
-              onChange={(event) =>
-                updateProductForm('pallets_per_truck', parseNullableNumber(event.target.value))
-              }
-              inputMode="numeric"
-              placeholder="팔레트 수"
-            />
-          </FormField>
-
-          {productFormError ? <Alert>{productFormError}</Alert> : null}
-        </form>
-      </Modal>
+        onSubmit={handleProductSubmit}
+        onUpdateForm={updateProductForm}
+        onApplyMasterDefaults={applyProductMasterDefaults}
+        onHandleClientSelect={handleClientSelect}
+        onSetClientDropdownOpen={setClientDropdownOpen}
+        formatNullableNumber={formatNullableNumber}
+      />
     </div>
   );
 }
