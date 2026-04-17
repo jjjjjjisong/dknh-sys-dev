@@ -36,6 +36,7 @@ export type DocumentPayload = {
   orderDate: string | null;
   arriveDate: string | null;
   deliveryAddr: string;
+  issueNoEditHistory: string;
   remark: string;
   requestNote: string;
   totalSupply: number;
@@ -88,6 +89,7 @@ export type DocumentHistory = {
   orderDate: string | null;
   arriveDate: string | null;
   deliveryAddr: string;
+  issueNoEditHistory: string;
   remark: string;
   requestNote: string;
   totalSupply: number;

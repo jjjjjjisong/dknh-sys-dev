@@ -651,6 +651,7 @@ export default function DocHistoryPage() {
                 <label className="field field-span-2-cols"><span>납품주소</span><input value={draft.deliveryAddr} onChange={(event) => updateDraft('deliveryAddr', event.target.value)} /></label>
                 <label className="field field-span-2"><span>유의사항</span><textarea rows={2} value={draft.remark} onChange={(event) => updateDraft('remark', event.target.value)} /></label>
                 <label className="field field-span-2"><span>요청사항</span><textarea rows={2} value={draft.requestNote} onChange={(event) => updateDraft('requestNote', event.target.value)} /></label>
+                <label className="field field-span-2"><span>발급번호 수정이력</span><textarea rows={2} value={draft.issueNoEditHistory} onChange={(event) => updateDraft('issueNoEditHistory', event.target.value)} /></label>
               </div>
             </section>
 

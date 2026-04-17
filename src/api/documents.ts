@@ -40,6 +40,7 @@ export async function saveDocument(payload: DocumentPayload) {
         order_date: payload.orderDate,
         arrive_date: payload.arriveDate,
         delivery_addr: payload.deliveryAddr,
+        issue_no_edit_history: payload.issueNoEditHistory,
         remark: payload.remark,
         request_note: payload.requestNote,
         total_supply: payload.totalSupply,
@@ -139,7 +140,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const { data, error } = await supabase
     .from('documents')
     .select(
-      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
+      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, issue_no_edit_history, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
     )
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
@@ -165,6 +166,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
     orderDate: row.order_date ?? null,
     arriveDate: row.arrive_date ?? null,
     deliveryAddr: row.delivery_addr ?? '',
+    issueNoEditHistory: row.issue_no_edit_history ?? '',
     remark: row.remark ?? '',
     requestNote: row.request_note ?? '',
     totalSupply: row.total_supply ?? 0,
@@ -242,6 +244,7 @@ export async function updateDocument(document: DocumentHistory) {
         order_date: document.orderDate,
         arrive_date: document.arriveDate,
         delivery_addr: document.deliveryAddr,
+        issue_no_edit_history: document.issueNoEditHistory,
         remark: document.remark,
         request_note: document.requestNote,
         total_supply: document.totalSupply,

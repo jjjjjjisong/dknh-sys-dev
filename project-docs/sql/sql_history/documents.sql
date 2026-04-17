@@ -18,6 +18,7 @@ create table if not exists public.documents (
   order_date date null,
   arrive_date date null,
   delivery_addr text not null default '',
+  issue_no_edit_history text not null default '',
   remark text not null default '',
   request_note text not null default '',
   total_supply numeric not null default 0,
@@ -71,6 +72,7 @@ alter table public.documents add column if not exists arrive_date date null;
 alter table public.documents add column if not exists delivery_addr text not null default '';
 alter table public.documents add column if not exists remark text not null default '';
 alter table public.documents add column if not exists request_note text not null default '';
+alter table public.documents add column if not exists issue_no_edit_history text not null default '';
 alter table public.documents add column if not exists total_supply numeric not null default 0;
 alter table public.documents add column if not exists total_vat numeric not null default 0;
 alter table public.documents add column if not exists total_amount numeric not null default 0;
