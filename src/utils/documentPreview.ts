@@ -2,13 +2,12 @@ import { SharedPreviewData } from '../types/documentPreview';
 import { getLocalDateInputValue } from './formatters';
 import { splitInvoiceDataByArriveDate } from './invoiceGrouping';
 
-const today = getLocalDateInputValue();
-
 type InvoicePreviewOptions = {
   showPrice?: boolean;
 };
 
 export function buildReleasePreviewHtml(data: SharedPreviewData) {
+  const today = getLocalDateInputValue();
   const rows = data.items
     .map((item) => {
       const palletValue = item.pallet !== null ? String(item.pallet) : '-';
@@ -82,7 +81,7 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
       ${data.remark ? `<tr><td class="lbl">비고</td><td>${escapeHtml(data.remark)}</td></tr>` : ''}
     </table>
     ${data.requestNote ? `<div class="request-box"><strong>요청사항</strong>${escapeHtml(data.requestNote).replace(/\n/g, '<br>')}</div>` : ''}
-    <div class="release-signoff">${escapeHtml(formatKoreanDate(data.orderDate || today))}<br><strong>(주)디케이앤에이치</strong></div>
+    <div class="release-signoff">${escapeHtml(formatKoreanDate(today))}<br><strong>(주)디케이앤에이치</strong></div>
   </div>`;
 }
 
@@ -90,6 +89,7 @@ export function buildInvoicePreviewHtml(
   data: SharedPreviewData,
   { showPrice = true }: InvoicePreviewOptions = {},
 ) {
+  const today = getLocalDateInputValue();
   const groupedDocs = splitInvoiceDataByArriveDate(data);
 
   const invoicePiece = (group: SharedPreviewData, suffix: string) => {
