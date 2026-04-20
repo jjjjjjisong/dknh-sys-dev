@@ -37,6 +37,10 @@ export interface InvoiceData {
   items: InvoiceItem[];
 }
 
+type InvoiceExcelExportOptions = {
+  hidePriceFields?: boolean;
+};
+
 function formatNumber(value: number) {
   return value.toLocaleString('ko-KR');
 }
@@ -117,7 +121,8 @@ function buildInvoiceFileName(data: InvoiceData) {
   return `DKH거래명세서_${client || '납품처'}_${arriveDate}.xlsx`;
 }
 
-function createInvoiceWorkbook(data: InvoiceData) {
+function createInvoiceWorkbook(data: InvoiceData, options: InvoiceExcelExportOptions = {}) {
+  const hidePriceFields = options.hidePriceFields ?? true;
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('거래명세서', {
     pageSetup: {
@@ -190,7 +195,7 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow + 3, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow + 4, 1, startRow + 4, 3);
-    ws.getCell(startRow + 4, 1).value = `( ${formatNumber(invoiceData.totalAmount)} ) VAT 포함`;
+    ws.getCell(startRow + 4, 1).value = hidePriceFields ? '' : `( ${formatNumber(invoiceData.totalAmount)} ) VAT 포함`;
     ws.getCell(startRow + 4, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow + 1, 4, startRow + 4, 4);
@@ -241,7 +246,8 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
 
     ws.mergeCells(startRow, 4, startRow, 10);
-    ws.getCell(startRow, 4).value = invoiceData.totalAmount !== 0 ? `${formatNumber(invoiceData.totalAmount)} 원` : '';
+    ws.getCell(startRow, 4).value =
+      hidePriceFields || invoiceData.totalAmount === 0 ? '' : `${formatNumber(invoiceData.totalAmount)} 원`;
     ws.getCell(startRow, 4).font = font10Bold;
     ws.getCell(startRow, 4).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getRow(startRow).height = 25;
@@ -284,9 +290,9 @@ function createInvoiceWorkbook(data: InvoiceData) {
         ws.getCell(startRow, 2).value = item.name2 || item.name1;
         ws.getCell(startRow, 5).value = item.qty ? Number(item.qty) : '';
         ws.mergeCells(startRow, 6, startRow, 7);
-        ws.getCell(startRow, 6).value = item.unitPrice !== 0 ? Number(item.unitPrice) : '';
-        ws.getCell(startRow, 8).value = item.supply !== 0 ? Number(item.supply) : '';
-        ws.getCell(startRow, 9).value = vatAmount !== 0 ? vatAmount : '';
+        ws.getCell(startRow, 6).value = hidePriceFields ? '' : item.unitPrice !== 0 ? Number(item.unitPrice) : '';
+        ws.getCell(startRow, 8).value = hidePriceFields ? '' : item.supply !== 0 ? Number(item.supply) : '';
+        ws.getCell(startRow, 9).value = hidePriceFields ? '' : vatAmount !== 0 ? vatAmount : '';
         ws.getCell(startRow, 10).value = item.invoiceNote || '';
       } else {
         ws.mergeCells(startRow, 2, startRow, 4);
@@ -322,8 +328,10 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell(startRow, 5).value = totalQty;
     ws.mergeCells(startRow, 6, startRow, 7);
-    ws.getCell(startRow, 8).value = invoiceData.totalSupply !== 0 ? invoiceData.totalSupply : '';
-    ws.getCell(startRow, 9).value = invoiceData.totalVat !== 0 ? invoiceData.totalVat : '';
+    ws.getCell(startRow, 8).value =
+      hidePriceFields || invoiceData.totalSupply === 0 ? '' : invoiceData.totalSupply;
+    ws.getCell(startRow, 9).value =
+      hidePriceFields || invoiceData.totalVat === 0 ? '' : invoiceData.totalVat;
 
     for (let c = 1; c <= 10; c += 1) {
       ws.getCell(startRow, c).border = createThinBorder();
@@ -346,7 +354,8 @@ function createInvoiceWorkbook(data: InvoiceData) {
     ws.getCell(startRow, 1).value = '총 합 계';
     ws.getCell(startRow, 1).font = font10Bold;
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getCell(startRow, 5).value = invoiceData.totalAmount !== 0 ? invoiceData.totalAmount : '';
+    ws.getCell(startRow, 5).value =
+      hidePriceFields || invoiceData.totalAmount === 0 ? '' : invoiceData.totalAmount;
     ws.getCell(startRow, 5).font = font10Bold;
     ws.getCell(startRow, 5).alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getCell(startRow, 5).numFmt = '#,##0';
@@ -439,11 +448,14 @@ function createInvoiceWorkbook(data: InvoiceData) {
   return wb;
 }
 
-export async function exportInvoiceToExcel(data: InvoiceData) {
+export async function exportInvoiceToExcel(
+  data: InvoiceData,
+  options: InvoiceExcelExportOptions = {},
+) {
   const groupedDocs = splitInvoiceDataByArriveDate(data);
 
   for (const group of groupedDocs) {
-    const wb = createInvoiceWorkbook(group);
+    const wb = createInvoiceWorkbook(group, options);
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -6,7 +6,7 @@ export type Product = {
   client: string;
   name1: string;
   name2: string;
-  supplier: string;
+  receiver: string;
   cost_price: number | null;
   sell_price: number | null;
   ea_per_b: number | null;
@@ -22,7 +22,7 @@ export type ProductInput = {
   clientId: string;
   gubun: string;
   client: string;
-  supplier: string;
+  receiver: string;
   name1: string;
   name2: string;
   cost_price: number | null;

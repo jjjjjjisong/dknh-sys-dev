@@ -9,6 +9,7 @@ import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
 import Modal from '../components/ui/Modal';
 import TableActionButton from '../components/ui/TableActionButton';
+import { RECEIVER_OPTIONS } from '../constants/receivers';
 import type { Client } from '../types/client';
 import type { Product, ProductInput } from '../types/product';
 
@@ -20,7 +21,7 @@ const emptyForm: ProductInput = {
   clientId: '',
   gubun: DEFAULT_GUBUN,
   client: '',
-  supplier: '',
+  receiver: '',
   name1: '',
   name2: '',
   cost_price: null,
@@ -90,7 +91,7 @@ export default function MasterProductPage() {
       if (clientFilter && product.client !== clientFilter) return false;
       if (!keyword) return true;
 
-      return [product.name1, product.name2, product.client, product.gubun, product.supplier]
+      return [product.name1, product.name2, product.client, product.gubun, product.receiver]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(keyword));
     });
@@ -126,7 +127,7 @@ export default function MasterProductPage() {
       clientId: product.clientId ?? '',
       gubun: product.gubun || DEFAULT_GUBUN,
       client: product.client,
-      supplier: product.supplier,
+      receiver: product.receiver,
       name1: product.name1,
       name2: product.name2,
       cost_price: product.cost_price,
@@ -189,7 +190,7 @@ export default function MasterProductPage() {
         clientId: form.clientId,
         gubun: form.gubun.trim() || DEFAULT_GUBUN,
         client: form.client.trim(),
-        supplier: form.supplier.trim(),
+        receiver: form.receiver.trim(),
         name1: form.name1.trim(),
         name2: form.name2.trim() || form.name1.trim(),
         cost_price: form.cost_price,
@@ -241,7 +242,7 @@ export default function MasterProductPage() {
       거래처: product.client || '',
       품목명: product.name1 || '',
       '품목명(거래명세서)': product.name2 || '',
-      출고처: product.supplier || '',
+      출고처: product.receiver || '',
       '입고 단가': product.cost_price ?? '',
       '판매 단가': product.sell_price ?? '',
       '1B=ea': product.ea_per_b ?? '',
@@ -341,7 +342,7 @@ export default function MasterProductPage() {
                         </div>
                       </td>
                       <td><div className="table-clamp-2" title={product.name2 || '-'}>{product.name2 || '-'}</div></td>
-                      <td><div className="table-clamp-2" title={product.supplier || '-'}>{product.supplier || '-'}</div></td>
+                      <td><div className="table-clamp-2" title={product.receiver || '-'}>{product.receiver || '-'}</div></td>
                       <td>{product.cost_price ?? '-'}</td>
                       <td>{product.sell_price ?? '-'}</td>
                       <td>{product.ea_per_b ?? '-'}</td>
@@ -443,11 +444,17 @@ export default function MasterProductPage() {
           </FormField>
 
           <FormField label="수신처">
-            <input
-              value={form.supplier}
-              onChange={(event) => updateForm('supplier', event.target.value)}
-              placeholder="수신처 입력"
-            />
+            <select
+              value={form.receiver}
+              onChange={(event) => updateForm('receiver', event.target.value)}
+            >
+              <option value="">수신처를 선택하세요</option>
+              {RECEIVER_OPTIONS.map((receiver) => (
+                <option key={receiver} value={receiver}>
+                  {receiver}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField label="품목명 *">
