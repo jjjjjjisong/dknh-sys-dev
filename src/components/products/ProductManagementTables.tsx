@@ -1,3 +1,4 @@
+import React from 'react';
 import TableActionButton from '../ui/TableActionButton';
 import type { Product, ProductMaster } from '../../types/product';
 
@@ -57,27 +58,116 @@ export function MasterProductsTable({
   }
 
   return (
-    <div className="master-card-list">
-      {pagedMasters.map((master, index) => {
-        const children = productsByMasterId.get(master.id) ?? [];
-        const expanded = expandedMasterIds.includes(master.id);
-
-        return (
-          <MasterCard
-            key={master.id}
-            master={master}
-            index={(currentPage - 1) * pageSize + index + 1}
-            childrenRows={children}
-            expanded={expanded}
-            onToggle={() => onToggleMaster(master.id)}
-            onCreateChild={() => onCreateChild(master.id)}
-            onEditMaster={() => onEditMaster(master)}
-            onDeleteMaster={() => onDeleteMaster(master)}
-            onEditChild={onEditChild}
-            onDeleteChild={onDeleteChild}
-          />
-        );
-      })}
+    <div className="table-wrap">
+      <table className="table master-tree-table">
+        <thead>
+          <tr>
+            <th style={{ width: 44 }}></th>
+            <th style={{ width: 80 }}>구분</th>
+            <th style={{ width: 260 }}>공통품목명</th>
+            <th style={{ width: 260 }}>품목명(거래명세서)</th>
+            <th style={{ width: 90, textAlign: 'right' }}>1B=ea</th>
+            <th style={{ width: 90, textAlign: 'right' }}>1P=BOX</th>
+            <th style={{ width: 90, textAlign: 'right' }}>1P=ea</th>
+            <th style={{ width: 100, textAlign: 'right' }}>1대당 팔레트</th>
+            <th style={{ width: 90, textAlign: 'center' }}>하위 품목</th>
+            <th style={{ width: 150 }}>관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pagedMasters.map(master => {
+            const isExpanded = expandedMasterIds.includes(master.id);
+            const children = productsByMasterId.get(master.id) ?? [];
+            return (
+              <React.Fragment key={master.id}>
+                <tr 
+                  className={`master-tree-row ${isExpanded ? 'is-expanded' : ''}`} 
+                  onClick={() => onToggleMaster(master.id)}
+                >
+                  <td className="chevron-cell">
+                    <span className="tree-chevron">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </span>
+                  </td>
+                  <td>{master.gubun || '-'}</td>
+                  <td className="font-bold">{master.name1 || '-'}</td>
+                  <td>{master.name2 || '-'}</td>
+                  <td style={{ textAlign: 'right' }}>{master.ea_per_b ?? '-'}</td>
+                  <td style={{ textAlign: 'right' }}>{master.box_per_p ?? '-'}</td>
+                  <td style={{ textAlign: 'right' }}>{master.ea_per_p ?? '-'}</td>
+                  <td style={{ textAlign: 'right' }}>{master.pallets_per_truck ?? '-'}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="badge badge-accent">{master.linkedProductCount}개</span>
+                  </td>
+                  <td onClick={e => e.stopPropagation()}>
+                    <div className="button-row">
+                      <TableActionButton variant="primary" onClick={() => onCreateChild(master.id)}>하위추가</TableActionButton>
+                      <TableActionButton onClick={() => onEditMaster(master)}>수정</TableActionButton>
+                      <TableActionButton variant="danger" onClick={() => onDeleteMaster(master)}>삭제</TableActionButton>
+                    </div>
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr className="master-tree-child-row">
+                    <td colSpan={10} className="master-tree-child-cell">
+                      {children.length === 0 ? (
+                         <div className="empty-state child-empty">연결된 거래처별 품목이 없습니다.</div>
+                      ) : (
+                        <div className="child-table-wrap">
+                          <table className="table child-table">
+                            <thead>
+                              <tr>
+                                <th style={{ width: 160 }}>거래처</th>
+                                <th style={{ width: 240 }}>거래처별 품목명</th>
+                                <th style={{ width: 240 }}>품목명(거래명세서)</th>
+                                <th style={{ width: 140 }}>출고처</th>
+                                <th style={{ width: 90, textAlign: 'right' }}>입고단가</th>
+                                <th style={{ width: 90, textAlign: 'right' }}>판매단가</th>
+                                <th style={{ width: 70, textAlign: 'center' }}>상태</th>
+                                <th style={{ width: 70 }}>관리</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {children.map(child => (
+                                <tr key={child.id} onClick={() => onEditChild(child)} className="history-clickable-row">
+                                  <td>
+                                    <div className="table-clamp-2" title={child.client || '-'}>{child.client || '-'}</div>
+                                  </td>
+                                  <td>
+                                    <div className="table-clamp-2" title={child.name1 || '-'}>{child.name1 || '-'}</div>
+                                  </td>
+                                  <td>
+                                    <div className="table-clamp-2" title={child.name2 || '-'}>{child.name2 || '-'}</div>
+                                  </td>
+                                  <td>
+                                    <div className="table-clamp-2" title={child.supplier || '-'}>{child.supplier || '-'}</div>
+                                  </td>
+                                  <td style={{ textAlign: 'right' }}>{child.cost_price ?? '-'}</td>
+                                  <td style={{ textAlign: 'right' }}>{child.sell_price ?? '-'}</td>
+                                  <td style={{ textAlign: 'center' }}>
+                                      <span className={child.delYn === 'Y' ? 'badge badge-muted' : 'badge'}>
+                                        {child.delYn === 'Y' ? '비활성' : '사용'}
+                                      </span>
+                                  </td>
+                                  <td onClick={e => e.stopPropagation()}>
+                                    <div className="button-row" style={{ justifyContent: 'center' }}>
+                                      <TableActionButton variant="danger" onClick={() => onDeleteChild(child)}>삭제</TableActionButton>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -172,126 +262,4 @@ export function ProductsTable({
   );
 }
 
-function MasterCard({
-  master,
-  index,
-  childrenRows,
-  expanded,
-  onToggle,
-  onCreateChild,
-  onEditMaster,
-  onDeleteMaster,
-  onEditChild,
-  onDeleteChild,
-}: MasterCardProps) {
-  return (
-    <section className={`master-card${expanded ? ' is-expanded' : ''}`}>
-      <div 
-        className="master-card-main" 
-        onClick={onToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onToggle();
-          }
-        }}
-      >
-        <div className="master-card-lead">
-          <span className="master-card-gubun">{master.gubun || '-'}</span>
-        </div>
-
-        <div className="master-card-body">
-          <div className="master-card-content">
-            <h3 className="master-card-title">{master.name1 || '-'}</h3>
-            <p className="master-card-subtitle">거래명세서명 {master.name2 || '-'}</p>
-            <div className="master-card-metrics">
-              <span className="master-card-metric">1B=ea {master.ea_per_b ?? '-'}</span>
-              <span className="master-card-metric">1P=BOX {master.box_per_p ?? '-'}</span>
-              <span className="master-card-metric">1P=ea {master.ea_per_p ?? '-'}</span>
-              <span className="master-card-metric">1대당 팔레트 {master.pallets_per_truck ?? '-'}</span>
-              <span className="master-card-metric is-accent">연결 {master.linkedProductCount}개</span>
-            </div>
-          </div>
-          
-          <div className="master-card-right" onClick={(e) => e.stopPropagation()}>
-            <div className="master-card-chevron-wrap" onClick={onToggle}>
-              <span className="master-card-chevron" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </span>
-            </div>
-            <div className="master-card-actions">
-              <TableActionButton variant="primary" onClick={onCreateChild}>
-                하위 추가
-              </TableActionButton>
-              <TableActionButton onClick={onEditMaster}>수정</TableActionButton>
-              <TableActionButton variant="danger" onClick={onDeleteMaster}>
-                삭제
-              </TableActionButton>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {expanded ? (
-        <div className="master-card-children">
-          {childrenRows.length === 0 ? (
-            <div className="empty-state" style={{ margin: 0 }}>
-              연결된 거래처별 품목이 없습니다.
-            </div>
-          ) : (
-            <div className="master-child-list">
-              {childrenRows.map((product) => (
-                <div
-                  key={product.id}
-                  className="master-child-row"
-                  onClick={() => onEditChild(product)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onEditChild(product);
-                    }
-                  }}
-                >
-                  <div className="master-child-top">
-                    <span className="master-child-client">{product.client || '-'}</span>
-                    <strong className="master-child-name">{product.name1 || '-'}</strong>
-                    <span className="master-child-stats">
-                      <span>1B=ea {product.ea_per_b ?? '-'}</span>
-                      <span className="master-child-sep">·</span>
-                      <span>1P=BOX {product.box_per_p ?? '-'}</span>
-                    </span>
-                    <span
-                      className="master-child-actions"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <TableActionButton variant="danger" onClick={() => onDeleteChild(product)}>
-                        삭제
-                      </TableActionButton>
-                    </span>
-                  </div>
-                  <div className="master-child-sub">
-                    <span>거래명세서명 {product.name2 || '-'}</span>
-                    <span className="master-child-sep">·</span>
-                    <span>출고처 {product.supplier || '-'}</span>
-                    {product.gubun ? (
-                      <>
-                        <span className="master-child-sep">·</span>
-                        <span>{product.gubun}</span>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
-    </section>
-  );
-}
+// Remove MasterCard component
