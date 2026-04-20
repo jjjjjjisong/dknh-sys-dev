@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
+import { DEFAULT_GUBUN } from '../constants/gubun';
 import type { Product } from '../types/product';
-import { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
+import { MANUAL_PRODUCT_ID } from '../components/ui/DocumentItemTable';
 import type { SharedItemRow, ItemSummary } from '../components/ui/DocumentItemTable';
 
 export function createEmptySharedItem(baseOrderDate: string, baseArriveDate: string): SharedItemRow {
@@ -8,7 +9,7 @@ export function createEmptySharedItem(baseOrderDate: string, baseArriveDate: str
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     productId: '',
     manualName: '',
-    manualGubun: DEFAULT_GUBUN_OPTIONS[0],
+    manualGubun: DEFAULT_GUBUN,
     orderDate: baseOrderDate,
     arriveDate: baseArriveDate,
     qty: 0,

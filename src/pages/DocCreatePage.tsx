@@ -9,7 +9,8 @@ import { getStoredUser } from '../lib/session';
 import { exportInvoiceToExcel } from '../utils/excelExport';
 import DocumentPreviewModal, { PreviewType } from '../components/ui/DocumentPreviewModal';
 import Modal from '../components/ui/Modal';
-import DocumentItemTable, { MANUAL_PRODUCT_ID, DEFAULT_GUBUN_OPTIONS } from '../components/ui/DocumentItemTable';
+import { DEFAULT_GUBUN } from '../constants/gubun';
+import DocumentItemTable, { MANUAL_PRODUCT_ID } from '../components/ui/DocumentItemTable';
 import type { SharedItemRow as DocItem, ItemSummary } from '../components/ui/DocumentItemTable';
 import { useDocumentItems, createEmptySharedItem } from '../hooks/useDocumentItems';
 import type { Client } from '../types/client';
@@ -896,8 +897,8 @@ function mapImportedDocumentItems(document: DocumentHistory, products: Product[]
       manualName: productId === MANUAL_PRODUCT_ID ? item.name1 : '',
       manualGubun:
         productId === MANUAL_PRODUCT_ID
-          ? item.gubun || DEFAULT_GUBUN_OPTIONS[0]
-          : DEFAULT_GUBUN_OPTIONS[0],
+          ? item.gubun || DEFAULT_GUBUN
+          : DEFAULT_GUBUN,
       orderDate: item.orderDate ?? document.orderDate ?? today,
       arriveDate: item.arriveDate ?? document.arriveDate ?? '',
       qty: item.qty,

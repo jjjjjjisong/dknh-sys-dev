@@ -9,12 +9,11 @@ import Button from '../components/ui/Button';
 import FormField from '../components/ui/FormField';
 import Modal from '../components/ui/Modal';
 import TableActionButton from '../components/ui/TableActionButton';
+import { DEFAULT_GUBUN, GUBUN_OPTIONS } from '../constants/gubun';
 import { RECEIVER_OPTIONS } from '../constants/receivers';
 import type { Client } from '../types/client';
 import type { Product, ProductInput } from '../types/product';
 
-const DEFAULT_GUBUN = '컵';
-const GUBUN_CHOICES = ['컵', '컵뚜껑', '비닐', '스트로우', '기타'];
 const PAGE_SIZE = 15;
 
 const emptyForm: ProductInput = {
@@ -398,7 +397,7 @@ export default function MasterProductPage() {
               value={form.gubun}
               onChange={(event) => updateForm('gubun', event.target.value)}
             >
-              {GUBUN_CHOICES.map((choice) => (
+              {GUBUN_OPTIONS.map((choice) => (
                 <option key={choice} value={choice}>
                   {choice}
                 </option>

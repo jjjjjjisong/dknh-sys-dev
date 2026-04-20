@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DEFAULT_GUBUN, GUBUN_OPTIONS } from '../../constants/gubun';
 import type { Product } from '../../types/product';
 import {
   formatDecimalInput,
@@ -10,7 +11,6 @@ import {
 } from '../../utils/formatters';
 
 export const MANUAL_PRODUCT_ID = '__manual__';
-export const DEFAULT_GUBUN_OPTIONS = ['컵', '컵뚜껑', '비닐', '스트로우', '기타'];
 
 export type SharedItemRow = {
   id: string;
@@ -178,7 +178,7 @@ export default function DocumentItemTable({
                           onUpdateItem(item.id, (current) => ({
                             ...current,
                             productId: nextId,
-                            manualGubun: DEFAULT_GUBUN_OPTIONS[0],
+                            manualGubun: DEFAULT_GUBUN,
                             manualName: nextId === MANUAL_PRODUCT_ID ? current.manualName : '',
                             unitPrice:
                               nextId === MANUAL_PRODUCT_ID
@@ -209,7 +209,7 @@ export default function DocumentItemTable({
                             }))
                           }
                         >
-                          {DEFAULT_GUBUN_OPTIONS.map((option) => (
+                          {GUBUN_OPTIONS.map((option) => (
                             <option key={option} value={option}>
                               {option}
                             </option>
