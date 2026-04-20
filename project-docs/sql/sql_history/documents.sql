@@ -40,6 +40,7 @@ create table if not exists public.document_items (
   name2 text not null default '',
   gubun text not null default '기타',
   qty integer not null default 0,
+  cost_price numeric null,
   unit_price numeric not null default 0,
   supply numeric not null default 0,
   vat boolean not null default true,
@@ -88,6 +89,7 @@ alter table public.document_items add column if not exists name1 text;
 alter table public.document_items add column if not exists name2 text not null default '';
 alter table public.document_items add column if not exists gubun text not null default '기타';
 alter table public.document_items add column if not exists qty integer not null default 0;
+alter table public.document_items add column if not exists cost_price numeric null;
 alter table public.document_items add column if not exists unit_price numeric not null default 0;
 alter table public.document_items add column if not exists supply numeric not null default 0;
 alter table public.document_items add column if not exists vat boolean not null default true;

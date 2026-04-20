@@ -39,6 +39,7 @@ create table if not exists public.document_items (
   name2 text not null default '',
   gubun text not null default '기타',
   qty integer not null default 0,
+  cost_price numeric null,
   unit_price numeric not null default 0,
   supply numeric not null default 0,
   vat boolean not null default true,

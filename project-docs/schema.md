@@ -24,6 +24,10 @@
 - `document_items`
 - `order_book`
 
+`document_items.cost_price`
+- `products.cost_price`를 문서 작성 시점에 스냅샷으로 저장하는 입고단가 컬럼입니다.
+- 화면 표시 여부와 무관하게 문서 원본 단가 이력을 보존하기 위한 용도입니다.
+
 운영 규칙:
 - 화면에서 삭제해도 DB에서는 실제 삭제하지 않습니다.
 - 삭제 시 `del_yn = 'Y'`로 변경합니다.

@@ -24,6 +24,7 @@ Product / document relational hardening:
 
 Notes:
 
+- `document_items.cost_price` migration: `20260420_document_items_cost_price.sql`
 - Old migration and history scripts were moved to `project-docs/sql/sql_history`.
 - The files in this folder are the current baseline for a brand-new environment.
 - `04_documents.sql` includes `document_items` and the active unique indexes:
