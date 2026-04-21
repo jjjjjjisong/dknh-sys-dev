@@ -48,6 +48,8 @@ interface DocumentItemTableProps {
   clientProducts: Product[];
   itemSummaries: ItemSummary[];
   totals: { supply: number; vat: number; total: number };
+  productSelectionEnabled?: boolean;
+  productSelectionMessage?: string | null;
   onUpdateItem: (id: string, updater: (item: SharedItemRow) => SharedItemRow) => void;
   onRemoveItem: (id: string) => void;
   onAddItem: () => void;
@@ -60,6 +62,8 @@ export default function DocumentItemTable({
   clientProducts,
   itemSummaries,
   totals,
+  productSelectionEnabled = true,
+  productSelectionMessage = null,
   onUpdateItem,
   onRemoveItem,
   onAddItem,
@@ -135,6 +139,11 @@ export default function DocumentItemTable({
       <div className="card-header">
         <div>
           <h2>품목 정보</h2>
+          {productSelectionMessage ? (
+            <p style={{ marginTop: 6, color: 'var(--text-3)', fontSize: 13 }}>
+              {productSelectionMessage}
+            </p>
+          ) : null}
         </div>
         <button className="btn btn-primary" type="button" onClick={onAddItem}>
           + 품목 추가
@@ -172,6 +181,7 @@ export default function DocumentItemTable({
                       <select
                         className="doc-cell-control"
                         value={item.productId}
+                        disabled={!productSelectionEnabled && item.productId !== MANUAL_PRODUCT_ID}
                         onChange={(event) => {
                           const nextId = event.target.value;
                           const selected = clientProducts.find((row) => row.id === nextId);
@@ -188,7 +198,9 @@ export default function DocumentItemTable({
                           }));
                         }}
                       >
-                        <option value="">품목 선택</option>
+                        <option value="">
+                          {productSelectionEnabled ? '품목 선택' : '납품처와 수신처를 먼저 선택'}
+                        </option>
                         {clientProducts.map((product) => (
                           <option key={product.id} value={product.id}>
                             {product.name1}

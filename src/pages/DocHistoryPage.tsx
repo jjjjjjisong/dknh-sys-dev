@@ -114,6 +114,15 @@ export default function DocHistoryPage() {
   }, []);
 
   async function reload() {
+    if (draftSelectionChanged && !(draft?.receiver ?? '').trim()) {
+      window.alert('수신처를 다시 선택해 주세요.');
+      return;
+    }
+    if (draftSelectionChanged && !(draft?.receiver ?? '').trim()) {
+      window.alert('수신처를 다시 선택해 주세요.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -308,6 +317,33 @@ export default function DocHistoryPage() {
     );
   }, [draft, itemSummaries, items, totals]);
 
+  const originalDocument = useMemo(
+    () => (draft ? documents.find((row) => row.id === draft.id) ?? null : null),
+    [documents, draft],
+  );
+
+  const draftSelectionChanged = useMemo(() => {
+    if (!draft || !originalDocument) return false;
+    return (
+      (draft.clientId ?? null) !== (originalDocument.clientId ?? null) ||
+      (draft.receiver ?? '') !== (originalDocument.receiver ?? '')
+    );
+  }, [draft, originalDocument]);
+
+  const canSelectDraftProducts = useMemo(() => {
+    if (!draft) return false;
+    if (!draftSelectionChanged) return true;
+    return Boolean(draft.clientId && draft.receiver.trim());
+  }, [draft, draftSelectionChanged]);
+
+  const filteredDraftProducts = useMemo(() => {
+    if (!draft) return [];
+    if (!draftSelectionChanged) return products;
+    if (!canSelectDraftProducts) return [];
+    const receiver = draft.receiver.trim();
+    return products.filter((product) => product.receiver.trim() === receiver);
+  }, [draft, draftSelectionChanged, canSelectDraftProducts, products]);
+
   function openDocument(document: DocumentHistory) {
     navigate(`/doc-history/${document.id}`);
   }
@@ -351,9 +387,18 @@ export default function DocHistoryPage() {
     applyDraftClient(client);
   }
 
+  function handleDraftReceiverChange(receiver: string) {
+    updateDraft('receiver', receiver);
+    resetDraftProducts();
+  }
+
   function addDraftItem() {
     if (!draft?.clientId) {
       window.alert('납품처를 목록에서 다시 선택해 주세요.');
+      return;
+    }
+    if (draftSelectionChanged && !draft.receiver.trim()) {
+      window.alert('수신처를 다시 선택해 주세요.');
       return;
     }
     addItem(draft?.orderDate || '', draft?.arriveDate || '');
@@ -620,7 +665,7 @@ export default function DocHistoryPage() {
                       className="search-input"
                       value={draft.receiver}
                       onChange={(event) => {
-                        updateDraft('receiver', event.target.value);
+                        handleDraftReceiverChange(event.target.value);
                         setReceiverDropdownOpen(true);
                       }}
                       onFocus={() => setReceiverDropdownOpen(true)}
@@ -637,7 +682,7 @@ export default function DocHistoryPage() {
                             className="client-search-option"
                             onMouseDown={(event) => {
                               event.preventDefault();
-                              updateDraft('receiver', receiver);
+                              handleDraftReceiverChange(receiver);
                               setReceiverDropdownOpen(false);
                             }}
                           >
@@ -688,9 +733,15 @@ export default function DocHistoryPage() {
 
             <DocumentItemTable
               items={items}
-              clientProducts={products}
+              clientProducts={filteredDraftProducts}
               itemSummaries={itemSummaries}
               totals={totals}
+              productSelectionEnabled={canSelectDraftProducts}
+              productSelectionMessage={
+                draftSelectionChanged && !canSelectDraftProducts
+                  ? '수정 시에는 납품처와 수신처를 모두 선택해야 품목 리스트가 표시됩니다.'
+                  : null
+              }
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
               onAddItem={addDraftItem}

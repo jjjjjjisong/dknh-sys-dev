@@ -99,8 +99,7 @@ export default function DocCreatePage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState<DocForm>(createInitialForm);
-  const clientProducts = useMemo(() => products, [products]);
-  const { items, setItems, itemSummaries, totals, addItem: _addItem, removeItem, updateItem } = useDocumentItems([createEmptySharedItem(today, '')], clientProducts);
+  const { items, setItems, itemSummaries, totals, addItem: _addItem, removeItem, updateItem } = useDocumentItems([createEmptySharedItem(today, '')], products);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewType, setPreviewType] = useState<PreviewType | null>(null);
@@ -239,6 +238,17 @@ export default function DocCreatePage() {
     return buildSharedPreviewData(form, itemSummaries, items, totals);
   }, [form, itemSummaries, items, totals]);
 
+  const canSelectProducts = useMemo(
+    () => Boolean(form.clientId && form.receiver.trim()),
+    [form.clientId, form.receiver],
+  );
+
+  const filteredClientProducts = useMemo(() => {
+    if (!canSelectProducts) return [];
+    const receiver = form.receiver.trim();
+    return products.filter((product) => product.receiver.trim() === receiver);
+  }, [canSelectProducts, form.receiver, products]);
+
 
 
   function updateForm<K extends keyof DocForm>(key: K, value: DocForm[K]) {
@@ -281,6 +291,11 @@ export default function DocCreatePage() {
     resetClientItems();
   }
 
+  function handleReceiverChange(receiver: string) {
+    updateForm('receiver', receiver);
+    resetClientItems();
+  }
+
   function handleClientInputChange(clientName: string) {
     applyClient(null, clientName);
   }
@@ -292,6 +307,10 @@ export default function DocCreatePage() {
   function addItem() {
     if (!form.clientId) {
       window.alert('먼저 납품처를 선택해 주세요.');
+      return;
+    }
+    if (!form.receiver.trim()) {
+      window.alert('먼저 수신처를 선택해 주세요.');
       return;
     }
     _addItem(form.orderDate, form.arriveDate);
@@ -561,7 +580,7 @@ export default function DocCreatePage() {
                     required
                     value={form.receiver}
                     onChange={(event) => {
-                      updateForm('receiver', event.target.value);
+                      handleReceiverChange(event.target.value);
                       setReceiverDropdownOpen(true);
                     }}
                     onFocus={() => setReceiverDropdownOpen(true)}
@@ -578,7 +597,7 @@ export default function DocCreatePage() {
                           className="client-search-option"
                           onMouseDown={(event) => {
                             event.preventDefault();
-                            updateForm('receiver', receiver);
+                            handleReceiverChange(receiver);
                             setReceiverDropdownOpen(false);
                           }}
                         >
@@ -629,9 +648,15 @@ export default function DocCreatePage() {
 
         <DocumentItemTable
           items={items}
-          clientProducts={clientProducts}
+          clientProducts={filteredClientProducts}
           itemSummaries={itemSummaries}
           totals={totals}
+          productSelectionEnabled={canSelectProducts}
+          productSelectionMessage={
+            canSelectProducts
+              ? null
+              : '납품처와 수신처를 모두 선택해야 품목 리스트가 표시됩니다.'
+          }
           onUpdateItem={updateItem}
           onRemoveItem={removeItem}
           onAddItem={addItem}
