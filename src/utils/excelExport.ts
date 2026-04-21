@@ -41,7 +41,8 @@ type InvoiceExcelExportOptions = {
   hidePriceFields?: boolean;
 };
 
-const SECOND_COPY_START_ROW = 28;
+const FOLD_LINE_ROW = 24;
+const SECOND_COPY_START_ROW = 26;
 const SECOND_COPY_SPACER_ROW_HEIGHT = 18;
 
 function formatNumber(value: number) {
@@ -439,12 +440,15 @@ function createInvoiceWorkbook(data: InvoiceData, options: InvoiceExcelExportOpt
   groupedDocs.forEach((group, index) => {
     nextRow = drawInvoicePart(group, nextRow, '(공급자용)');
 
+    padRowsUntil(FOLD_LINE_ROW);
+
     ws.mergeCells(nextRow, 1, nextRow, 10);
     ws.getCell(nextRow, 1).border = {
       bottom: { style: 'dashed', color: { argb: 'FFAAAAAA' } },
     };
     ws.getRow(nextRow).height = 10;
     nextRow += 2;
+
     padRowsUntil(SECOND_COPY_START_ROW);
 
     nextRow = drawInvoicePart(group, nextRow, '(공급받는자용)');
