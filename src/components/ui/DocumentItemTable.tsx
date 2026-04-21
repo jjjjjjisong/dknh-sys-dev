@@ -22,6 +22,7 @@ export type SharedItemRow = {
   qty: number | null;
   customPallet: number | null;
   customBox: number | null;
+  costPrice: number | null;
   unitPrice: number | null;
   customSupply: number | null;
   vat: boolean;
@@ -34,6 +35,7 @@ export type ItemSummary = {
   name2: string;
   gubun: string;
   qty: number;
+  costPrice: number | null;
   unitPrice: number;
   supply: number;
   vatAmount: number;
@@ -56,6 +58,13 @@ interface DocumentItemTableProps {
 }
 
 type IntegerFieldKey = 'qty' | 'customPallet' | 'customBox' | 'customSupply';
+type NumericFieldKey =
+  | 'qty'
+  | 'customPallet'
+  | 'customBox'
+  | 'costPrice'
+  | 'unitPrice'
+  | 'customSupply';
 
 export default function DocumentItemTable({
   items,
@@ -82,10 +91,7 @@ export default function DocumentItemTable({
     return formatIntegerInput(value);
   }
 
-  function handleNumericFocus(
-    id: string,
-    key: 'qty' | 'customPallet' | 'customBox' | 'unitPrice' | 'customSupply',
-  ) {
+  function handleNumericFocus(id: string, key: NumericFieldKey) {
     onUpdateItem(id, (current) => {
       const value = current[key];
       if (value === 0) {
@@ -162,7 +168,8 @@ export default function DocumentItemTable({
               <th>수량(ea)</th>
               <th className="doc-pallet-col">파레트</th>
               <th className="doc-box-col">BOX</th>
-              <th>단가</th>
+              <th className="doc-number-col-cost">입고단가</th>
+              <th className="doc-number-col-sell">판매단가</th>
               <th>공급가액</th>
               <th>VAT</th>
               <th>관리</th>
@@ -190,6 +197,10 @@ export default function DocumentItemTable({
                             productId: nextId,
                             manualGubun: DEFAULT_GUBUN,
                             manualName: nextId === MANUAL_PRODUCT_ID ? current.manualName : '',
+                            costPrice:
+                              nextId === MANUAL_PRODUCT_ID
+                                ? current.costPrice
+                                : selected?.cost_price ?? null,
                             unitPrice:
                               nextId === MANUAL_PRODUCT_ID
                                 ? current.unitPrice
@@ -300,6 +311,22 @@ export default function DocumentItemTable({
                     </td>
                     <td>
                       <input
+                        className="doc-cell-control doc-number-input-costprice"
+                        type="text"
+                        inputMode="decimal"
+                        value={formatDecimalInput(item.costPrice)}
+                        onFocus={() => handleNumericFocus(item.id, 'costPrice')}
+                        onChange={(event) =>
+                          onUpdateItem(item.id, (current) => ({
+                            ...current,
+                            costPrice: parseNullableDecimal(event.target.value),
+                          }))
+                        }
+                        placeholder="입고단가"
+                      />
+                    </td>
+                    <td>
+                      <input
                         className="doc-cell-control doc-number-input-unitprice"
                         type="text"
                         inputMode="decimal"
@@ -312,7 +339,7 @@ export default function DocumentItemTable({
                             customSupply: null,
                           }))
                         }
-                        placeholder="단가"
+                        placeholder="판매단가"
                       />
                     </td>
                     <td>
@@ -400,6 +427,7 @@ export default function DocumentItemTable({
                         placeholder="비고(거래명세서) 입력"
                       />
                     </td>
+                    <td className="doc-item-note-spacer" />
                     <td className="doc-item-note-spacer" />
                     <td className="doc-item-note-spacer" />
                     <td className="doc-item-note-spacer" />

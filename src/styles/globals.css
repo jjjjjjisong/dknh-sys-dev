@@ -1482,7 +1482,7 @@ a {
 }
 
 .doc-items-table.wide {
-  min-width: 1480px;
+  min-width: 1560px;
 }
 
 .doc-item-name-cell {
@@ -1532,13 +1532,23 @@ a {
   text-align: right;
 }
 
+.doc-number-col-cost,
+.doc-number-col-sell {
+  min-width: 92px;
+}
+
+.doc-number-input-costprice {
+  width: 92px;
+  text-align: right;
+}
+
 .doc-number-input-unitprice {
-  width: 28px;
+  width: 92px;
   text-align: right;
 }
 
 .doc-number-input-supply {
-  width: 116px;
+  width: 98px;
   text-align: right;
 }
 

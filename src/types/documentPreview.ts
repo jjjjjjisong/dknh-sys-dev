@@ -5,6 +5,7 @@ export type SharedPreviewItem = {
   name2: string;
   gubun: string;
   qty: number;
+  costPrice: number | null;
   unitPrice: number;
   supply: number;
   vat: boolean;

@@ -294,8 +294,7 @@ export function ProductItemModal({
         <FormField label="1B=EA">
           <input
             value={formatNullableNumber(productForm.ea_per_b)}
-            onChange={(event) => onUpdateForm('ea_per_b', parseNullableNumber(event.target.value))}
-            inputMode="numeric"
+            readOnly
             placeholder="1Box 기준 EA 수량"
           />
         </FormField>
@@ -303,8 +302,7 @@ export function ProductItemModal({
         <FormField label="1P=BOX">
           <input
             value={formatNullableNumber(productForm.box_per_p)}
-            onChange={(event) => onUpdateForm('box_per_p', parseNullableNumber(event.target.value))}
-            inputMode="numeric"
+            readOnly
             placeholder="1P 기준 BOX 수량"
           />
         </FormField>
@@ -316,10 +314,7 @@ export function ProductItemModal({
         <FormField label="1대당 파레트">
           <input
             value={formatNullableNumber(productForm.pallets_per_truck)}
-            onChange={(event) =>
-              onUpdateForm('pallets_per_truck', parseNullableNumber(event.target.value))
-            }
-            inputMode="numeric"
+            readOnly
             placeholder="차량당 파레트 수량"
           />
         </FormField>

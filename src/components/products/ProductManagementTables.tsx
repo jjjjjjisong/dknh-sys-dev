@@ -59,7 +59,7 @@ export function MasterProductsTable({
       <table className="table master-tree-table">
         <thead>
           <tr>
-            <th style={{ width: 44 }}></th>
+            <th style={{ width: 44 }} />
             <th style={{ width: 80 }}>구분</th>
             <th style={{ width: 260 }}>품목명(출고의뢰서)</th>
             <th style={{ width: 260 }}>품목명(거래명세서)</th>
@@ -221,7 +221,6 @@ export function ProductsTable({
   onUpdateProductPriceDraft,
   onSaveProductPrices,
   onEditProduct,
-  onDeleteProduct,
 }: ProductsTableProps) {
   return (
     <div className="table-wrap">
@@ -331,9 +330,6 @@ export function ProductsTable({
                       disabled={savingPriceProductId === product.id}
                     >
                       {savingPriceProductId === product.id ? '저장중...' : '저장'}
-                    </TableActionButton>
-                    <TableActionButton variant="danger" onClick={() => onDeleteProduct(product)}>
-                      삭제
                     </TableActionButton>
                   </div>
                 </td>

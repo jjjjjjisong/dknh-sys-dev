@@ -15,6 +15,7 @@ export function createEmptySharedItem(baseOrderDate: string, baseArriveDate: str
     qty: 0,
     customPallet: null,
     customBox: null,
+    costPrice: null,
     unitPrice: null,
     customSupply: null,
     vat: true,
@@ -38,6 +39,7 @@ export function useDocumentItems(initialItems: SharedItemRow[], clientProducts: 
         const boxPerP = manualMode ? null : product?.box_per_p ?? null;
         const eaPerP = eaPerB && boxPerP ? eaPerB * boxPerP : product?.ea_per_p ?? null;
         const qty = item.qty ?? 0;
+        const costPrice = item.costPrice ?? product?.cost_price ?? null;
         const unitPrice = item.unitPrice ?? product?.sell_price ?? 0;
         const computedSupply = Math.round(unitPrice * qty);
         const supply = item.customSupply ?? computedSupply;
@@ -48,6 +50,7 @@ export function useDocumentItems(initialItems: SharedItemRow[], clientProducts: 
           name2,
           gubun,
           qty,
+          costPrice,
           unitPrice,
           supply,
           vatAmount,

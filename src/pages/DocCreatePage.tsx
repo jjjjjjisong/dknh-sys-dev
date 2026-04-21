@@ -271,7 +271,7 @@ export default function DocCreatePage() {
     setItems((current) =>
       current.map((item) =>
         item.productId && item.productId !== MANUAL_PRODUCT_ID
-          ? { ...item, productId: '', unitPrice: null, customSupply: null }
+          ? { ...item, productId: '', costPrice: null, unitPrice: null, customSupply: null }
           : item,
       ),
     );
@@ -852,6 +852,7 @@ function mapImportedDocumentItems(document: DocumentHistory, products: Product[]
       qty: item.qty,
       customPallet: item.customPallet,
       customBox: item.customBox,
+      costPrice: item.costPrice,
       unitPrice: item.unitPrice,
       customSupply: item.supply,
       vat: item.vat,

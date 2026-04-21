@@ -356,7 +356,7 @@ export default function DocHistoryPage() {
     setItems((current) =>
       current.map((item) =>
         item.productId && item.productId !== MANUAL_PRODUCT_ID
-          ? { ...item, productId: '', unitPrice: null, customSupply: null }
+          ? { ...item, productId: '', costPrice: null, unitPrice: null, customSupply: null }
           : item,
       ),
     );
@@ -871,6 +871,7 @@ function mapDraftItemsToSharedRows(draft: DocumentHistory, products: Product[]):
       qty: item.qty ?? 0,
       customPallet: item.customPallet ?? null,
       customBox: item.customBox ?? null,
+      costPrice: item.costPrice ?? null,
       unitPrice: item.unitPrice ?? null,
       customSupply: item.supply ?? null,
       vat: typeof item.vat === 'boolean' ? item.vat : true,

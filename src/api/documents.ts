@@ -69,6 +69,7 @@ export async function saveDocument(payload: DocumentPayload) {
         name2: item.name2,
         gubun: item.gubun,
         qty: item.qty,
+        cost_price: item.costPrice,
         unit_price: item.unitPrice,
         supply: item.supply,
         vat: item.vat,
@@ -140,7 +141,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const { data, error } = await supabase
     .from('documents')
     .select(
-      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, issue_no_edit_history, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
+      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, issue_no_edit_history, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, cost_price, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
     )
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
@@ -196,6 +197,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
         name2: item.name2 ?? '',
         gubun: item.gubun ?? '',
         qty: item.qty ?? 0,
+        costPrice: item.cost_price ?? null,
         unitPrice: item.unit_price ?? 0,
         supply: item.supply ?? 0,
         vat: item.vat ?? false,
@@ -310,6 +312,7 @@ export async function updateDocument(document: DocumentHistory) {
         name2: item.name2,
         gubun: item.gubun,
         qty: item.qty,
+        cost_price: item.costPrice,
         unit_price: item.unitPrice,
         supply: item.supply,
         vat: item.vat,
