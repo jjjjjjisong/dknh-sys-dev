@@ -1135,8 +1135,8 @@ a {
   border-bottom: none;
 }
 
-.child-table tr.history-clickable-row:hover td {
-  background-color: #f8fbff;
+.child-table tbody tr.history-clickable-row:hover > td {
+  background-color: #f8fbff !important;
 }
 
 .child-empty {
@@ -1167,6 +1167,25 @@ a {
   word-break: break-word;
   line-height: 1.45;
   max-height: calc(1.45em * 2);
+}
+
+.table-inline-input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-1);
+  font-size: 13px;
+  text-align: right;
+}
+
+.table-inline-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 .table-row-selected {

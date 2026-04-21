@@ -22,28 +22,21 @@ type ProductsTableProps = {
   pagedProducts: Product[];
   currentPage: number;
   pageSize: number;
+  productPriceDrafts: Record<string, { cost_price: string; sell_price: string }>;
+  savingPriceProductId: string | null;
+  onUpdateProductPriceDraft: (
+    productId: string,
+    field: 'cost_price' | 'sell_price',
+    value: string,
+  ) => void;
+  onSaveProductPrices: (product: Product) => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
-};
-
-type MasterCardProps = {
-  master: ProductMaster;
-  index: number;
-  childrenRows: Product[];
-  expanded: boolean;
-  onToggle: () => void;
-  onCreateChild: () => void;
-  onEditMaster: () => void;
-  onDeleteMaster: () => void;
-  onEditChild: (product: Product) => void;
-  onDeleteChild: (product: Product) => void;
 };
 
 export function MasterProductsTable({
   filteredMasters,
   pagedMasters,
-  currentPage,
-  pageSize,
   expandedMasterIds,
   productsByMasterId,
   onToggleMaster,
@@ -64,29 +57,39 @@ export function MasterProductsTable({
           <tr>
             <th style={{ width: 44 }}></th>
             <th style={{ width: 80 }}>구분</th>
-            <th style={{ width: 260 }}>공통품목명</th>
+            <th style={{ width: 260 }}>품목명</th>
             <th style={{ width: 260 }}>품목명(거래명세서)</th>
-            <th style={{ width: 90, textAlign: 'right' }}>1B=ea</th>
-            <th style={{ width: 90, textAlign: 'right' }}>1P=BOX</th>
-            <th style={{ width: 90, textAlign: 'right' }}>1P=ea</th>
-            <th style={{ width: 100, textAlign: 'right' }}>1대당 팔레트</th>
+            <th style={{ width: 110, textAlign: 'right' }}>1Box(ea)</th>
+            <th style={{ width: 120, textAlign: 'right' }}>1Pallet(Box)</th>
+            <th style={{ width: 120, textAlign: 'right' }}>1Pallet(EA)</th>
+            <th style={{ width: 110, textAlign: 'right' }}>1대당 파레트</th>
             <th style={{ width: 90, textAlign: 'center' }}>하위 품목</th>
             <th style={{ width: 150 }}>관리</th>
           </tr>
         </thead>
         <tbody>
-          {pagedMasters.map(master => {
+          {pagedMasters.map((master) => {
             const isExpanded = expandedMasterIds.includes(master.id);
             const children = productsByMasterId.get(master.id) ?? [];
+
             return (
               <React.Fragment key={master.id}>
-                <tr 
-                  className={`master-tree-row ${isExpanded ? 'is-expanded' : ''}`} 
+                <tr
+                  className={`master-tree-row ${isExpanded ? 'is-expanded' : ''}`}
                   onClick={() => onToggleMaster(master.id)}
                 >
                   <td className="chevron-cell">
                     <span className="tree-chevron">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
                     </span>
                   </td>
                   <td>{master.gubun || '-'}</td>
@@ -99,59 +102,80 @@ export function MasterProductsTable({
                   <td style={{ textAlign: 'center' }}>
                     <span className="badge badge-accent">{master.linkedProductCount}개</span>
                   </td>
-                  <td onClick={e => e.stopPropagation()}>
+                  <td onClick={(event) => event.stopPropagation()}>
                     <div className="button-row">
-                      <TableActionButton variant="primary" onClick={() => onCreateChild(master.id)}>하위추가</TableActionButton>
+                      <TableActionButton variant="primary" onClick={() => onCreateChild(master.id)}>
+                        하위추가
+                      </TableActionButton>
                       <TableActionButton onClick={() => onEditMaster(master)}>수정</TableActionButton>
-                      <TableActionButton variant="danger" onClick={() => onDeleteMaster(master)}>삭제</TableActionButton>
+                      <TableActionButton variant="danger" onClick={() => onDeleteMaster(master)}>
+                        삭제
+                      </TableActionButton>
                     </div>
                   </td>
                 </tr>
-                {isExpanded && (
+                {isExpanded ? (
                   <tr className="master-tree-child-row">
                     <td colSpan={10} className="master-tree-child-cell">
                       {children.length === 0 ? (
-                         <div className="empty-state child-empty">연결된 거래처별 품목이 없습니다.</div>
+                        <div className="empty-state child-empty">연결된 납품처별 품목이 없습니다.</div>
                       ) : (
                         <div className="child-table-wrap">
                           <table className="table child-table">
                             <thead>
                               <tr>
-                                <th style={{ width: 160 }}>거래처</th>
-                                <th style={{ width: 240 }}>거래처별 품목명</th>
+                                <th style={{ width: 160 }}>납품처</th>
+                                <th style={{ width: 240 }}>품목명</th>
                                 <th style={{ width: 240 }}>품목명(거래명세서)</th>
-                                <th style={{ width: 140 }}>출고처</th>
+                                <th style={{ width: 140 }}>수신처</th>
                                 <th style={{ width: 90, textAlign: 'right' }}>입고단가</th>
                                 <th style={{ width: 90, textAlign: 'right' }}>판매단가</th>
                                 <th style={{ width: 70, textAlign: 'center' }}>상태</th>
-                                <th style={{ width: 70 }}>관리</th>
+                                <th style={{ width: 70, textAlign: 'center' }}>관리</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {children.map(child => (
-                                <tr key={child.id} onClick={() => onEditChild(child)} className="history-clickable-row">
+                              {children.map((child) => (
+                                <tr
+                                  key={child.id}
+                                  onClick={() => onEditChild(child)}
+                                  className="history-clickable-row"
+                                >
                                   <td>
-                                    <div className="table-clamp-2" title={child.client || '-'}>{child.client || '-'}</div>
+                                    <div className="table-clamp-2" title={child.client || '-'}>
+                                      {child.client || '-'}
+                                    </div>
                                   </td>
                                   <td>
-                                    <div className="table-clamp-2" title={child.name1 || '-'}>{child.name1 || '-'}</div>
+                                    <div className="table-clamp-2" title={child.name1 || '-'}>
+                                      {child.name1 || '-'}
+                                    </div>
                                   </td>
                                   <td>
-                                    <div className="table-clamp-2" title={child.name2 || '-'}>{child.name2 || '-'}</div>
+                                    <div className="table-clamp-2" title={child.name2 || '-'}>
+                                      {child.name2 || '-'}
+                                    </div>
                                   </td>
                                   <td>
-                                    <div className="table-clamp-2" title={child.supplier || '-'}>{child.supplier || '-'}</div>
+                                    <div className="table-clamp-2" title={child.receiver || '-'}>
+                                      {child.receiver || '-'}
+                                    </div>
                                   </td>
                                   <td style={{ textAlign: 'right' }}>{child.cost_price ?? '-'}</td>
                                   <td style={{ textAlign: 'right' }}>{child.sell_price ?? '-'}</td>
                                   <td style={{ textAlign: 'center' }}>
-                                      <span className={child.delYn === 'Y' ? 'badge badge-muted' : 'badge'}>
-                                        {child.delYn === 'Y' ? '비활성' : '사용'}
-                                      </span>
+                                    <span className={child.delYn === 'Y' ? 'badge badge-muted' : 'badge'}>
+                                      {child.delYn === 'Y' ? '비활성' : '사용'}
+                                    </span>
                                   </td>
-                                  <td onClick={e => e.stopPropagation()}>
+                                  <td onClick={(event) => event.stopPropagation()}>
                                     <div className="button-row" style={{ justifyContent: 'center' }}>
-                                      <TableActionButton variant="danger" onClick={() => onDeleteChild(child)}>삭제</TableActionButton>
+                                      <TableActionButton
+                                        variant="danger"
+                                        onClick={() => onDeleteChild(child)}
+                                      >
+                                        삭제
+                                      </TableActionButton>
                                     </div>
                                   </td>
                                 </tr>
@@ -162,9 +186,9 @@ export function MasterProductsTable({
                       )}
                     </td>
                   </tr>
-                )}
+                ) : null}
               </React.Fragment>
-            )
+            );
           })}
         </tbody>
       </table>
@@ -175,6 +199,10 @@ export function MasterProductsTable({
 export function ProductsTable({
   filteredProducts,
   pagedProducts,
+  productPriceDrafts,
+  savingPriceProductId,
+  onUpdateProductPriceDraft,
+  onSaveProductPrices,
   onEditProduct,
   onDeleteProduct,
 }: ProductsTableProps) {
@@ -185,16 +213,16 @@ export function ProductsTable({
           <tr>
             <th style={{ width: 56 }}>No</th>
             <th style={{ width: 90 }}>구분</th>
-            <th style={{ width: 180 }}>거래처</th>
+            <th style={{ width: 180 }}>납품처</th>
             <th style={{ width: 270 }}>품목명</th>
             <th style={{ width: 270 }}>품목명(거래명세서)</th>
-            <th style={{ width: 140 }}>출고처</th>
-            <th style={{ width: 110, textAlign: 'right' }}>입고 단가</th>
-            <th style={{ width: 110, textAlign: 'right' }}>판매 단가</th>
+            <th style={{ width: 140 }}>수신처</th>
+            <th style={{ width: 130, textAlign: 'right' }}>입고단가</th>
+            <th style={{ width: 130, textAlign: 'right' }}>판매단가</th>
             <th style={{ width: 90, textAlign: 'right' }}>1B=ea</th>
             <th style={{ width: 90, textAlign: 'right' }}>1P=BOX</th>
             <th style={{ width: 96 }}>상태</th>
-            <th style={{ width: 72 }}>관리</th>
+            <th style={{ width: 120 }}>관리</th>
           </tr>
         </thead>
         <tbody>
@@ -233,12 +261,44 @@ export function ProductsTable({
                   </div>
                 </td>
                 <td>
-                  <div className="table-clamp-2" title={product.supplier || '-'}>
-                    {product.supplier || '-'}
+                  <div className="table-clamp-2" title={product.receiver || '-'}>
+                    {product.receiver || '-'}
                   </div>
                 </td>
-                <td style={{ textAlign: 'right' }}>{product.cost_price ?? '-'}</td>
-                <td style={{ textAlign: 'right' }}>{product.sell_price ?? '-'}</td>
+                <td onClick={(event) => event.stopPropagation()}>
+                  <input
+                    className="table-inline-input"
+                    value={productPriceDrafts[product.id]?.cost_price ?? ''}
+                    onChange={(event) =>
+                      onUpdateProductPriceDraft(product.id, 'cost_price', event.target.value)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        onSaveProductPrices(product);
+                      }
+                    }}
+                    inputMode="decimal"
+                    placeholder="입고단가"
+                  />
+                </td>
+                <td onClick={(event) => event.stopPropagation()}>
+                  <input
+                    className="table-inline-input"
+                    value={productPriceDrafts[product.id]?.sell_price ?? ''}
+                    onChange={(event) =>
+                      onUpdateProductPriceDraft(product.id, 'sell_price', event.target.value)
+                    }
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        onSaveProductPrices(product);
+                      }
+                    }}
+                    inputMode="decimal"
+                    placeholder="판매단가"
+                  />
+                </td>
                 <td style={{ textAlign: 'right' }}>{product.ea_per_b ?? '-'}</td>
                 <td style={{ textAlign: 'right' }}>{product.box_per_p ?? '-'}</td>
                 <td>
@@ -261,5 +321,3 @@ export function ProductsTable({
     </div>
   );
 }
-
-// Remove MasterCard component

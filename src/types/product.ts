@@ -9,7 +9,6 @@ export type Product = {
   receiver: string;
   gubun: string;
   client: string;
-  supplier: string;
   name1: string;
   name2: string;
   cost_price: number | null;
@@ -44,7 +43,6 @@ export type ProductInput = {
   receiver: string;
   gubun: string;
   client: string;
-  supplier: string;
   name1: string;
   name2: string;
   cost_price: number | null;

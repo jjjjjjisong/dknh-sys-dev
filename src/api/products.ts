@@ -6,6 +6,7 @@ import type {
   ProductMaster,
   ProductMasterInput,
 } from '../types/product';
+import { DEFAULT_GUBUN } from '../features/products/constants';
 import { toNullableDbId } from '../utils/dbIds';
 
 type ProductMasterRow = {
@@ -103,16 +104,7 @@ export async function fetchProductMasters(): Promise<ProductMaster[]> {
 
 export async function createProductMaster(input: ProductMasterInput): Promise<ProductMaster> {
   const supabase = getSupabaseClient();
-  const payload = {
-    name1: input.name1,
-    name2: input.name2 || input.name1,
-    gubun: input.gubun,
-    ea_per_b: input.ea_per_b,
-    box_per_p: input.box_per_p,
-    ea_per_p: input.ea_per_p,
-    pallets_per_truck: input.pallets_per_truck,
-    ...getActiveAuditFields(),
-  };
+  const payload = buildProductMasterPayload(input);
 
   const { data, error } = await supabase
     .from('product_masters')
@@ -131,16 +123,7 @@ export async function updateProductMaster(id: string, input: ProductMasterInput)
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('product_masters')
-    .update({
-      name1: input.name1,
-      name2: input.name2 || input.name1,
-      gubun: input.gubun,
-      ea_per_b: input.ea_per_b,
-      box_per_p: input.box_per_p,
-      ea_per_p: input.ea_per_p,
-      pallets_per_truck: input.pallets_per_truck,
-      ...getActiveAuditFields(),
-    })
+    .update(buildProductMasterPayload(input))
     .eq('id', id)
     .eq('del_yn', 'N')
     .select(productMasterSelectColumns)
@@ -183,30 +166,8 @@ export async function removeProductMaster(id: string) {
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const supabase = getSupabaseClient();
-  const productMasterId = toNullableDbId(input.productMasterId);
-  if (productMasterId === null) {
-    throw new Error('공통 품목을 먼저 선택해 주세요.');
-  }
-
   const nextNo = await fetchNextProductNo();
-  const payload = {
-    no: nextNo,
-    product_master_id: productMasterId,
-    client_id: toNullableDbId(input.clientId),
-    receiver: input.receiver,
-    client: input.client,
-    gubun: input.gubun,
-    supplier: input.receiver,
-    name1: input.name1,
-    name2: input.name2,
-    cost_price: input.cost_price,
-    sell_price: input.sell_price,
-    ea_per_b: input.ea_per_b,
-    box_per_p: input.box_per_p,
-    ea_per_p: input.ea_per_p,
-    pallets_per_truck: input.pallets_per_truck,
-    ...getActiveAuditFields(),
-  };
+  const payload = buildProductPayload(input, nextNo);
 
   const { data, error } = await supabase
     .from('products')
@@ -239,33 +200,15 @@ export async function createProduct(input: ProductInput): Promise<Product> {
   throw toReadableError(error);
 }
 
-export async function updateProduct(id: string, currentNo: number | null, input: ProductInput): Promise<Product> {
+export async function updateProduct(
+  id: string,
+  currentNo: number | null,
+  input: ProductInput,
+): Promise<Product> {
   const supabase = getSupabaseClient();
-  const productMasterId = toNullableDbId(input.productMasterId);
-  if (productMasterId === null) {
-    throw new Error('공통 품목을 먼저 선택해 주세요.');
-  }
-
   const { data, error } = await supabase
     .from('products')
-    .update({
-      no: currentNo,
-      product_master_id: productMasterId,
-      client_id: toNullableDbId(input.clientId),
-      receiver: input.receiver,
-      client: input.client,
-      gubun: input.gubun,
-      supplier: input.receiver,
-      name1: input.name1,
-      name2: input.name2,
-      cost_price: input.cost_price,
-      sell_price: input.sell_price,
-      ea_per_b: input.ea_per_b,
-      box_per_p: input.box_per_p,
-      ea_per_p: input.ea_per_p,
-      pallets_per_truck: input.pallets_per_truck,
-      ...getActiveAuditFields(),
-    })
+    .update(buildProductPayload(input, currentNo))
     .eq('id', id)
     .select(productSelectColumns)
     .single();
@@ -284,6 +227,22 @@ export async function removeProduct(id: string) {
   if (error) {
     throw toReadableError(error);
   }
+}
+
+export async function saveProductMaster(
+  id: string | null,
+  input: ProductMasterInput,
+): Promise<ProductMaster> {
+  validateProductMasterInput(input);
+  return id ? updateProductMaster(id, input) : createProductMaster(input);
+}
+
+export async function saveProduct(
+  target: { id: string; currentNo: number | null } | null,
+  input: ProductInput,
+): Promise<Product> {
+  validateProductInput(input);
+  return target ? updateProduct(target.id, target.currentNo, input) : createProduct(input);
 }
 
 async function fetchLinkedProductCounts() {
@@ -349,6 +308,79 @@ function isProductsPrimaryKeyError(error: unknown) {
   return maybeError.code === '23505' && String(maybeError.message ?? '').includes('products_pkey');
 }
 
+function validateProductMasterInput(input: ProductMasterInput) {
+  if (!input.name1.trim()) {
+    throw new Error('공통 품목명을 입력해 주세요.');
+  }
+}
+
+function validateProductInput(input: ProductInput) {
+  if (!input.productMasterId.trim()) {
+    throw new Error('공통 품목을 선택해 주세요.');
+  }
+
+  if (!input.client.trim() || !input.clientId.trim()) {
+    throw new Error('거래처를 선택해 주세요.');
+  }
+
+  if (!input.name1.trim()) {
+    throw new Error('거래처별 품목명을 입력해 주세요.');
+  }
+}
+
+function buildProductMasterPayload(input: ProductMasterInput) {
+  const name1 = input.name1.trim();
+  const name2 = input.name2.trim() || name1;
+
+  return {
+    name1,
+    name2,
+    gubun: input.gubun.trim() || DEFAULT_GUBUN,
+    ea_per_b: input.ea_per_b,
+    box_per_p: input.box_per_p,
+    ea_per_p:
+      input.ea_per_b !== null && input.box_per_p !== null
+        ? input.ea_per_b * input.box_per_p
+        : input.ea_per_p,
+    pallets_per_truck: input.pallets_per_truck,
+    ...getActiveAuditFields(),
+  };
+}
+
+function buildProductPayload(input: ProductInput, no: number | null) {
+  const productMasterId = toNullableDbId(input.productMasterId);
+  if (productMasterId === null) {
+    throw new Error('공통 품목을 선택해 주세요.');
+  }
+
+  const client = input.client.trim();
+  const receiver = input.receiver.trim();
+  const name1 = input.name1.trim();
+  const name2 = input.name2.trim() || name1;
+
+  return {
+    no,
+    product_master_id: productMasterId,
+    client_id: toNullableDbId(input.clientId),
+    receiver,
+    client,
+    gubun: input.gubun.trim() || DEFAULT_GUBUN,
+    supplier: receiver,
+    name1,
+    name2,
+    cost_price: input.cost_price,
+    sell_price: input.sell_price,
+    ea_per_b: input.ea_per_b,
+    box_per_p: input.box_per_p,
+    ea_per_p:
+      input.ea_per_b !== null && input.box_per_p !== null
+        ? input.ea_per_b * input.box_per_p
+        : input.ea_per_p,
+    pallets_per_truck: input.pallets_per_truck,
+    ...getActiveAuditFields(),
+  };
+}
+
 function mapProductMasterRow(
   productMaster: ProductMasterRow,
   linkedCounts: Map<string, number>,
@@ -381,6 +413,7 @@ function normalizeProductMasterRelation(
 
 function mapProductRow(product: ProductRow): Product {
   const productMaster = normalizeProductMasterRelation(product.product_master);
+  const receiver = product.receiver ?? product.supplier ?? '';
 
   return {
     id: String(product.id),
@@ -396,10 +429,9 @@ function mapProductRow(product: ProductRow): Product {
       product.client_id === null || product.client_id === undefined
         ? null
         : String(product.client_id),
-    receiver: product.receiver ?? '',
+    receiver,
     gubun: productMaster?.gubun ?? product.gubun ?? '',
     client: product.client ?? '',
-    supplier: product.supplier ?? '',
     name1: product.name1 ?? '',
     name2: product.name2 ?? '',
     cost_price: product.cost_price ?? null,
@@ -407,8 +439,7 @@ function mapProductRow(product: ProductRow): Product {
     ea_per_b: productMaster?.ea_per_b ?? product.ea_per_b ?? null,
     box_per_p: productMaster?.box_per_p ?? product.box_per_p ?? null,
     ea_per_p: productMaster?.ea_per_p ?? product.ea_per_p ?? null,
-    pallets_per_truck:
-      productMaster?.pallets_per_truck ?? product.pallets_per_truck ?? null,
+    pallets_per_truck: productMaster?.pallets_per_truck ?? product.pallets_per_truck ?? null,
     delYn: (product.del_yn ?? 'N') as Product['delYn'],
     updatedAt: product.updated_at ?? null,
     updatedBy: product.updated_by ?? '',

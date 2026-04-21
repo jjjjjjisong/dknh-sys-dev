@@ -1,10 +1,11 @@
 import { type RefObject, type FormEvent } from 'react';
+import { RECEIVER_OPTIONS } from '../../constants/receivers';
+import type { Client } from '../../types/client';
+import type { Product, ProductInput, ProductMaster, ProductMasterInput } from '../../types/product';
 import Alert from '../ui/Alert';
 import Button from '../ui/Button';
 import FormField from '../ui/FormField';
 import Modal from '../ui/Modal';
-import type { Client } from '../../types/client';
-import type { Product, ProductInput, ProductMaster, ProductMasterInput } from '../../types/product';
 
 type ProductMasterModalProps = {
   open: boolean;
@@ -27,6 +28,7 @@ type ProductModalProps = {
   productForm: ProductInput;
   productFormError: string | null;
   saving: boolean;
+  showPricingFields: boolean;
   productMasters: ProductMaster[];
   clients: Client[];
   filteredFormClientOptions: Client[];
@@ -39,6 +41,7 @@ type ProductModalProps = {
   onHandleClientSelect: (clientName: string) => void;
   onSetClientDropdownOpen: (open: boolean) => void;
   formatNullableNumber: (value: number | null) => string;
+  parseNullableNumber: (value: string) => number | null;
 };
 
 export function ProductMasterModal({
@@ -86,62 +89,62 @@ export function ProductMasterModal({
           </select>
         </FormField>
 
-        <FormField label="공통 품목명 *">
+        <FormField label="품목명 *">
           <input
             value={masterForm.name1}
             onChange={(event) => onUpdateForm('name1', event.target.value)}
-            placeholder="공통 품목명 입력"
+            placeholder="품목명을 입력하세요"
           />
         </FormField>
 
-        <FormField label="거래명세서 기본명">
+        <FormField label="품목명(거래명세서)">
           <input
             value={masterForm.name2}
             onChange={(event) => onUpdateForm('name2', event.target.value)}
-            placeholder="비워두면 공통 품목명과 동일하게 저장"
+            placeholder="비워두면 품목명과 동일하게 저장됩니다"
           />
         </FormField>
 
-        <FormField label="1B=ea">
+        <FormField label="1Box(ea)">
           <input
             value={formatNullableNumber(masterForm.ea_per_b)}
             onChange={(event) => onUpdateForm('ea_per_b', parseNullableNumber(event.target.value))}
             inputMode="numeric"
-            placeholder="1B ea"
+            placeholder="1Box 기준 EA 수량"
           />
         </FormField>
 
-        <FormField label="1P=BOX">
+        <FormField label="1Pallet(Box)">
           <input
             value={formatNullableNumber(masterForm.box_per_p)}
             onChange={(event) => onUpdateForm('box_per_p', parseNullableNumber(event.target.value))}
             inputMode="numeric"
-            placeholder="1P BOX"
+            placeholder="1Pallet 기준 Box 수량"
           />
         </FormField>
 
-        <FormField label="1P=ea">
+        <FormField label="1Pallet(EA)">
           <input value={formatNullableNumber(masterForm.ea_per_p)} readOnly placeholder="자동 계산" />
         </FormField>
 
-        <FormField label="1대당 팔레트">
+        <FormField label="1대당 파레트">
           <input
             value={formatNullableNumber(masterForm.pallets_per_truck)}
             onChange={(event) =>
               onUpdateForm('pallets_per_truck', parseNullableNumber(event.target.value))
             }
             inputMode="numeric"
-            placeholder="팔레트 수"
+            placeholder="파레트 수량"
           />
         </FormField>
 
         {editingMaster ? (
           <div className="field">
-            <span>연결된 거래처별 품목</span>
+            <span>연결된 납품처별 품목</span>
             <div>
               {linkedProductsCount === 0 ? (
                 <span style={{ color: 'var(--text-3)', fontSize: 13 }}>
-                  연결된 거래처별 품목이 없습니다.
+                  연결된 납품처별 품목이 없습니다.
                 </span>
               ) : (
                 <span className="badge">{linkedProductsCount}개 연결됨</span>
@@ -162,6 +165,7 @@ export function ProductItemModal({
   productForm,
   productFormError,
   saving,
+  showPricingFields,
   productMasters,
   clients,
   filteredFormClientOptions,
@@ -174,11 +178,12 @@ export function ProductItemModal({
   onHandleClientSelect,
   onSetClientDropdownOpen,
   formatNullableNumber,
+  parseNullableNumber,
 }: ProductModalProps) {
   return (
     <Modal
       open={open}
-      title={editingProduct ? '거래처별 품목 수정' : '거래처별 품목 추가'}
+      title={editingProduct ? '납품처별 품목 수정' : '납품처별 품목 추가'}
       onClose={onClose}
       closeOnOverlayClick={false}
       footer={
@@ -211,7 +216,11 @@ export function ProductItemModal({
           </select>
         </FormField>
 
-        <FormField label="거래처 *">
+        <FormField label="구분">
+          <input value={productForm.gubun || '-'} readOnly />
+        </FormField>
+
+        <FormField label="납품처 *">
           <div className="client-search-box" ref={clientSearchBoxRef}>
             <input
               className="search-input"
@@ -224,7 +233,7 @@ export function ProductItemModal({
                 onSetClientDropdownOpen(true);
               }}
               onFocus={() => onSetClientDropdownOpen(true)}
-              placeholder="거래처를 선택하세요."
+              placeholder="납품처를 선택하세요"
             />
             <span className="client-search-caret" aria-hidden="true" />
             {clientDropdownOpen ? (
@@ -249,64 +258,64 @@ export function ProductItemModal({
         </FormField>
 
         <FormField label="수신처">
-          <input
+          <select
             value={productForm.receiver}
             onChange={(event) => onUpdateForm('receiver', event.target.value)}
-            placeholder="수신처 입력"
-          />
+          >
+            <option value="">수신처를 선택하세요</option>
+            {RECEIVER_OPTIONS.map((receiver) => (
+              <option key={receiver} value={receiver}>
+                {receiver}
+              </option>
+            ))}
+          </select>
         </FormField>
 
         <div className="product-form-section field-span-2">
           <p className="product-form-section-label">품목명</p>
         </div>
 
-        <FormField label="거래처별 품목명 *">
+        <FormField label="품목명 *">
           <input
             value={productForm.name1}
             onChange={(event) => onUpdateForm('name1', event.target.value)}
-            placeholder="거래처별 품목명 입력"
+            placeholder="품목명을 입력하세요"
           />
         </FormField>
 
-        <FormField label="거래명세서명">
+        <FormField label="품목명(거래명세서)">
           <input
             value={productForm.name2}
             onChange={(event) => onUpdateForm('name2', event.target.value)}
-            placeholder="비워두면 거래처별 품목명과 동일하게 저장"
+            placeholder="비워두면 품목명과 동일하게 저장됩니다"
           />
         </FormField>
 
-        <FormField label="공급처">
-          <input
-            value={productForm.supplier}
-            onChange={(event) => onUpdateForm('supplier', event.target.value)}
-            placeholder="공급처 입력"
-          />
-        </FormField>
+        {showPricingFields ? (
+          <>
+            <FormField label="입고단가">
+              <input
+                value={formatNullableNumber(productForm.cost_price)}
+                onChange={(event) =>
+                  onUpdateForm('cost_price', parseNullableNumber(event.target.value))
+                }
+                inputMode="decimal"
+                placeholder="입고단가 입력"
+              />
+            </FormField>
 
-        <div className="product-form-section field-span-2">
-          <p className="product-form-section-label">공통 품목 기준값</p>
-        </div>
-
-        <FormField label="구분">
-          <input value={productForm.gubun || '-'} readOnly />
-        </FormField>
-
-        <FormField label="1B=ea">
-          <input value={formatNullableNumber(productForm.ea_per_b)} readOnly />
-        </FormField>
-
-        <FormField label="1P=BOX">
-          <input value={formatNullableNumber(productForm.box_per_p)} readOnly />
-        </FormField>
-
-        <FormField label="1P=ea">
-          <input value={formatNullableNumber(productForm.ea_per_p)} readOnly />
-        </FormField>
-
-        <FormField label="1대당 팔레트">
-          <input value={formatNullableNumber(productForm.pallets_per_truck)} readOnly />
-        </FormField>
+            <FormField label="판매단가">
+              <input
+                value={formatNullableNumber(productForm.sell_price)}
+                onChange={(event) =>
+                  onUpdateForm('sell_price', parseNullableNumber(event.target.value))
+                }
+                inputMode="decimal"
+                placeholder="판매단가 입력"
+              />
+            </FormField>
+          </>
+        ) : null}
 
         {productFormError ? <Alert>{productFormError}</Alert> : null}
       </form>
