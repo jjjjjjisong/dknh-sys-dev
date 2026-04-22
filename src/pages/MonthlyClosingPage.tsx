@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { fetchClients } from '../api/clients';
@@ -373,6 +373,19 @@ export default function MonthlyClosingPage() {
     });
   }
 
+  function handleDownloadSummaryExcel() {
+    if (monthlyClientSummaries.length === 0) {
+      window.alert('\uB2E4\uC6B4\uB85C\uB4DC\uD560 \uC885\uD569\uC7A5 \uB370\uC774\uD130\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.');
+      return;
+    }
+
+    void exportMonthlySummaryToExcel({
+      yearMonth: selectedYearMonth,
+      rows: monthlyClientSummaries,
+      noteDrafts: summaryNoteDrafts,
+    });
+  }
+
   return (
     <div className="page-content">
       <PageHeader
@@ -555,6 +568,17 @@ export default function MonthlyClosingPage() {
         onClose={() => setSummaryModalOpen(false)}
         closeOnOverlayClick
         cardClassName="monthly-summary-modal-card"
+        headerAction={
+          <Button
+            type="button"
+            variant="secondary"
+            className="excel-download-button"
+            onClick={handleDownloadSummaryExcel}
+            disabled={monthlyClientSummaries.length === 0}
+          >
+            {'\uC5D1\uC140 \uB2E4\uC6B4\uB85C\uB4DC'}
+          </Button>
+        }
         footer={
           <Button type="button" variant="secondary" onClick={() => setSummaryModalOpen(false)}>
             닫기
@@ -609,6 +633,101 @@ export default function MonthlyClosingPage() {
       </Modal>
     </div>
   );
+}
+
+async function exportMonthlySummaryToExcel(params: {
+  yearMonth: string;
+  rows: SummaryRow[];
+  noteDrafts: Record<string, string>;
+}) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('\uC885\uD569\uC7A5', {
+    views: [{ state: 'frozen', ySplit: 3 }],
+  });
+  const excelFontName = '\uAD74\uB9BC';
+  const totalAmount = params.rows.reduce((sum, row) => sum + row.totalAmount, 0);
+
+  worksheet.pageSetup = {
+    paperSize: 9,
+    orientation: 'portrait',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    margins: {
+      left: 0.28,
+      right: 0.28,
+      top: 0.35,
+      bottom: 0.35,
+      header: 0.1,
+      footer: 0.1,
+    },
+  };
+
+  worksheet.columns = [{ width: 26 }, { width: 18 }, { width: 20 }];
+
+  worksheet.mergeCells('A1:C1');
+  const titleCell = worksheet.getCell('A1');
+  titleCell.value = `${formatYearMonthLabel(params.yearMonth)} \uAC70\uB798\uBA85\uC138\uC11C \uD569\uACC4`;
+  titleCell.font = { name: excelFontName, size: 16, bold: true, color: { argb: 'FF000000' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getRow(1).height = 28;
+
+  const headerRow = worksheet.getRow(3);
+  headerRow.values = ['\uAC70\uB798\uCC98', '\uAE08\uC561', '\uBE44\uACE0'];
+  headerRow.height = 24;
+  headerRow.eachCell((cell) => {
+    cell.font = { name: excelFontName, size: 11, bold: true, color: { argb: 'FF000000' } };
+    cell.fill = createSolidFill('FFE5E7EB');
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    applyCellBorder(cell, 'FFB8BEC8');
+  });
+
+  let currentRow = 4;
+
+  params.rows.forEach((row) => {
+    const excelRow = worksheet.getRow(currentRow);
+    excelRow.values = [
+      row.clientName,
+      row.totalAmount > 0 ? row.totalAmount : '-',
+      params.noteDrafts[row.clientId] ?? '',
+    ];
+    excelRow.height = 23;
+
+    excelRow.eachCell((cell, colNumber) => {
+      cell.font = { name: excelFontName, size: 11, color: { argb: 'FF000000' } };
+      cell.alignment = {
+        horizontal: colNumber === 2 ? 'right' : 'left',
+        vertical: 'middle',
+      };
+      applyCellBorder(cell, 'FFC9CED6');
+    });
+
+    if (row.totalAmount > 0) {
+      excelRow.getCell(2).numFmt = '#,##0';
+    }
+
+    currentRow += 1;
+  });
+
+  const totalRow = worksheet.getRow(currentRow);
+  totalRow.values = ['\uD569\uACC4', totalAmount, ''];
+  totalRow.height = 24;
+  totalRow.eachCell((cell, colNumber) => {
+    cell.font = { name: excelFontName, size: 11, bold: true, color: { argb: 'FF000000' } };
+    cell.fill = createSolidFill('FFF3F4F6');
+    cell.alignment = {
+      horizontal: colNumber === 2 ? 'right' : 'center',
+      vertical: 'middle',
+    };
+    applyCellBorder(cell, 'FFB8BEC8');
+  });
+  totalRow.getCell(2).numFmt = '#,##0';
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  saveAs(blob, `\uC885\uD569\uC7A5_${params.yearMonth.replace('-', '')}.xlsx`);
 }
 
 function getItemBaseDate(document: DocumentHistory, item: DocumentHistoryItem) {
