@@ -3,6 +3,7 @@ import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { fetchClients } from '../api/clients';
 import { fetchDocuments, updateDocumentItemMonthlyClosingNote } from '../api/documents';
+import { fetchMonthlySummaryNotes, saveMonthlySummaryNote } from '../api/monthlySummaryNotes';
 import { fetchProducts } from '../api/products';
 import PageHeader from '../components/PageHeader';
 import Alert from '../components/ui/Alert';
@@ -67,6 +68,7 @@ export default function MonthlyClosingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingRowId, setSavingRowId] = useState<string | null>(null);
+  const [savingSummaryNoteClientId, setSavingSummaryNoteClientId] = useState<string | null>(null);
   const clientSearchBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -128,6 +130,27 @@ export default function MonthlyClosingPage() {
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [clientDropdownOpen]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSummaryNotes() {
+      try {
+        const notes = await fetchMonthlySummaryNotes(selectedYearMonth);
+        if (mounted) setSummaryNoteDrafts(notes);
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err.message : '종합장 비고를 불러오지 못했습니다.');
+        }
+      }
+    }
+
+    void loadSummaryNotes();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedYearMonth]);
 
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -386,6 +409,24 @@ export default function MonthlyClosingPage() {
     });
   }
 
+  async function handleSaveSummaryNote(clientId: string) {
+    const nextNote = (summaryNoteDrafts[clientId] ?? '').trim();
+
+    try {
+      setSavingSummaryNoteClientId(clientId);
+      setError(null);
+      await saveMonthlySummaryNote(selectedYearMonth, clientId, nextNote);
+      setSummaryNoteDrafts((current) => ({
+        ...current,
+        [clientId]: nextNote,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '종합장 비고 저장에 실패했습니다.');
+    } finally {
+      setSavingSummaryNoteClientId(null);
+    }
+  }
+
   return (
     <div className="page-content">
       <PageHeader
@@ -605,12 +646,19 @@ export default function MonthlyClosingPage() {
                     <input
                       className="search-input monthly-summary-note-input"
                       value={summaryNoteDrafts[row.clientId] ?? ''}
+                      disabled={savingSummaryNoteClientId === row.clientId}
                       onChange={(event) =>
                         setSummaryNoteDrafts((current) => ({
                           ...current,
                           [row.clientId]: event.target.value,
                         }))
                       }
+                      onBlur={() => void handleSaveSummaryNote(row.clientId)}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter') return;
+                        event.preventDefault();
+                        void handleSaveSummaryNote(row.clientId);
+                      }}
                       placeholder="비고 입력"
                     />
                   </td>
