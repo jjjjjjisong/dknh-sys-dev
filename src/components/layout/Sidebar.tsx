@@ -19,7 +19,7 @@ const navItems: NavItem[] = [
   { group: '관리', label: '품목 관리', to: '/master-product', icon: <SidebarIconBox /> },
   { group: '관리', label: '공급자 관리', to: '/master-supplier', icon: <SidebarIconStore /> },
   { group: '정산', label: '월마감', to: '/monthly-closing', icon: <SidebarIconTrend /> },
-  { group: '정산', label: '일일판매', to: '/daily-sales', icon: <SidebarIconTrend /> },
+  { group: '정산', label: '일일판매', to: '/daily-sales', icon: <SidebarIconTrend />, adminOnly: true },
   { group: '관리자', label: '계정 관리', to: '/account', icon: <SidebarIconSettings />, adminOnly: true },
 ];
 
