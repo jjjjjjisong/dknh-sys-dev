@@ -56,13 +56,15 @@ export const router = createHashRouter([
       { path: 'doc-history/:documentId', element: <DocHistoryPage /> },
       { path: 'order-book', element: <OrderBookPage /> },
       { path: 'monthly-closing', element: <MonthlyClosingPage /> },
-      { path: 'daily-sales', element: <DailySalesPage /> },
       { path: 'master-client', element: <MasterClientPage /> },
       { path: 'master-supplier', element: <MasterSupplierPage /> },
       { path: 'master-product', element: <MasterProductPage /> },
       {
         element: <AdminOnlyRoute />,
-        children: [{ path: 'account', element: <AccountPage /> }],
+        children: [
+          { path: 'daily-sales', element: <DailySalesPage /> },
+          { path: 'account', element: <AccountPage /> },
+        ],
       },
     ],
   },
