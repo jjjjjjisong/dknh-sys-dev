@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+﻿import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { getStoredUser, isAdminUser, subscribeSessionChange } from '../../lib/session';
 
@@ -15,11 +15,11 @@ const navItems: NavItem[] = [
   { group: '문서', label: '문서 작성', to: '/doc-create', icon: <SidebarIconPen /> },
   { group: '문서', label: '발행 이력', to: '/doc-history', icon: <SidebarIconHistory /> },
   { group: '문서', label: '수주대장', to: '/order-book', icon: <SidebarIconList /> },
-  { group: '정산관리', label: '월마감', to: '/monthly-closing', icon: <SidebarIconTrend /> },
-  { group: '정산관리', label: '일일판매', to: '/daily-sales', icon: <SidebarIconTrend /> },
   { group: '관리', label: '납품처 관리', to: '/master-client', icon: <SidebarIconUsers /> },
   { group: '관리', label: '품목 관리', to: '/master-product', icon: <SidebarIconBox /> },
   { group: '관리', label: '공급자 관리', to: '/master-supplier', icon: <SidebarIconStore /> },
+  { group: '정산', label: '월마감', to: '/monthly-closing', icon: <SidebarIconTrend /> },
+  { group: '정산', label: '일일판매', to: '/daily-sales', icon: <SidebarIconTrend /> },
   { group: '관리자', label: '계정 관리', to: '/account', icon: <SidebarIconSettings />, adminOnly: true },
 ];
 
@@ -240,3 +240,4 @@ function SidebarIconTrend() {
     </svg>
   );
 }
+
