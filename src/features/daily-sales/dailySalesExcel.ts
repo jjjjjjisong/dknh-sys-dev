@@ -82,7 +82,7 @@ export async function exportDailySalesToExcel(params: {
   headerRow.height = 26;
   headerRow.eachCell((cell) => {
     cell.font = { name: excelFontName, size: 10, bold: true, color: { argb: 'FF0F172A' } };
-    cell.fill = createSolidFill('FFE7EEF8');
+    cell.fill = createSolidFill('FFE5E7EB');
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     applyCellBorder(cell, 'FF8FA3BA');
   });
@@ -126,7 +126,7 @@ export async function exportDailySalesToExcel(params: {
   totalRow.height = 24;
   totalRow.eachCell((cell, colNumber) => {
     cell.font = { name: excelFontName, size: 10, bold: true, color: { argb: 'FF0F172A' } };
-    cell.fill = createSolidFill('FFDCEBFF');
+    cell.fill = createSolidFill('FFD1D5DB');
     cell.alignment = {
       horizontal: colNumber >= 4 ? 'right' : 'center',
       vertical: 'middle',
