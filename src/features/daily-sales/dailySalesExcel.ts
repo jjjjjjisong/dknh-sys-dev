@@ -84,7 +84,7 @@ export async function exportDailySalesToExcel(params: {
     cell.font = { name: excelFontName, size: 10, bold: true, color: { argb: 'FF0F172A' } };
     cell.fill = createSolidFill('FFE7EEF8');
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    applyCellBorder(cell, 'FFC8D4E3');
+    applyCellBorder(cell, 'FF8FA3BA');
   });
 
   let currentRow = 4;
@@ -131,7 +131,7 @@ export async function exportDailySalesToExcel(params: {
       horizontal: colNumber >= 4 ? 'right' : 'center',
       vertical: 'middle',
     };
-    applyCellBorder(cell, 'FF9DBCE8');
+    applyCellBorder(cell, 'FF6B85A3');
   });
 
   applyNumberFormats(worksheet, currentRow, headers.length);
@@ -150,7 +150,7 @@ function styleBodyRow(row: ExcelJS.Row, fontName: string) {
       horizontal: colNumber >= 4 ? 'right' : 'left',
       vertical: 'middle',
     };
-    applyCellBorder(cell, 'FFE2E8F0');
+    applyCellBorder(cell, 'FFAEBBCA');
   });
 }
 
