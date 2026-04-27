@@ -204,6 +204,11 @@ export default function PriceChangePanel({
           </Button>
         </div>
         {manualOnlySelected ? (
+          <div className="price-change-count-row">
+            <span>선택된 품목: 직접입력</span>
+          </div>
+        ) : null}
+        {manualOnlySelected ? (
           <div className="price-change-next-hint price-change-step-enter">
             기간 내 직접입력 품목 전체를 검색합니다.
           </div>

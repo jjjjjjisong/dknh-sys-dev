@@ -358,7 +358,9 @@ export function useMasterProductPage() {
 
       if (key === 'productName') {
         next.productName = String(value);
-        next.productId = '';
+        if (current.productId !== MANUAL_PRICE_CHANGE_PRODUCT_ID) {
+          next.productId = '';
+        }
       }
 
       if (key === 'productId') {
