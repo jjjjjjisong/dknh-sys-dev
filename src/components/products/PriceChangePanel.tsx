@@ -113,7 +113,6 @@ export default function PriceChangePanel({
 
   function handleProductKeywordChange(value: string) {
     onUpdateForm('productName', value);
-    onUpdateForm('productId', '');
     setProductSearchOpen(true);
   }
 
