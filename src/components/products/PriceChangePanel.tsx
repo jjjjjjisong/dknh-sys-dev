@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import Button from '../ui/Button';
+import { MANUAL_PRICE_CHANGE_PRODUCT_ID } from '../../api/priceChanges';
 import type { Product } from '../../types/product';
 import type { PriceChangeLog, PriceChangePreviewRow } from '../../api/priceChanges';
 
@@ -83,7 +84,8 @@ export default function PriceChangePanel({
   const selectedDocumentCount = new Set(selectedRows.map((row) => row.documentId)).size;
   const allPreviewRowsSelected = previewRows.length > 0 && previewRows.every((row) => selectedIdSet.has(row.itemId));
   const hasSearched = searched;
-  const selectedProduct = products.find((product) => product.id === form.productId);
+  const manualOnlySelected = form.productId === MANUAL_PRICE_CHANGE_PRODUCT_ID;
+  const selectedProduct = manualOnlySelected ? undefined : products.find((product) => product.id === form.productId);
 
   const productSuggestions = useMemo(() => {
     const keyword = form.productName.trim().toLowerCase();
@@ -108,6 +110,11 @@ export default function PriceChangePanel({
     onUpdateForm('productName', value);
     onUpdateForm('productId', '');
     setProductSearchOpen(true);
+  }
+
+  function handleManualSelect() {
+    onUpdateForm('productId', MANUAL_PRICE_CHANGE_PRODUCT_ID);
+    setProductSearchOpen(false);
   }
 
   function handleProductSelect(product: Product) {
@@ -157,9 +164,18 @@ export default function PriceChangePanel({
             />
             {productSearchOpen ? (
               <div className="price-change-product-menu">
+                <button
+                  type="button"
+                  className="price-change-product-option"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={handleManualSelect}
+                >
+                  <strong>직접입력</strong>
+                  <span>기간 내 직접입력 품목 전체 검색</span>
+                </button>
                 {productSuggestions.length === 0 ? (
                   <button type="button" className="price-change-product-option" disabled>
-                    검색 결과가 없습니다.
+                    寃??寃곌낵媛 ?놁뒿?덈떎.
                   </button>
                 ) : (
                   productSuggestions.map((product) => (
@@ -182,6 +198,11 @@ export default function PriceChangePanel({
             {loadingPreview ? '검색 중...' : '검색'}
           </Button>
         </div>
+        {manualOnlySelected ? (
+          <div className="price-change-next-hint price-change-step-enter">
+            기간 내 직접입력 품목 전체를 검색합니다.
+          </div>
+        ) : null}
         {selectedProduct ? (
           <div className="price-change-product-summary price-change-step-enter">
             <div>
