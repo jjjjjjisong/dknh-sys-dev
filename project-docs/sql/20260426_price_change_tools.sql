@@ -119,9 +119,13 @@ as $$
     and (p_date_to is null or coalesce(di.arrive_date, d.arrive_date, di.order_date, d.order_date) <= p_date_to)
     and (p_client_id is null or d.client_id = p_client_id)
     and (nullif(trim(p_receiver), '') is null or d.receiver = trim(p_receiver))
-    and (p_product_id is null or di.product_id = p_product_id)
     and (
-      nullif(trim(p_product_name), '') is null
+      (trim(coalesce(p_product_name, '')) = '__manual__' and di.product_id is null)
+      or (trim(coalesce(p_product_name, '')) <> '__manual__' and (p_product_id is null or di.product_id = p_product_id))
+    )
+    and (
+      trim(coalesce(p_product_name, '')) = '__manual__'
+      or nullif(trim(p_product_name), '') is null
       or di.name1 = trim(p_product_name)
       or di.name2 = trim(p_product_name)
     )

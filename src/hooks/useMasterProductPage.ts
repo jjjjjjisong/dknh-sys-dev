@@ -4,6 +4,7 @@ import { fetchProductManagementData } from '../api/productManagement';
 import {
   applyPriceChange,
   fetchPriceChangeLogs,
+  MANUAL_PRICE_CHANGE_PRODUCT_ID,
   previewPriceChange,
   type PriceChangeLog,
   type PriceChangePreviewRow,
@@ -363,8 +364,12 @@ export function useMasterProductPage() {
       if (key === 'productId') {
         const selectedProduct = products.find((product) => product.id === value);
         next.productId = String(value);
-        if (selectedProduct) {
+        if (value === MANUAL_PRICE_CHANGE_PRODUCT_ID) {
+          next.productName = '직접입력';
+        } else if (selectedProduct) {
           next.productName = selectedProduct.name1;
+        } else if (!value) {
+          next.productName = '';
         }
       }
 

@@ -2,6 +2,8 @@ import { getAuditActor } from './audit';
 import { getSupabaseClient } from './supabase/client';
 import { toNullableDbId } from '../utils/dbIds';
 
+export const MANUAL_PRICE_CHANGE_PRODUCT_ID = '__manual__';
+
 export type PriceChangeCriteria = {
   dateFrom: string;
   dateTo: string;
@@ -94,13 +96,18 @@ type PriceChangeLogDb = {
 
 export async function previewPriceChange(criteria: PriceChangeCriteria): Promise<PriceChangePreviewRow[]> {
   const supabase = getSupabaseClient();
+  const manualOnly = criteria.productId === MANUAL_PRICE_CHANGE_PRODUCT_ID;
   const { data, error } = await supabase.rpc('preview_document_item_price_change', {
     p_date_from: toNullableText(criteria.dateFrom),
     p_date_to: toNullableText(criteria.dateTo),
     p_client_id: toNullableDbId(criteria.clientId),
     p_receiver: toNullableText(criteria.receiver),
-    p_product_id: toNullableDbId(criteria.productId),
-    p_product_name: criteria.productId ? null : toNullableText(criteria.productName),
+    p_product_id: manualOnly ? null : toNullableDbId(criteria.productId),
+    p_product_name: manualOnly
+      ? MANUAL_PRICE_CHANGE_PRODUCT_ID
+      : criteria.productId
+        ? null
+        : toNullableText(criteria.productName),
   });
 
   if (error) {
@@ -117,6 +124,7 @@ export async function applyPriceChange(params: {
   newUnitPrice: number | null;
 }): Promise<{ logId: string; changedItemCount: number; changedDocumentCount: number }> {
   const supabase = getSupabaseClient();
+  const manualOnly = params.criteria.productId === MANUAL_PRICE_CHANGE_PRODUCT_ID;
   const { data, error } = await supabase.rpc('apply_document_item_price_change', {
     p_item_ids: params.itemIds.map((id) => Number(id)),
     p_new_cost_price: params.newCostPrice,
@@ -127,8 +135,8 @@ export async function applyPriceChange(params: {
     p_client_id: toNullableDbId(params.criteria.clientId),
     p_client_name: params.criteria.clientName.trim(),
     p_receiver: params.criteria.receiver.trim(),
-    p_product_id: toNullableDbId(params.criteria.productId),
-    p_product_name: params.criteria.productName.trim(),
+    p_product_id: manualOnly ? null : toNullableDbId(params.criteria.productId),
+    p_product_name: manualOnly ? '직접입력' : params.criteria.productName.trim(),
   });
 
   if (error) {
