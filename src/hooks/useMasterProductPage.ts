@@ -365,7 +365,7 @@ export function useMasterProductPage() {
         const selectedProduct = products.find((product) => product.id === value);
         next.productId = String(value);
         if (value === MANUAL_PRICE_CHANGE_PRODUCT_ID) {
-          next.productName = '직접입력';
+          next.productName = '';
         } else if (selectedProduct) {
           next.productName = selectedProduct.name1;
         } else if (!value) {
