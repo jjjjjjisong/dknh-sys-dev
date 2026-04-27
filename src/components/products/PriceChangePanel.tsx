@@ -87,13 +87,12 @@ export default function PriceChangePanel({
   const allPreviewRowsSelected =
     previewRows.length > 0 && previewRows.every((row) => selectedIdSet.has(row.itemId));
   const manualOnlySelected = form.productId === MANUAL_PRICE_CHANGE_PRODUCT_ID;
-  const hasSearched = searched;
   const selectedProduct = manualOnlySelected
     ? undefined
     : products.find((product) => product.id === form.productId);
+  const keyword = form.productName.trim().toLowerCase();
 
   const productSuggestions = useMemo(() => {
-    const keyword = form.productName.trim().toLowerCase();
     const source = keyword
       ? products.filter((product) =>
           [product.client, product.receiver, product.name1, product.name2]
@@ -103,13 +102,15 @@ export default function PriceChangePanel({
       : products;
 
     return source.slice(0, 30);
-  }, [form.productName, products]);
+  }, [keyword, products]);
 
   const filteredLogs = useMemo(() => {
-    const keyword = historyKeyword.trim().toLowerCase();
-    if (!keyword) return logs;
-    return logs.filter((log) => log.productName.toLowerCase().includes(keyword));
+    const logKeyword = historyKeyword.trim().toLowerCase();
+    if (!logKeyword) return logs;
+    return logs.filter((log) => log.productName.toLowerCase().includes(logKeyword));
   }, [historyKeyword, logs]);
+
+  const showManualOption = keyword.length === 0;
 
   function handleProductKeywordChange(value: string) {
     onUpdateForm('productName', value);
@@ -168,20 +169,22 @@ export default function PriceChangePanel({
             />
             {productSearchOpen ? (
               <div className="price-change-product-menu">
-                <button
-                  type="button"
-                  className="price-change-product-option"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={handleManualSelect}
-                >
-                  <strong>직접입력</strong>
-                  <span>기간 내 직접입력 품목 전체 검색</span>
-                </button>
-                {productSuggestions.length === 0 && !manualOnlySelected ? (
+                {showManualOption ? (
+                  <button
+                    type="button"
+                    className="price-change-product-option"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={handleManualSelect}
+                  >
+                    <strong>직접입력</strong>
+                    <span>기간 내 직접입력 품목 전체 검색</span>
+                  </button>
+                ) : null}
+                {productSuggestions.length === 0 ? (
                   <button type="button" className="price-change-product-option" disabled>
                     검색 결과가 없습니다.
                   </button>
-                ) : productSuggestions.length > 0 ? (
+                ) : (
                   productSuggestions.map((product) => (
                     <button
                       type="button"
@@ -194,7 +197,7 @@ export default function PriceChangePanel({
                       <span>{getProductLabel(product)}</span>
                     </button>
                   ))
-                ) : null}
+                )}
               </div>
             ) : null}
           </div>
@@ -209,7 +212,9 @@ export default function PriceChangePanel({
         ) : null}
         {manualOnlySelected ? (
           <div className="price-change-next-hint price-change-step-enter">
-            기간 내 직접입력 품목 전체를 검색합니다.
+            {form.productName.trim()
+              ? `기간 내 직접입력 품목 중 "${form.productName.trim()}" 검색합니다.`
+              : '기간 내 직접입력 품목 전체를 검색합니다.'}
           </div>
         ) : null}
         {selectedProduct ? (
@@ -238,7 +243,7 @@ export default function PriceChangePanel({
         ) : null}
       </section>
 
-      {hasSearched ? (
+      {searched ? (
         <section className="price-change-section price-change-step-enter">
           <div className="price-change-section-title">
             <h3>2. 검색 결과</h3>
@@ -389,7 +394,7 @@ export default function PriceChangePanel({
             </Button>
           </div>
         </section>
-      ) : hasSearched ? (
+      ) : searched ? (
         <div className="price-change-next-hint price-change-step-enter">
           검색 결과에서 변경할 항목을 체크하면 변경 대상 영역이 나타납니다.
         </div>

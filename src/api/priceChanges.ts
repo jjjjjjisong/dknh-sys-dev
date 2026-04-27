@@ -97,6 +97,7 @@ type PriceChangeLogDb = {
 export async function previewPriceChange(criteria: PriceChangeCriteria): Promise<PriceChangePreviewRow[]> {
   const supabase = getSupabaseClient();
   const manualOnly = criteria.productId === MANUAL_PRICE_CHANGE_PRODUCT_ID;
+  const manualKeyword = criteria.productName.trim();
   const { data, error } = await supabase.rpc('preview_document_item_price_change', {
     p_date_from: toNullableText(criteria.dateFrom),
     p_date_to: toNullableText(criteria.dateTo),
@@ -104,7 +105,9 @@ export async function previewPriceChange(criteria: PriceChangeCriteria): Promise
     p_receiver: toNullableText(criteria.receiver),
     p_product_id: manualOnly ? null : toNullableDbId(criteria.productId),
     p_product_name: manualOnly
-      ? MANUAL_PRICE_CHANGE_PRODUCT_ID
+      ? manualKeyword
+        ? `${MANUAL_PRICE_CHANGE_PRODUCT_ID}|${manualKeyword}`
+        : MANUAL_PRICE_CHANGE_PRODUCT_ID
       : criteria.productId
         ? null
         : toNullableText(criteria.productName),

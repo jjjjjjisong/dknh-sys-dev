@@ -120,11 +120,25 @@ as $$
     and (p_client_id is null or d.client_id = p_client_id)
     and (nullif(trim(p_receiver), '') is null or d.receiver = trim(p_receiver))
     and (
-      (trim(coalesce(p_product_name, '')) = '__manual__' and di.product_id is null)
-      or (trim(coalesce(p_product_name, '')) <> '__manual__' and (p_product_id is null or di.product_id = p_product_id))
+      (
+        split_part(trim(coalesce(p_product_name, '')), '|', 1) = '__manual__'
+        and di.product_id is null
+      )
+      or (
+        split_part(trim(coalesce(p_product_name, '')), '|', 1) <> '__manual__'
+        and (p_product_id is null or di.product_id = p_product_id)
+      )
     )
     and (
       trim(coalesce(p_product_name, '')) = '__manual__'
+      or (
+        split_part(trim(coalesce(p_product_name, '')), '|', 1) = '__manual__'
+        and (
+          nullif(split_part(trim(coalesce(p_product_name, '')), '|', 2), '') is null
+          or di.name1 ilike '%' || split_part(trim(coalesce(p_product_name, '')), '|', 2) || '%'
+          or di.name2 ilike '%' || split_part(trim(coalesce(p_product_name, '')), '|', 2) || '%'
+        )
+      )
       or nullif(trim(p_product_name), '') is null
       or di.name1 = trim(p_product_name)
       or di.name2 = trim(p_product_name)
