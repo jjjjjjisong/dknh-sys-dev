@@ -178,11 +178,11 @@ export default function PriceChangePanel({
                   <strong>직접입력</strong>
                   <span>기간 내 직접입력 품목 전체 검색</span>
                 </button>
-                {productSuggestions.length === 0 ? (
+                {productSuggestions.length === 0 && !manualOnlySelected ? (
                   <button type="button" className="price-change-product-option" disabled>
                     검색 결과가 없습니다.
                   </button>
-                ) : (
+                ) : productSuggestions.length > 0 ? (
                   productSuggestions.map((product) => (
                     <button
                       type="button"
@@ -195,7 +195,7 @@ export default function PriceChangePanel({
                       <span>{getProductLabel(product)}</span>
                     </button>
                   ))
-                )}
+                ) : null}
               </div>
             ) : null}
           </div>
