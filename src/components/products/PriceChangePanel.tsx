@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import Button from '../ui/Button';
+import type { PriceChangeLog, PriceChangePreviewRow } from '../../api/priceChanges';
 import { MANUAL_PRICE_CHANGE_PRODUCT_ID } from '../../api/priceChanges';
 import type { Product } from '../../types/product';
-import type { PriceChangeLog, PriceChangePreviewRow } from '../../api/priceChanges';
+import Button from '../ui/Button';
 
 export type PriceChangeForm = {
   dateFrom: string;
@@ -52,7 +52,9 @@ function formatPriceChange(before: number | null, after: number | null) {
 
 function formatLogDate(log: PriceChangeLog) {
   if (log.baseDate) return formatDate(log.baseDate);
-  if (log.dateFrom && log.dateTo && log.dateFrom !== log.dateTo) return `${formatDate(log.dateFrom)} ~ ${formatDate(log.dateTo)}`;
+  if (log.dateFrom && log.dateTo && log.dateFrom !== log.dateTo) {
+    return `${formatDate(log.dateFrom)} ~ ${formatDate(log.dateTo)}`;
+  }
   return formatDate(log.dateFrom ?? log.dateTo);
 }
 
@@ -82,10 +84,13 @@ export default function PriceChangePanel({
   const selectedIdSet = useMemo(() => new Set(selectedItemIds), [selectedItemIds]);
   const selectedRows = previewRows.filter((row) => selectedIdSet.has(row.itemId));
   const selectedDocumentCount = new Set(selectedRows.map((row) => row.documentId)).size;
-  const allPreviewRowsSelected = previewRows.length > 0 && previewRows.every((row) => selectedIdSet.has(row.itemId));
-  const hasSearched = searched;
+  const allPreviewRowsSelected =
+    previewRows.length > 0 && previewRows.every((row) => selectedIdSet.has(row.itemId));
   const manualOnlySelected = form.productId === MANUAL_PRICE_CHANGE_PRODUCT_ID;
-  const selectedProduct = manualOnlySelected ? undefined : products.find((product) => product.id === form.productId);
+  const hasSearched = searched;
+  const selectedProduct = manualOnlySelected
+    ? undefined
+    : products.find((product) => product.id === form.productId);
 
   const productSuggestions = useMemo(() => {
     const keyword = form.productName.trim().toLowerCase();
@@ -175,7 +180,7 @@ export default function PriceChangePanel({
                 </button>
                 {productSuggestions.length === 0 ? (
                   <button type="button" className="price-change-product-option" disabled>
-                    寃??寃곌낵媛 ?놁뒿?덈떎.
+                    검색 결과가 없습니다.
                   </button>
                 ) : (
                   productSuggestions.map((product) => (
@@ -296,45 +301,38 @@ export default function PriceChangePanel({
       ) : null}
 
       {selectedRows.length > 0 ? (
-      <section className="price-change-section price-change-target-section price-change-step-enter">
-        <div className="price-change-section-title">
-          <h3>3. 변경 대상</h3>
-          <p>체크한 항목만 실제 변경됩니다.</p>
-        </div>
-        <div className="price-change-target-summary">
-          <div>
-            <span>선택 품목</span>
-            <strong>{selectedRows.length.toLocaleString('ko-KR')}건</strong>
+        <section className="price-change-section price-change-target-section price-change-step-enter">
+          <div className="price-change-section-title">
+            <h3>3. 변경 대상</h3>
+            <p>체크한 항목만 실제 변경됩니다.</p>
           </div>
-          <div>
-            <span>영향 문서</span>
-            <strong>{selectedDocumentCount.toLocaleString('ko-KR')}건</strong>
+          <div className="price-change-target-summary">
+            <div>
+              <span>선택 품목</span>
+              <strong>{selectedRows.length.toLocaleString('ko-KR')}건</strong>
+            </div>
+            <div>
+              <span>영향 문서</span>
+              <strong>{selectedDocumentCount.toLocaleString('ko-KR')}건</strong>
+            </div>
           </div>
-        </div>
-        <div className="table-wrap price-change-selected-table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th className="price-change-date-col">기준일</th>
-                <th style={{ width: 100 }}>발급번호</th>
-                <th style={{ minWidth: 140 }}>납품처</th>
-                <th style={{ minWidth: 130 }}>수신처</th>
-                <th style={{ minWidth: 220 }}>품목</th>
-                <th style={{ width: 90, textAlign: 'right' }}>수량</th>
-                <th style={{ width: 110, textAlign: 'right' }}>입고단가</th>
-                <th style={{ width: 110, textAlign: 'right' }}>판매단가</th>
-                <th style={{ width: 80 }}>제외</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedRows.length === 0 ? (
+          <div className="table-wrap price-change-selected-table-wrap">
+            <table className="table">
+              <thead>
                 <tr>
-                  <td colSpan={9} className="table-empty">
-                    검색 결과에서 변경할 항목을 체크하세요.
-                  </td>
+                  <th className="price-change-date-col">기준일</th>
+                  <th style={{ width: 100 }}>발급번호</th>
+                  <th style={{ minWidth: 140 }}>납품처</th>
+                  <th style={{ minWidth: 130 }}>수신처</th>
+                  <th style={{ minWidth: 220 }}>품목</th>
+                  <th style={{ width: 90, textAlign: 'right' }}>수량</th>
+                  <th style={{ width: 110, textAlign: 'right' }}>입고단가</th>
+                  <th style={{ width: 110, textAlign: 'right' }}>판매단가</th>
+                  <th style={{ width: 80 }}>제외</th>
                 </tr>
-              ) : (
-                selectedRows.map((row) => (
+              </thead>
+              <tbody>
+                {selectedRows.map((row) => (
                   <tr key={row.itemId}>
                     <td className="price-change-date-col">{formatDate(row.baseDate)}</td>
                     <td>{row.issueNo || '-'}</td>
@@ -354,40 +352,39 @@ export default function PriceChangePanel({
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="price-change-apply-grid">
-          <label className="field">
-            <span>변경할 입고단가</span>
-            <input
-              value={form.newCostPrice}
-              onChange={(event) => onUpdateForm('newCostPrice', event.target.value)}
-              inputMode="decimal"
-              placeholder="비우면 변경 안 함"
-            />
-          </label>
-          <label className="field">
-            <span>변경할 판매단가</span>
-            <input
-              value={form.newUnitPrice}
-              onChange={(event) => onUpdateForm('newUnitPrice', event.target.value)}
-              inputMode="decimal"
-              placeholder="비우면 변경 안 함"
-            />
-          </label>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={onApply}
-            disabled={selectedRows.length === 0 || applying || loadingPreview}
-          >
-            {applying ? '변경 중...' : '변경하기'}
-          </Button>
-        </div>
-      </section>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="price-change-apply-grid">
+            <label className="field">
+              <span>변경할 입고단가</span>
+              <input
+                value={form.newCostPrice}
+                onChange={(event) => onUpdateForm('newCostPrice', event.target.value)}
+                inputMode="decimal"
+                placeholder="비우면 변경 안 함"
+              />
+            </label>
+            <label className="field">
+              <span>변경할 판매단가</span>
+              <input
+                value={form.newUnitPrice}
+                onChange={(event) => onUpdateForm('newUnitPrice', event.target.value)}
+                inputMode="decimal"
+                placeholder="비우면 변경 안 함"
+              />
+            </label>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={onApply}
+              disabled={selectedRows.length === 0 || applying || loadingPreview}
+            >
+              {applying ? '변경 중...' : '변경하기'}
+            </Button>
+          </div>
+        </section>
       ) : hasSearched ? (
         <div className="price-change-next-hint price-change-step-enter">
           검색 결과에서 변경할 항목을 체크하면 변경 대상 영역이 나타납니다.
