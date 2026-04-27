@@ -8,6 +8,23 @@ let creatingDocument = false;
 const updatingDocumentIds = new Set<string>();
 const togglingDocumentIds = new Set<string>();
 
+type DocumentHistoryQueryParams = {
+  page: number;
+  pageSize: number;
+  dateFrom?: string;
+  dateTo?: string;
+  filterType?: 'all' | 'client' | 'author';
+  keyword?: string;
+};
+
+type DocumentHistoryPageResult = {
+  items: DocumentHistory[];
+  totalCount: number;
+};
+
+const documentHistorySelect =
+  'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, issue_no_edit_history, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, cost_price, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, monthly_closing_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)';
+
 export async function saveDocument(payload: DocumentPayload) {
   if (creatingDocument) {
     throw new Error('문서 저장이 이미 진행 중입니다. 잠시 후 다시 시도해 주세요.');
@@ -141,9 +158,7 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from('documents')
-    .select(
-      'id, issue_no, client_id, client, manager, manager_tel, receiver, supplier_biz_no, supplier_name, supplier_owner, supplier_address, supplier_business_type, supplier_business_item, order_date, arrive_date, delivery_addr, issue_no_edit_history, remark, request_note, total_supply, total_vat, total_amount, author_id, author, status, approval_title, approval_status, approval_requested_at, approval_completed_at, approval_current_step, created_at, updated_at, updated_by, del_yn, document_items(id, product_id, seq, name1, name2, gubun, qty, cost_price, unit_price, supply, vat, order_date, arrive_date, item_note, release_note, invoice_note, monthly_closing_note, ea_per_b, box_per_p, custom_pallet, custom_box, updated_at, updated_by, del_yn)',
-    )
+    .select(documentHistorySelect)
     .eq('del_yn', 'N')
     .order('created_at', { ascending: false });
 
@@ -151,7 +166,87 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
     throw error;
   }
 
-  return (data ?? []).map((row: any) => ({
+  return mapDocumentHistoryRows(data ?? []);
+}
+
+export async function fetchDocumentHistoryPage(
+  params: DocumentHistoryQueryParams,
+): Promise<DocumentHistoryPageResult> {
+  const supabase = getSupabaseClient();
+  const page = Math.max(1, params.page);
+  const pageSize = Math.max(1, params.pageSize);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('documents')
+    .select(documentHistorySelect, { count: 'exact' })
+    .eq('del_yn', 'N');
+
+  if (params.dateFrom) {
+    query = query.gte('arrive_date', params.dateFrom);
+  }
+
+  if (params.dateTo) {
+    query = query.lte('arrive_date', params.dateTo);
+  }
+
+  const keyword = params.keyword?.trim() ?? '';
+  if (keyword) {
+    const escapedKeyword = escapeForIlike(keyword);
+    const pattern = `%${escapedKeyword}%`;
+
+    if (params.filterType === 'client') {
+      query = query.ilike('client', pattern);
+    } else if (params.filterType === 'author') {
+      query = query.ilike('author', pattern);
+    } else {
+      query = query.or(
+        `issue_no.ilike.${pattern},client.ilike.${pattern},receiver.ilike.${pattern},author.ilike.${pattern}`,
+      );
+    }
+  }
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    items: mapDocumentHistoryRows(data ?? []),
+    totalCount: count ?? 0,
+  };
+}
+
+export async function fetchDocumentById(id: string): Promise<DocumentHistory | null> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('documents')
+    .select(documentHistorySelect)
+    .eq('id', id)
+    .eq('del_yn', 'N')
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapDocumentHistoryRow(data);
+}
+
+function mapDocumentHistoryRows(rows: any[]): DocumentHistory[] {
+  return rows.map((row: any) => mapDocumentHistoryRow(row));
+}
+
+function mapDocumentHistoryRow(row: any): DocumentHistory {
+  return {
     id: String(row.id),
     clientId: row.client_id === null || row.client_id === undefined ? null : String(row.client_id),
     issueNo: row.issue_no ?? '',
@@ -215,7 +310,11 @@ export async function fetchDocuments(): Promise<DocumentHistory[]> {
         updatedBy: item.updated_by ?? '',
         delYn: (item.del_yn ?? 'N') as DocumentHistory['delYn'],
       })),
-  }));
+  };
+}
+
+function escapeForIlike(value: string) {
+  return value.replace(/[%*,()]/g, ' ').trim();
 }
 
 export async function updateDocument(document: DocumentHistory) {

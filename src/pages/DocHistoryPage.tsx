@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchClients } from '../api/clients';
-import { fetchDocuments, toggleDocumentCancelled, updateDocument } from '../api/documents';
+import {
+  fetchDocumentById,
+  fetchDocumentHistoryPage,
+  toggleDocumentCancelled,
+  updateDocument,
+} from '../api/documents';
 import { fetchProductsByClientId } from '../api/products';
 import { fetchSuppliers } from '../api/suppliers';
 import PageHeader from '../components/PageHeader';
@@ -44,7 +49,9 @@ export default function DocHistoryPage() {
   const { documentId } = useParams();
   const [clients, setClients] = useState<Client[]>([]);
   const [documents, setDocuments] = useState<DocumentHistory[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [draft, setDraft] = useState<DocumentHistory | null>(null);
+  const [originalDocument, setOriginalDocument] = useState<DocumentHistory | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const { items, setItems, itemSummaries, totals, addItem, removeItem, updateItem } = useDocumentItems([], products);
@@ -68,10 +75,12 @@ export default function DocHistoryPage() {
   const prevBaseArriveDateRef = useRef('');
 
   useEffect(() => {
-    void reload();
-  }, []);
+    if (documentId) return;
+    void loadListPage();
+  }, [currentPage, dateFrom, dateTo, documentId, filterType, keyword]);
 
   useEffect(() => {
+    if (!documentId) return;
     let mounted = true;
 
     async function loadClients() {
@@ -90,9 +99,10 @@ export default function DocHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [documentId]);
 
   useEffect(() => {
+    if (!documentId) return;
     let mounted = true;
 
     async function loadSuppliers() {
@@ -111,9 +121,9 @@ export default function DocHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [documentId]);
 
-  async function reload() {
+  async function loadDocumentPage() {
     if (draftSelectionChanged && !(draft?.receiver ?? '').trim()) {
       window.alert('수신처를 다시 선택해 주세요.');
       return;
@@ -126,10 +136,39 @@ export default function DocHistoryPage() {
     try {
       setLoading(true);
       setError(null);
-      const rows = await fetchDocuments();
-      setDocuments(rows);
+      const result = await fetchDocumentHistoryPage({
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        dateFrom,
+        dateTo,
+        filterType,
+        keyword,
+      });
+      setDocuments(result.items);
+      setTotalItems(result.totalCount);
     } catch (err) {
       setError(getErrorMessage(err, '발행 이력을 불러오지 못했습니다.'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadListPage() {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await fetchDocumentHistoryPage({
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        dateFrom,
+        dateTo,
+        filterType,
+        keyword,
+      });
+      setDocuments(result.items);
+      setTotalItems(result.totalCount);
+    } catch (err) {
+      setError(getErrorMessage(err, '諛쒗뻾 ?대젰??遺덈윭?ㅼ? 紐삵뻽?듬땲??'));
     } finally {
       setLoading(false);
     }
@@ -138,17 +177,42 @@ export default function DocHistoryPage() {
   useEffect(() => {
     if (!documentId) {
       setDraft(null);
+      setOriginalDocument(null);
       prevBaseOrderDateRef.current = '';
       prevBaseArriveDateRef.current = '';
       return;
     }
 
-    const selected = documents.find((row) => row.id === documentId) ?? null;
-    const nextDraft = selected ? cloneDocument(selected) : null;
-    prevBaseOrderDateRef.current = nextDraft?.orderDate || '';
-    prevBaseArriveDateRef.current = nextDraft?.arriveDate || '';
-    setDraft(nextDraft);
-  }, [documentId, documents]);
+    const targetDocumentId = documentId;
+    let mounted = true;
+
+    async function loadDocumentDetail() {
+      try {
+        setLoading(true);
+        setError(null);
+        const selected = await fetchDocumentById(targetDocumentId);
+        if (!mounted) return;
+        const nextDraft = selected ? cloneDocument(selected) : null;
+        prevBaseOrderDateRef.current = nextDraft?.orderDate || '';
+        prevBaseArriveDateRef.current = nextDraft?.arriveDate || '';
+        setOriginalDocument(selected);
+        setDraft(nextDraft);
+      } catch (err) {
+        if (!mounted) return;
+        setError(getErrorMessage(err, '諛쒗뻾 ?곸꽭瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??'));
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadDocumentDetail();
+
+    return () => {
+      mounted = false;
+    };
+  }, [documentId]);
 
   useEffect(() => {
     let mounted = true;
@@ -218,45 +282,9 @@ export default function DocHistoryPage() {
     prevBaseArriveDateRef.current = draft.arriveDate || '';
   }, [draft?.arriveDate, setItems]);
 
-  const filteredDocuments = useMemo(() => {
-    const search = keyword.trim().toLowerCase();
-
-    return documents.filter((doc) => {
-      const docDate = doc.arriveDate || '';
-      if (dateFrom && docDate && docDate < dateFrom) return false;
-      if (dateTo && docDate && docDate > dateTo) return false;
-      if (!search) return true;
-      if (filterType === 'client') return doc.client.toLowerCase().includes(search);
-      if (filterType === 'author') return doc.author.toLowerCase().includes(search);
-
-      return [
-        doc.issueNo,
-        doc.client,
-        doc.receiver,
-        doc.author,
-        doc.items.map((item) => `${item.name1} ${item.name2}`).join(' '),
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(search);
-    });
-  }, [dateFrom, dateTo, documents, filterType, keyword]);
-
-  const pagedDocuments = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredDocuments.slice(start, start + PAGE_SIZE);
-  }, [currentPage, filteredDocuments]);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFrom, dateTo, filterType, keyword]);
-
-  useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, filteredDocuments.length]);
 
   const filteredSuppliers = useMemo(() => {
     const search = supplierKeyword.trim().toLowerCase();
@@ -316,11 +344,6 @@ export default function DocHistoryPage() {
       totals,
     );
   }, [draft, itemSummaries, items, totals]);
-
-  const originalDocument = useMemo(
-    () => (draft ? documents.find((row) => row.id === draft.id) ?? null : null),
-    [documents, draft],
-  );
 
   const draftSelectionChanged = useMemo(() => {
     if (!draft || !originalDocument) return false;
@@ -463,8 +486,8 @@ export default function DocHistoryPage() {
         totalAmount: totals.total,
       };
       await updateDocument(nextDraft);
+      setOriginalDocument(cloneDocument(nextDraft));
       setDraft(nextDraft);
-      await reload();
       window.alert('수정 저장이 완료되었습니다.');
     } catch (err) {
       setError(getErrorMessage(err, '수정 저장에 실패했습니다.'));
@@ -485,12 +508,7 @@ export default function DocHistoryPage() {
       setError(null);
       await toggleDocumentCancelled(draft.id, nextCancelled);
       setDraft((current) => (current ? { ...current, status: nextStatus } : current));
-      setDocuments((current) =>
-        current.map((document) =>
-          document.id === draft.id ? { ...document, status: nextStatus } : document,
-        ),
-      );
-      await reload();
+      setOriginalDocument((current) => (current ? { ...current, status: nextStatus } : current));
       window.alert(nextCancelled ? '거래취소 처리되었습니다.' : '거래취소를 해제했습니다.');
     } catch (err) {
       setError(getErrorMessage(err, '상태 변경에 실패했습니다.'));
@@ -567,14 +585,14 @@ export default function DocHistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDocuments.length === 0 ? (
+                    {documents.length === 0 ? (
                       <tr>
                         <td colSpan={11} className="table-empty" style={{ textAlign: 'center' }}>
                           검색 결과가 없습니다.
                         </td>
                       </tr>
                     ) : (
-                      pagedDocuments.map((doc) => (
+                      documents.map((doc) => (
                         <tr
                           key={doc.id}
                           onClick={() => openDocument(doc)}
@@ -601,7 +619,7 @@ export default function DocHistoryPage() {
 
             <Pagination
               currentPage={currentPage}
-              totalItems={filteredDocuments.length}
+              totalItems={totalItems}
               pageSize={PAGE_SIZE}
               onPageChange={setCurrentPage}
             />

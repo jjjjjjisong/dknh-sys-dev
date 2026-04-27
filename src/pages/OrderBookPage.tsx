@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import * as XLSX from 'xlsx';
 import {
-  fetchOrderBook,
+  fetchOrderBookPage,
   removeOrderBookEntry,
   updateManyOrderBookShippedStatus,
   updateOrderBookEntry,
@@ -36,6 +36,7 @@ function getDefaultDateRange() {
 export default function OrderBookPage() {
   const defaults = getDefaultDateRange();
   const [entries, setEntries] = useState<OrderBookEntry[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState(defaults.from);
@@ -65,14 +66,23 @@ export default function OrderBookPage() {
 
   useEffect(() => {
     void loadEntries();
-  }, []);
+  }, [currentPage, dateFrom, dateTo, filterType, keyword, shippingFilter]);
 
   async function loadEntries() {
     try {
       setLoading(true);
       setError(null);
-      const rows = await fetchOrderBook();
-      setEntries(rows);
+      const result = await fetchOrderBookPage({
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        dateFrom,
+        dateTo,
+        filterType,
+        keyword,
+        shippingFilter,
+      });
+      setEntries(result.items);
+      setTotalItems(result.totalCount);
     } catch (err) {
       setError(err instanceof Error ? err.message : '수주대장 목록을 불러오지 못했습니다.');
     } finally {
@@ -80,45 +90,11 @@ export default function OrderBookPage() {
     }
   }
 
-  const filteredEntries = useMemo(() => {
-    const search = keyword.trim().toLowerCase();
-
-    return entries.filter((entry) => {
-      const arriveDate = entry.deadline || '';
-      if (dateFrom && arriveDate && arriveDate < dateFrom) return false;
-      if (dateTo && arriveDate && arriveDate > dateTo) return false;
-      if (shippingFilter !== 'all' && entry.shippedStatus !== shippingFilter) return false;
-      if (!search) return true;
-
-      if (filterType === 'client') return entry.client.toLowerCase().includes(search);
-      if (filterType === 'product') return entry.product.toLowerCase().includes(search);
-      if (filterType === 'issueNo') return entry.issueNo.toLowerCase().includes(search);
-      if (filterType === 'receipt') return entry.status.toLowerCase().includes(search);
-
-      return [entry.issueNo, entry.client, entry.receiver, entry.product, entry.note]
-        .join(' ')
-        .toLowerCase()
-        .includes(search);
-    });
-  }, [dateFrom, dateTo, entries, filterType, keyword, shippingFilter]);
-
-  const pagedEntries = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredEntries.slice(start, start + PAGE_SIZE);
-  }, [currentPage, filteredEntries]);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFrom, dateTo, filterType, keyword, shippingFilter]);
 
-  useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, filteredEntries.length]);
-
-  const allChecked = pagedEntries.length > 0 && pagedEntries.every((entry) => selectedIds.includes(entry.id));
+  const allChecked = entries.length > 0 && entries.every((entry) => selectedIds.includes(entry.id));
 
   function openEditModal(entry: OrderBookEntry) {
     setEditingEntry(entry);
@@ -150,10 +126,10 @@ export default function OrderBookPage() {
 
   function toggleSelectAll(checked: boolean) {
     if (checked) {
-      setSelectedIds((current) => Array.from(new Set([...current, ...pagedEntries.map((entry) => entry.id)])));
+      setSelectedIds((current) => Array.from(new Set([...current, ...entries.map((entry) => entry.id)])));
       return;
     }
-    setSelectedIds((current) => current.filter((id) => !pagedEntries.some((entry) => entry.id === id)));
+    setSelectedIds((current) => current.filter((id) => !entries.some((entry) => entry.id === id)));
   }
 
   function toggleSelectOne(id: string, checked: boolean) {
@@ -184,13 +160,22 @@ export default function OrderBookPage() {
   }
 
   async function handleDownloadExcel() {
-    if (filteredEntries.length === 0) {
+    if (totalItems === 0) {
       window.alert('다운로드할 데이터가 없습니다.');
       return;
     }
 
     try {
-      await exportOrderBookToExcel(filteredEntries, {
+      const exportResult = await fetchOrderBookPage({
+        page: 1,
+        pageSize: Math.max(totalItems, PAGE_SIZE),
+        dateFrom,
+        dateTo,
+        filterType,
+        keyword,
+        shippingFilter,
+      });
+      await exportOrderBookToExcel(exportResult.items, {
         fileStamp: formatFileStamp(new Date()),
         dateFrom,
         dateTo,
@@ -204,7 +189,7 @@ export default function OrderBookPage() {
       return;
     }
 
-    const rows = filteredEntries.map((entry) => ({
+    const rows = entries.map((entry) => ({
       발급번호: entry.issueNo || '',
       발주일자: entry.date || '',
       입고일자: entry.deadline || '',
@@ -413,14 +398,14 @@ export default function OrderBookPage() {
                     수주대장 목록을 불러오는 중입니다...
                   </td>
                 </tr>
-              ) : filteredEntries.length === 0 ? (
+              ) : entries.length === 0 ? (
                 <tr>
                   <td colSpan={11} className="history-empty-cell">
                     검색 결과가 없습니다.
                   </td>
                 </tr>
               ) : (
-                pagedEntries.map((entry) => (
+                entries.map((entry) => (
                   <tr
                     key={entry.id}
                     className={entry.status === 'ST01' ? 'history-row-cancelled history-clickable-row' : 'history-clickable-row'}
@@ -465,7 +450,7 @@ export default function OrderBookPage() {
 
         <Pagination
           currentPage={currentPage}
-          totalItems={filteredEntries.length}
+          totalItems={totalItems}
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />

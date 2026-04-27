@@ -57,6 +57,21 @@ type DocumentItemLookupRow = {
   del_yn: 'Y' | 'N' | null;
 };
 
+type OrderBookQueryParams = {
+  page: number;
+  pageSize: number;
+  dateFrom?: string;
+  dateTo?: string;
+  filterType?: 'all' | 'client' | 'product' | 'issueNo' | 'receipt';
+  shippingFilter?: string;
+  keyword?: string;
+};
+
+type OrderBookPageResult = {
+  items: OrderBookEntry[];
+  totalCount: number;
+};
+
 const ORDER_BOOK_SELECT =
   'id, doc_id, document_item_id, product_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
 
@@ -78,6 +93,71 @@ export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   ]);
 
   return rows.map((row) => mapOrderBookRow(row, documentsById, itemsByDocId));
+}
+
+export async function fetchOrderBookPage(
+  params: OrderBookQueryParams,
+): Promise<OrderBookPageResult> {
+  const supabase = getSupabaseClient();
+  const page = Math.max(1, params.page);
+  const pageSize = Math.max(1, params.pageSize);
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('order_book')
+    .select(ORDER_BOOK_SELECT, { count: 'exact' })
+    .eq('del_yn', 'N');
+
+  if (params.dateFrom) {
+    query = query.gte('deadline', params.dateFrom);
+  }
+
+  if (params.dateTo) {
+    query = query.lte('deadline', params.dateTo);
+  }
+
+  if (params.shippingFilter && params.shippingFilter !== 'all') {
+    query = query.eq('shipped_status', params.shippingFilter);
+  }
+
+  const keyword = params.keyword?.trim() ?? '';
+  if (keyword) {
+    const escapedKeyword = escapeForIlike(keyword);
+    const pattern = `%${escapedKeyword}%`;
+
+    if (params.filterType === 'client') {
+      query = query.ilike('client', pattern);
+    } else if (params.filterType === 'product') {
+      query = query.ilike('product', pattern);
+    } else if (params.filterType === 'issueNo') {
+      query = query.ilike('issue_no', pattern);
+    } else if (params.filterType === 'receipt') {
+      query = query.or(`receipt.ilike.${pattern},status.ilike.${pattern}`);
+    } else {
+      query = query.or(
+        `issue_no.ilike.${pattern},client.ilike.${pattern},receipt.ilike.${pattern},product.ilike.${pattern},note.ilike.${pattern}`,
+      );
+    }
+  }
+
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as OrderBookRow[];
+  const docIds = Array.from(new Set(rows.map((row) => row.doc_id).filter((value): value is string => Boolean(value))));
+  const [documentsById, itemsByDocId] = await Promise.all([
+    fetchDocumentsByIds(docIds),
+    fetchDocumentItemsByDocIds(docIds),
+  ]);
+
+  return {
+    items: rows.map((row) => mapOrderBookRow(row, documentsById, itemsByDocId)),
+    totalCount: count ?? 0,
+  };
 }
 
 export async function createOrderBookEntry(payload: OrderBookInput) {
@@ -317,4 +397,8 @@ function mapOrderBookStatus(status: string | null | undefined): OrderBookStatus 
   if (status === 'ST01') return 'ST01';
   if (status === 'ST00') return 'ST00';
   return 'ST00';
+}
+
+function escapeForIlike(value: string) {
+  return value.replace(/[%*,()]/g, ' ').trim();
 }

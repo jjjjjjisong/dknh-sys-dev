@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DK&H Redesign v2</title>
+  <style>
+    :root {
+      --navy-900: #1b2370;
+      --navy-800: #2837a3;
+      --navy-700: #4360df;
+      --navy-100: #e8eeff;
+      --navy-050: #f4f7ff;
+      --sky-100: #eef5ff;
+      --sand: #f7f5ef;
+      --paper: #fffdfa;
+      --ink-900: #111a3b;
+      --ink-800: #223058;
+      --ink-700: #425278;
+      --ink-500: #72809c;
+      --line: #d8e0f4;
+      --line-strong: #bdc8e7;
+      --success: #198754;
+      --success-bg: #e8fbf0;
+      --warn: #c77617;
+      --warn-bg: #fff3e4;
+      --danger: #d54c58;
+      --danger-bg: #fff0f2;
+      --shadow: 0 24px 64px rgba(31, 48, 113, 0.12);
+      --shadow-sm: 0 12px 28px rgba(31, 48, 113, 0.08);
+      --radius-xl: 34px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+      font-family: "Pretendard Variable", "Pretendard", "Segoe UI", sans-serif;
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(67, 96, 223, 0.16), transparent 22%),
+        radial-gradient(circle at top right, rgba(27, 35, 112, 0.14), transparent 24%),
+        linear-gradient(180deg, #edf2fb 0%, #f6f8fd 42%, #eef4ff 100%);
+      color: var(--ink-900);
+      padding: 22px;
+    }
+
+    img { display: block; }
+    .page { max-width: 1640px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+    .intro {
+      background:
+        linear-gradient(135deg, rgba(27, 35, 112, 0.98), rgba(47, 61, 159, 0.96)),
+        var(--navy-900);
+      color: #fff;
+      border-radius: 36px;
+      padding: 28px 32px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .intro::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 40px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent);
+      transform: rotate(20deg);
+    }
+
+    .intro-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .logo-wrap {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 16px;
+      padding: 12px 16px;
+      width: fit-content;
+    }
+
+    .logo-wrap img { width: 132px; }
+    .intro-kicker {
+      margin: 0 0 10px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .intro h1 {
+      margin: 0;
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 1.02;
+      letter-spacing: -0.06em;
+      max-width: 900px;
+    }
+
+    .intro p {
+      margin: 14px 0 0;
+      max-width: 820px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .compare {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .compare-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .compare-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .compare-card span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .screen {
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(216, 224, 244, 0.86);
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar {
+      height: 82px;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(255, 253, 250, 0.95);
+      border-bottom: 1px solid rgba(216, 224, 244, 0.9);
+    }
+
+    .topbar-left, .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar img { width: 108px; }
+
+    .top-pill {
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: var(--navy-050);
+      border: 1px solid var(--line);
+      color: var(--navy-900);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .frame {
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+      min-height: 940px;
+    }
+
+    .nav {
+      background:
+        linear-gradient(180deg, #f2f5fd 0%, #e8eefc 100%);
+      padding: 24px 16px;
+      border-right: 1px solid rgba(216, 224, 244, 0.9);
+    }
+
+    .nav-title {
+      margin: 0 0 10px;
+      padding: 0 12px;
+      color: var(--ink-500);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 16px;
+      color: var(--ink-700);
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .nav-link.active {
+      background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(40, 55, 163, 0.18);
+    }
+
+    .nav-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 20px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-box strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-box span {
+      color: var(--ink-700);
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .main {
+      padding: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 253, 250, 0.82), rgba(247, 249, 255, 0.92));
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    .header-row h2 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: -0.06em;
+      line-height: 1.04;
+    }
+
+    .header-row p {
+      margin: 10px 0 0;
+      color: var(--ink-700);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 760px;
+      font-weight: 700;
+    }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn, .btn-primary {
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 15px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink-800);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .btn-primary {
+      border-color: transparent;
+      color: #fff;
+      background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+      box-shadow: 0 14px 28px rgba(40, 55, 163, 0.2);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(216, 224, 244, 0.95);
+      border-radius: 26px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-body { padding: 22px; }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .card-head h3, .card-head h4 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.04em;
+    }
+
+    .card-head p {
+      margin: 6px 0 0;
+      color: var(--ink-700);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .dashboard-lead {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .big-kpi {
+      min-height: 220px;
+      padding: 24px;
+      background:
+        linear-gradient(135deg, var(--navy-900), #3040b0 58%, #5b74f0 100%);
+      color: #fff;
+      border-radius: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .big-kpi::after {
+      content: "";
+      position: absolute;
+      right: -24px;
+      bottom: -36px;
+      width: 180px;
+      height: 180px;
+      border-radius: 46px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent);
+      transform: rotate(18deg);
+    }
+
+    .big-kpi-label {
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .big-kpi-number {
+      margin: 18px 0 14px;
+      font-size: 88px;
+      line-height: 0.92;
+      letter-spacing: -0.08em;
+      font-weight: 900;
+    }
+
+    .big-kpi-copy {
+      max-width: 360px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.82);
+      font-weight: 700;
+    }
+
+    .big-kpi-meta {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .stack { display: flex; flex-direction: column; gap: 18px; }
+
+    .alert-card {
+      padding: 18px;
+      border-radius: 24px;
+      min-height: 101px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+    }
+
+    .alert-card strong {
+      display: block;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-700);
+      margin-bottom: 12px;
+    }
+
+    .alert-card b {
+      display: block;
+      font-size: 40px;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      color: var(--ink-900);
+      margin-bottom: 8px;
+    }
+
+    .alert-card span {
+      color: var(--ink-700);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .alert-card.danger { background: linear-gradient(180deg, #fff8f8, #fff0f2); }
+    .alert-card.danger b { color: var(--danger); }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.45fr 0.85fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .chart-panel {
+      background: linear-gradient(180deg, #fff, #f8faff);
+    }
+
+    .bars {
+      height: 290px;
+      display: flex;
+      align-items: end;
+      gap: 14px;
+      padding-top: 16px;
+    }
+
+    .bar-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .bar-value {
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--navy-900);
+    }
+
+    .bar-track {
+      width: 100%;
+      max-width: 58px;
+      height: 210px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #edf2ff, #dbe4fb);
+      padding: 4px;
+      display: flex;
+      align-items: end;
+    }
+
+    .bar-fill {
+      width: 100%;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #6c84ff, #24328f);
+    }
+
+    .bar-fill.focus { background: linear-gradient(180deg, #9ab0ff, #111a3b); }
+    .bar-label { font-size: 13px; color: var(--ink-700); font-weight: 800; }
+
+    .urgent-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .urgent {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .urgent-mark {
+      width: 52px;
+      height: 52px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .urgent h4 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .urgent span {
+      color: var(--ink-700);
+      font-size: 13px;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .pill {
+      padding: 8px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pill.success { background: var(--success-bg); color: var(--success); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .pill.danger { background: var(--danger-bg); color: var(--danger); }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1040px;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: linear-gradient(180deg, #eff3ff, #e7edff);
+      color: var(--ink-700);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid #e7edf8;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink-800);
+    }
+
+    tbody tr:nth-child(even) td { background: #fbfcff; }
+    tbody tr:hover td { background: #eef4ff; }
+    .primary-text { color: var(--ink-900); }
+    .muted-text { color: var(--ink-700); }
+
+    .table-note {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+      color: var(--ink-700);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .pager { display: flex; gap: 8px; }
+    .pager span {
+      min-width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--ink-700);
+    }
+
+    .pager .active { background: var(--navy-900); color: #fff; border-color: var(--navy-900); }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: 1.45fr 0.8fr;
+      gap: 18px;
+    }
+
+    .form-card {
+      padding: 22px;
+      background: linear-gradient(180deg, #fffdfa, #fbfcff);
+    }
+
+    .section-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--navy-050);
+      border: 1px solid var(--line);
+      color: var(--navy-900);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field,
+    .field-wide {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-wide { grid-column: 1 / -1; }
+
+    .field label,
+    .field-wide label {
+      color: var(--ink-700);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 900;
+    }
+
+    .input,
+    .textarea,
+    .select {
+      min-height: 50px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      color: var(--ink-900);
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .textarea {
+      min-height: 106px;
+      padding: 14px;
+      line-height: 1.65;
+      align-items: flex-start;
+    }
+
+    .assist {
+      margin-top: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #eff4ff, #f8fbff);
+      border: 1px solid var(--line);
+      color: var(--ink-700);
+      font-size: 13px;
+      line-height: 1.65;
+      font-weight: 800;
+    }
+
+    .review-rail {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .summary-box {
+      padding: 20px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .summary-box h4 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      letter-spacing: -0.04em;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+      color: var(--ink-700);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row strong { color: var(--ink-900); }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .summary-grid div {
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--navy-050);
+      border: 1px solid var(--line);
+    }
+
+    .summary-grid span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink-700);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 900;
+    }
+
+    .summary-grid strong {
+      font-size: 18px;
+      color: var(--ink-900);
+      letter-spacing: -0.04em;
+    }
+
+    .steps { display: flex; flex-direction: column; gap: 12px; }
+    .step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .step-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink-900);
+      font-size: 14px;
+    }
+
+    .step span {
+      color: var(--ink-700);
+      font-size: 13px;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .cta-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cta {
+      min-height: 52px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink-800);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .cta.primary {
+      background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .management-layout { display: flex; flex-direction: column; gap: 18px; }
+    .management-top {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 18px;
+    }
+
+    .tabs-card { padding: 20px; }
+    .tabs {
+      display: inline-flex;
+      padding: 6px;
+      gap: 8px;
+      border-radius: 20px;
+      background: #edf2ff;
+      border: 1px solid var(--line);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 15px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink-700);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .tab.active {
+      background: #fff;
+      color: var(--navy-900);
+      box-shadow: 0 10px 22px rgba(40, 55, 163, 0.12);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.5fr 0.8fr 0.8fr auto;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .side-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 18px;
+      border-radius: 22px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .metric span {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--ink-700);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 32px;
+      letter-spacing: -0.06em;
+      color: var(--ink-900);
+    }
+
+    .metric em {
+      display: block;
+      margin-top: 6px;
+      color: var(--ink-700);
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 800;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .preview {
+      padding: 18px;
+      border-radius: 24px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .preview h4 {
+      margin: 0 0 6px;
+      font-size: 19px;
+      letter-spacing: -0.04em;
+    }
+
+    .preview p {
+      margin: 0 0 14px;
+      color: var(--ink-700);
+      font-size: 13px;
+      line-height: 1.6;
+      font-weight: 700;
+    }
+
+    .micro-list { display: flex; flex-direction: column; gap: 10px; }
+    .micro {
+      display: grid;
+      grid-template-columns: 1.2fr 0.95fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #fafcff;
+      border: 1px solid #e6ecfa;
+      font-size: 13px;
+      color: var(--ink-800);
+      font-weight: 800;
+    }
+
+    .micro strong { color: var(--ink-900); font-size: 14px; }
+
+    .footer-note {
+      padding: 18px 22px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(216, 224, 244, 0.86);
+      box-shadow: var(--shadow-sm);
+      color: var(--ink-700);
+      font-size: 14px;
+      line-height: 1.7;
+      font-weight: 700;
+    }
+
+    .footer-note strong { color: var(--ink-900); }
+
+    @media (max-width: 1260px) {
+      .dashboard-lead,
+      .dashboard-grid,
+      .doc-grid,
+      .management-top,
+      .preview-grid,
+      .compare,
+      .summary-grid,
+      .cta-row {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 1080px) {
+      .frame { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .intro-top, .header-row, .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding-top: 18px;
+        padding-bottom: 18px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 12px; }
+      .main, .card-body, .form-card, .tabs-card, .summary-box { padding: 16px; }
+      .header-row h2 { font-size: 26px; }
+      .big-kpi-number { font-size: 64px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="intro">
+      <div class="intro-top">
+        <div>
+          <p class="intro-kicker">DK&amp;H Visual Direction v2</p>
+          <h1>정돈이 아니라 재구성. 숫자와 상태가 먼저 보이는 운영형 화면.</h1>
+          <p>이번 시안은 기존 화면을 다듬는 수준이 아니라, 업무 우선순위가 즉시 드러나는 보드형 구조로 방향을 바꿨습니다. 흐린 테이블, 무난한 카드 배열, 안전한 회색 UI 느낌을 버리고 더 굵고 더 선명하게 잡았습니다.</p>
+        </div>
+        <div class="logo-wrap">
+          <img src="../logo.png" alt="DK&amp;H logo" />
+        </div>
+      </div>
+      <div class="compare">
+        <div class="compare-card">
+          <strong>강한 첫 시선</strong>
+          <span>오늘 가장 중요한 숫자는 작은 카드가 아니라 대형 수치판으로 노출합니다.</span>
+        </div>
+        <div class="compare-card">
+          <strong>테이블 명암 개선</strong>
+          <span>본문은 진한 남색, 헤더는 밝은 면 분리, 상태는 배지로 절단해 읽기 속도를 높였습니다.</span>
+        </div>
+        <div class="compare-card">
+          <strong>업무 흐름 중심</strong>
+          <span>문서작성은 작성과 검토 동시, 품목관리는 탭+검색+수정 콘솔처럼 재배치했습니다.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen">
+      <div class="topbar">
+        <div class="topbar-left">
+          <img src="../logo.png" alt="DK&amp;H logo" />
+          <span class="top-pill">Dashboard v2</span>
+        </div>
+        <div class="topbar-right">
+          <span class="top-pill">2026.04.27 Mon 08:40</span>
+          <span class="top-pill">물류관리팀 김대리</span>
+        </div>
+      </div>
+      <div class="frame">
+        <aside class="nav">
+          <p class="nav-title">Workflow</p>
+          <div class="nav-link active">대시보드</div>
+          <div class="nav-link">문서작성</div>
+          <div class="nav-link">문서이력</div>
+          <div class="nav-link">발주대장</div>
+          <p class="nav-title" style="margin-top:18px;">Master</p>
+          <div class="nav-link">품목관리</div>
+          <div class="nav-link">거래처관리</div>
+          <div class="nav-link">공급처관리</div>
+          <div class="nav-box">
+            <strong>오늘 우선 업무</strong>
+            <span>미출고 7건과 지연 2건을 오전에 해결해야 전체 흐름이 안정됩니다.</span>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div class="header-row">
+            <div>
+              <h2>한눈에 운영 상황이 꽂히는 대시보드</h2>
+              <p>가장 먼저 봐야 하는 숫자는 크게, 추세는 길게, 액션은 짧게. 보고 판단하는 시간이 아니라 보고 바로 움직이는 시간을 줄이는 구조입니다.</p>
+            </div>
+            <div class="actions">
+              <div class="btn">캘린더 보기</div>
+              <div class="btn">예외건만 필터</div>
+              <div class="btn-primary">오늘 브리핑</div>
+            </div>
+          </div>
+
+          <div class="dashboard-lead">
+            <section class="big-kpi">
+              <div class="big-kpi-label">Today Incoming Overview</div>
+              <div class="big-kpi-number">128</div>
+              <div class="big-kpi-copy">오늘 입고 예정 전체 건수를 첫 화면 중심에 고정했습니다. 숫자 하나만 봐도 오늘의 체감 볼륨을 바로 이해할 수 있는 구조입니다.</div>
+              <div class="big-kpi-meta">
+                <span class="meta-chip">미출고 7</span>
+                <span class="meta-chip">지연 2</span>
+                <span class="meta-chip">수정요청 5</span>
+              </div>
+            </section>
+
+            <div class="stack">
+              <section class="alert-card">
+                <strong>오늘 미출고</strong>
+                <b>7</b>
+                <span>11시 이전 집중 처리 권장</span>
+              </section>
+              <section class="alert-card danger">
+                <strong>지연 건수</strong>
+                <b>2</b>
+                <span>거래처 연락과 일정 재조정 필요</span>
+              </section>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="card chart-panel">
+              <div class="card-body">
+                <div class="card-head">
+                  <div>
+                    <h3>주간 입고 피크 보드</h3>
+                    <p>요일별 물량 편차를 더 과감한 막대 높이와 대비로 표현</p>
+                  </div>
+                  <span class="top-pill">4월 4주차</span>
+                </div>
+                <div class="bars">
+                  <div class="bar-item">
+                    <div class="bar-value">17</div>
+                    <div class="bar-track"><div class="bar-fill" style="height: 44%;"></div></div>
+                    <div class="bar-label">월</div>
+                  </div>
+                  <div class="bar-item">
+                    <div class="bar-value">22</div>
+                    <div class="bar-track"><div class="bar-fill" style="height: 58%;"></div></div>
+                    <div class="bar-label">화</div>
+                  </div>
+                  <div class="bar-item">
+                    <div class="bar-value">27</div>
+                    <div class="bar-track"><div class="bar-fill" style="height: 71%;"></div></div>
+                    <div class="bar-label">수</div>
+                  </div>
+                  <div class="bar-item">
+                    <div class="bar-value">31</div>
+                    <div class="bar-track"><div class="bar-fill" style="height: 83%;"></div></div>
+                    <div class="bar-label">목</div>
+                  </div>
+                  <div class="bar-item">
+                    <div class="bar-value">38</div>
+                    <div class="bar-track"><div class="bar-fill focus" style="height: 100%;"></div></div>
+                    <div class="bar-label">금</div>
+                  </div>
+                  <div class="bar-item">
+                    <div class="bar-value">14</div>
+                    <div class="bar-track"><div class="bar-fill" style="height: 36%;"></div></div>
+                    <div class="bar-label">토</div>
+                  </div>
+                  <div class="bar-item">
+                    <div class="bar-value">9</div>
+                    <div class="bar-track"><div class="bar-fill" style="height: 22%;"></div></div>
+                    <div class="bar-label">일</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-body">
+                <div class="card-head">
+                  <div>
+                    <h4>즉시 액션</h4>
+                    <p>알림보다 처리 순서가 보이는 카드</p>
+                  </div>
+                </div>
+                <div class="urgent-list">
+                  <div class="urgent">
+                    <div class="urgent-mark">1</div>
+                    <div>
+                      <h4>DK푸드센터 냉장건</h4>
+                      <span>09:30 입고 · 팔레트 12 · 출고확정 전</span>
+                    </div>
+                    <span class="pill danger">미출고</span>
+                  </div>
+                  <div class="urgent">
+                    <div class="urgent-mark">2</div>
+                    <div>
+                      <h4>청해유통 서부센터</h4>
+                      <span>1일 지연 · 수신처 재확인 필요</span>
+                    </div>
+                    <span class="pill danger">지연</span>
+                  </div>
+                  <div class="urgent">
+                    <div class="urgent-mark">3</div>
+                    <div>
+                      <h4>세림물산 수정 요청</h4>
+                      <span>발급번호 정정 · 담당자 회신 대기</span>
+                    </div>
+                    <span class="pill warn">검토</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card-body">
+              <div class="card-head">
+                <div>
+                  <h3>최근 등록 문서</h3>
+                  <p>본문 글자를 진하게, 행간을 넓게, 상태를 끊어서 읽는 강한 테이블</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 150px;">발급번호</th>
+                      <th style="width: 120px;">발주일</th>
+                      <th style="width: 120px;">입고일</th>
+                      <th>납품처</th>
+                      <th>수신처</th>
+                      <th style="width: 120px;">작성자</th>
+                      <th style="width: 140px;">상태</th>
+                      <th style="width: 170px;">최종수정</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="muted-text">D-260427-018</td>
+                      <td>04.27</td>
+                      <td>04.28</td>
+                      <td class="primary-text">DK푸드센터 용인물류</td>
+                      <td>냉장 2센터 하역장</td>
+                      <td>김대리</td>
+                      <td><span class="pill warn">검토중</span></td>
+                      <td>08:32</td>
+                    </tr>
+                    <tr>
+                      <td class="muted-text">D-260427-017</td>
+                      <td>04.27</td>
+                      <td>04.27</td>
+                      <td class="primary-text">세림물산 부산지점</td>
+                      <td>출고장 B라인</td>
+                      <td>이과장</td>
+                      <td><span class="pill success">출고완료</span></td>
+                      <td>08:05</td>
+                    </tr>
+                    <tr>
+                      <td class="muted-text">D-260427-016</td>
+                      <td>04.26</td>
+                      <td>04.27</td>
+                      <td class="primary-text">청해유통 서부센터</td>
+                      <td>집하장 3번 도크</td>
+                      <td>박주임</td>
+                      <td><span class="pill danger">지연</span></td>
+                      <td>07:54</td>
+                    </tr>
+                    <tr>
+                      <td class="muted-text">D-260427-015</td>
+                      <td>04.26</td>
+                      <td>04.27</td>
+                      <td class="primary-text">은하식품 김포허브</td>
+                      <td>상온센터 A동</td>
+                      <td>정대리</td>
+                      <td><span class="pill warn">수정요청</span></td>
+                      <td>07:42</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-note">
+                <span>컬럼명은 절제된 밝기, 본문값은 진한 잉크 톤으로 대비를 확실히 줌</span>
+                <div class="pager"><span>이전</span><span class="active">1</span><span>2</span><span>다음</span></div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <section class="screen">
+      <div class="topbar">
+        <div class="topbar-left">
+          <img src="../logo.png" alt="DK&amp;H logo" />
+          <span class="top-pill">Document Composer v2</span>
+        </div>
+        <div class="topbar-right">
+          <span class="top-pill">자동 저장 08:46</span>
+        </div>
+      </div>
+      <div class="frame">
+        <aside class="nav">
+          <p class="nav-title">Document Flow</p>
+          <div class="nav-link active">문서작성</div>
+          <div class="nav-link">문서이력</div>
+          <div class="nav-link">출력관리</div>
+          <div class="nav-box">
+            <strong>핵심 방향</strong>
+            <span>폼을 길게 늘이지 않고 작성영역과 검토영역을 명확하게 양분했습니다.</span>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div class="header-row">
+            <div>
+              <h2>입력하면서 바로 검토되는 문서작성</h2>
+              <p>지금 화면은 단순 입력폼이 아니라 문서 제작 스튜디오처럼 보이게 구성했습니다. 좌측은 작성, 우측은 실시간 검토와 결과물 제어에 집중합니다.</p>
+            </div>
+            <div class="actions">
+              <div class="btn">이전 문서 불러오기</div>
+              <div class="btn-primary">출고의뢰서 생성</div>
+            </div>
+          </div>
+
+          <div class="doc-grid">
+            <div class="stack">
+              <section class="card form-card">
+                <div class="section-chip">Step 01 기본 정보</div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label>발주일</label>
+                    <div class="input">2026.04.27</div>
+                  </div>
+                  <div class="field">
+                    <label>입고일</label>
+                    <div class="input">2026.04.28</div>
+                  </div>
+                  <div class="field">
+                    <label>발급번호</label>
+                    <div class="input">D-260427-018</div>
+                  </div>
+                  <div class="field">
+                    <label>수신처</label>
+                    <div class="input">냉장 2센터 하역장</div>
+                  </div>
+                  <div class="field">
+                    <label>납품처</label>
+                    <div class="input">DK푸드센터 용인물류</div>
+                  </div>
+                  <div class="field">
+                    <label>담당자 연락처</label>
+                    <div class="input">010-1234-7821</div>
+                  </div>
+                  <div class="field-wide">
+                    <label>납품주소</label>
+                    <div class="input">경기도 용인시 처인구 물류로 148, 냉장 2센터 하역장 B-3</div>
+                  </div>
+                  <div class="field-wide">
+                    <label>유의사항</label>
+                    <div class="textarea">08:00 이전 차량 도착 시 사전 연락 필수 / 검수표 동봉 / 냉장 적재칸 분리 필요</div>
+                  </div>
+                </div>
+                <div class="assist">입력 필드는 작고 밋밋한 폼 대신, 문서 제작에 맞는 큰 리듬으로 재정렬했습니다. 자동 입력 정보도 흐리지 않고 동일한 무게로 보여서 신뢰감이 생기도록 했습니다.</div>
+              </section>
+
+              <section class="card form-card">
+                <div class="card-head">
+                  <div>
+                    <div class="section-chip">Step 02 품목 구성</div>
+                    <p style="margin-top:12px;">수량, 팔레트, 박스가 한 축으로 읽히는 표</p>
+                  </div>
+                  <div class="actions">
+                    <div class="btn">품목 불러오기</div>
+                    <div class="btn">행 추가</div>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width: 160px;">구분</th>
+                        <th>품목명</th>
+                        <th style="width: 100px;">수량</th>
+                        <th style="width: 100px;">팔레트</th>
+                        <th style="width: 100px;">박스</th>
+                        <th style="width: 140px;">공급가</th>
+                        <th style="width: 170px;">출고 메모</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>냉장</td>
+                        <td class="primary-text">대패삼겹 1kg 진공포장</td>
+                        <td>180</td>
+                        <td>12</td>
+                        <td>60</td>
+                        <td>2,340,000</td>
+                        <td>선입선출 요청</td>
+                      </tr>
+                      <tr>
+                        <td>냉장</td>
+                        <td class="primary-text">한우국거리 500g 트레이</td>
+                        <td>96</td>
+                        <td>8</td>
+                        <td>32</td>
+                        <td>1,120,000</td>
+                        <td>상단 적재 금지</td>
+                      </tr>
+                      <tr>
+                        <td>상온</td>
+                        <td class="primary-text">양념소스 2L 박스</td>
+                        <td>48</td>
+                        <td>4</td>
+                        <td>16</td>
+                        <td>384,000</td>
+                        <td>라벨 재확인</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+
+            <aside class="review-rail">
+              <section class="summary-box">
+                <h4>문서 상태</h4>
+                <div class="summary-row"><span>작성 상태</span><strong>임시 저장됨</strong></div>
+                <div class="summary-row"><span>최근 수정</span><strong>08:46</strong></div>
+                <div class="summary-row"><span>변경 이력</span><strong>5건</strong></div>
+              </section>
+
+              <section class="summary-box">
+                <h4>수량 요약</h4>
+                <div class="summary-grid">
+                  <div><span>총 품목</span><strong>3</strong></div>
+                  <div><span>총 수량</span><strong>324</strong></div>
+                  <div><span>총 팔레트</span><strong>24</strong></div>
+                </div>
+                <div class="summary-row"><span>공급가 합계</span><strong>3,844,000</strong></div>
+                <div class="summary-row"><span>VAT</span><strong>384,400</strong></div>
+                <div class="summary-row"><span>총액</span><strong>4,228,400</strong></div>
+              </section>
+
+              <section class="summary-box">
+                <h4>검토 포인트</h4>
+                <div class="steps">
+                  <div class="step">
+                    <div class="step-mark">1</div>
+                    <div><strong>거래처 선택</strong><span>담당자, 주소, 유의사항이 즉시 채워지는 시나리오</span></div>
+                  </div>
+                  <div class="step">
+                    <div class="step-mark">2</div>
+                    <div><strong>수량 검토</strong><span>수량과 포장 단위를 같은 시선축에서 검사</span></div>
+                  </div>
+                  <div class="step">
+                    <div class="step-mark">3</div>
+                    <div><strong>결과물 생성</strong><span>엑셀, 미리보기, 저장을 동일 비중이 아닌 우선순위 비중으로 배치</span></div>
+                  </div>
+                </div>
+              </section>
+
+              <div class="cta-row">
+                <div class="cta">엑셀</div>
+                <div class="cta">미리보기</div>
+                <div class="cta primary">저장</div>
+              </div>
+            </aside>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section class="screen">
+      <div class="topbar">
+        <div class="topbar-left">
+          <img src="../logo.png" alt="DK&amp;H logo" />
+          <span class="top-pill">Master Console v2</span>
+        </div>
+        <div class="topbar-right">
+          <span class="top-pill">품목 / 거래처 / 공급처 통합</span>
+        </div>
+      </div>
+      <div class="frame">
+        <aside class="nav">
+          <p class="nav-title">Master</p>
+          <div class="nav-link active">품목관리 센터</div>
+          <div class="nav-link">거래처 데이터</div>
+          <div class="nav-link">공급처 정보</div>
+          <div class="nav-box">
+            <strong>왜 탭 구조인가</strong>
+            <span>이 세 화면은 사용 흐름이 이어지므로 따로 떨어진 페이지보다 하나의 콘솔이 더 자연스럽습니다.</span>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div class="header-row">
+            <div>
+              <h2>검색과 수정이 중심인 품목관리 콘솔</h2>
+              <p>“조회용 리스트”처럼 보이지 않게 만들었습니다. 검색, 상태 필터, 새 항목 등록, 탭 전환이 같은 전투선에 놓이는 관리 콘솔 방향입니다.</p>
+            </div>
+            <div class="actions">
+              <div class="btn">대량 업로드</div>
+              <div class="btn-primary">새 항목 등록</div>
+            </div>
+          </div>
+
+          <div class="management-layout">
+            <div class="management-top">
+              <section class="card tabs-card">
+                <div class="tabs">
+                  <div class="tab active">품목 관리 <span class="top-pill">1,284</span></div>
+                  <div class="tab">거래처 관리 <span class="top-pill">214</span></div>
+                  <div class="tab">공급처 관리 <span class="top-pill">38</span></div>
+                </div>
+
+                <div class="toolbar">
+                  <div class="input">품목명, 거래처, 수신처, 규격으로 검색</div>
+                  <div class="select">전체 거래처</div>
+                  <div class="select">활성 상태</div>
+                  <div class="btn-primary">품목 추가</div>
+                </div>
+
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width: 76px;">No</th>
+                        <th style="width: 120px;">구분</th>
+                        <th style="width: 220px;">거래처</th>
+                        <th>품목명</th>
+                        <th style="width: 170px;">수신처</th>
+                        <th style="width: 120px;">공급가</th>
+                        <th style="width: 120px;">판매가</th>
+                        <th style="width: 90px;">1B</th>
+                        <th style="width: 90px;">1P</th>
+                        <th style="width: 120px;">상태</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>001</td>
+                        <td>냉장</td>
+                        <td class="primary-text">DK푸드센터 용인물류</td>
+                        <td class="primary-text">대패삼겹 1kg 진공포장</td>
+                        <td>냉장 2센터</td>
+                        <td>13,000</td>
+                        <td>15,500</td>
+                        <td>10</td>
+                        <td>6</td>
+                        <td><span class="pill success">사용중</span></td>
+                      </tr>
+                      <tr>
+                        <td>002</td>
+                        <td>상온</td>
+                        <td class="primary-text">은하식품 김포허브</td>
+                        <td class="primary-text">양념소스 2L 박스</td>
+                        <td>상온센터 A동</td>
+                        <td>8,000</td>
+                        <td>9,600</td>
+                        <td>4</td>
+                        <td>8</td>
+                        <td><span class="pill warn">단가검토</span></td>
+                      </tr>
+                      <tr>
+                        <td>003</td>
+                        <td>냉동</td>
+                        <td class="primary-text">청해유통 서부센터</td>
+                        <td class="primary-text">오징어채 500g 패키지</td>
+                        <td>냉동창고 B라인</td>
+                        <td>7,300</td>
+                        <td>8,100</td>
+                        <td>20</td>
+                        <td>5</td>
+                        <td><span class="pill success">사용중</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="table-note">
+                  <span>품목명과 거래처명이 제일 먼저 보이게 강한 활자를 배치</span>
+                  <div class="pager"><span class="active">1</span><span>2</span><span>3</span></div>
+                </div>
+              </section>
+
+              <aside class="side-metrics">
+                <section class="metric">
+                  <span>활성 품목</span>
+                  <strong>1,284</strong>
+                  <em>이번 주 +32</em>
+                </section>
+                <section class="metric">
+                  <span>단가 검토</span>
+                  <strong>47</strong>
+                  <em>최근 7일 기준</em>
+                </section>
+                <section class="metric">
+                  <span>미매핑 수신처</span>
+                  <strong>9</strong>
+                  <em>즉시 정리 권장</em>
+                </section>
+              </aside>
+            </div>
+
+            <div class="preview-grid">
+              <section class="preview">
+                <h4>품목 관리 탭</h4>
+                <p>숫자와 상태를 중심으로 보는 탭. 표 중심이지만 건조하지 않게 리듬을 줬습니다.</p>
+                <div class="micro-list">
+                  <div class="micro"><strong>대패삼겹 1kg</strong><span>DK푸드센터</span><span class="pill success">정상</span></div>
+                  <div class="micro"><strong>양념소스 2L</strong><span>은하식품</span><span class="pill warn">검토</span></div>
+                  <div class="micro"><strong>오징어채 500g</strong><span>청해유통</span><span class="pill success">정상</span></div>
+                </div>
+              </section>
+
+              <section class="preview">
+                <h4>거래처 관리 탭</h4>
+                <p>담당자와 주소, 메모를 스캔하기 쉬운 밀도로 정리한 카드형 관리 화면입니다.</p>
+                <div class="micro-list">
+                  <div class="micro"><strong>DK푸드센터 용인물류</strong><span>김민수 · 010-4521-2231</span><span class="pill success">활성</span></div>
+                  <div class="micro"><strong>세림물산 부산지점</strong><span>박현정 · 051-811-1022</span><span class="pill success">활성</span></div>
+                  <div class="micro"><strong>은하식품 김포허브</strong><span>점심 12:00-13:00</span><span class="pill warn">메모</span></div>
+                </div>
+              </section>
+
+              <section class="preview">
+                <h4>공급처 관리 탭</h4>
+                <p>문서작성의 ‘불러오기’ 모달과 연결되는 공급처 데이터 관리 전용 탭입니다.</p>
+                <div class="micro-list">
+                  <div class="micro"><strong>DK&amp;H 물류산업</strong><span>123-81-45678</span><span class="pill success">기본값</span></div>
+                  <div class="micro"><strong>한빛식자재</strong><span>대표 이도현</span><span class="pill success">사용중</span></div>
+                  <div class="micro"><strong>청운식품유통</strong><span>최근 30일 미사용</span><span class="pill warn">휴면</span></div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section class="footer-note">
+      <strong>이번 v2는 이렇게 다릅니다.</strong> 이전 시안이 “정돈된 기존 디자인”이었다면, 이번 시안은 첫 화면부터 시선 우선순위를 다시 짰습니다. 큰 숫자판, 더 선명한 컬럼, 더 강한 상태 배지, 탭형 관리 콘솔로 확실히 성격을 바꿨습니다.
+    </section>
+  </div>
+</body>
+</html>
