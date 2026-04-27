@@ -78,6 +78,7 @@ export default function DocumentItemTable({
   onAddItem,
 }: DocumentItemTableProps) {
   const [integerEditingValues, setIntegerEditingValues] = useState<Record<string, string>>({});
+  const [decimalEditingValues, setDecimalEditingValues] = useState<Record<string, string>>({});
 
   function getIntegerFieldStateKey(id: string, key: IntegerFieldKey) {
     return `${id}:${key}`;
@@ -89,6 +90,18 @@ export default function DocumentItemTable({
       return integerEditingValues[stateKey];
     }
     return formatIntegerInput(value);
+  }
+
+  function getDecimalFieldStateKey(id: string, key: 'costPrice' | 'unitPrice') {
+    return `${id}:${key}`;
+  }
+
+  function getDecimalDisplayValue(id: string, key: 'costPrice' | 'unitPrice', value: number | null) {
+    const stateKey = getDecimalFieldStateKey(id, key);
+    if (Object.prototype.hasOwnProperty.call(decimalEditingValues, stateKey)) {
+      return decimalEditingValues[stateKey];
+    }
+    return formatDecimalInput(value);
   }
 
   function handleNumericFocus(id: string, key: NumericFieldKey) {
@@ -137,6 +150,62 @@ export default function DocumentItemTable({
             customSupply: null,
           }
         : {}),
+    }));
+  }
+
+  function sanitizeDecimalInput(rawValue: string) {
+    let value = rawValue.replace(/,/g, '').replace(/[^0-9.-]/g, '');
+    const negative = value.startsWith('-');
+    value = value.replace(/-/g, '');
+
+    const firstDotIndex = value.indexOf('.');
+    if (firstDotIndex >= 0) {
+      const integerPart = value.slice(0, firstDotIndex).replace(/\./g, '');
+      const decimalPart = value.slice(firstDotIndex + 1).replace(/\./g, '');
+      value = `${integerPart}.${decimalPart}`;
+    }
+
+    if (negative) value = `-${value}`;
+    if (value === '.') return '0.';
+    if (value === '-.') return '-0.';
+    return value;
+  }
+
+  function handleDecimalFocus(id: string, key: 'costPrice' | 'unitPrice', value: number | null) {
+    handleNumericFocus(id, key);
+    setDecimalEditingValues((current) => ({
+      ...current,
+      [getDecimalFieldStateKey(id, key)]: value === null || value === 0 ? '' : String(value),
+    }));
+  }
+
+  function handleDecimalBlur(id: string, key: 'costPrice' | 'unitPrice') {
+    const stateKey = getDecimalFieldStateKey(id, key);
+    setDecimalEditingValues((current) => {
+      const next = { ...current };
+      delete next[stateKey];
+      return next;
+    });
+  }
+
+  function handleDecimalChange(id: string, key: 'costPrice' | 'unitPrice', rawValue: string) {
+    const sanitized = sanitizeDecimalInput(rawValue);
+    const stateKey = getDecimalFieldStateKey(id, key);
+
+    setDecimalEditingValues((current) => ({
+      ...current,
+      [stateKey]: sanitized,
+    }));
+
+    const normalized =
+      sanitized === '' || sanitized === '-' ? null
+        : sanitized.endsWith('.') ? parseNullableDecimal(sanitized.slice(0, -1))
+        : parseNullableDecimal(sanitized);
+
+    onUpdateItem(id, (current) => ({
+      ...current,
+      [key]: normalized,
+      ...(key === 'unitPrice' ? { customSupply: null } : {}),
     }));
   }
 
@@ -314,14 +383,10 @@ export default function DocumentItemTable({
                         className="doc-cell-control doc-number-input-costprice"
                         type="text"
                         inputMode="decimal"
-                        value={formatDecimalInput(item.costPrice)}
-                        onFocus={() => handleNumericFocus(item.id, 'costPrice')}
-                        onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({
-                            ...current,
-                            costPrice: parseNullableDecimal(event.target.value),
-                          }))
-                        }
+                        value={getDecimalDisplayValue(item.id, 'costPrice', item.costPrice)}
+                        onFocus={() => handleDecimalFocus(item.id, 'costPrice', item.costPrice)}
+                        onBlur={() => handleDecimalBlur(item.id, 'costPrice')}
+                        onChange={(event) => handleDecimalChange(item.id, 'costPrice', event.target.value)}
                         placeholder="입고단가"
                       />
                     </td>
@@ -330,15 +395,10 @@ export default function DocumentItemTable({
                         className="doc-cell-control doc-number-input-unitprice"
                         type="text"
                         inputMode="decimal"
-                        value={formatDecimalInput(item.unitPrice)}
-                        onFocus={() => handleNumericFocus(item.id, 'unitPrice')}
-                        onChange={(event) =>
-                          onUpdateItem(item.id, (current) => ({
-                            ...current,
-                            unitPrice: parseNullableDecimal(event.target.value),
-                            customSupply: null,
-                          }))
-                        }
+                        value={getDecimalDisplayValue(item.id, 'unitPrice', item.unitPrice)}
+                        onFocus={() => handleDecimalFocus(item.id, 'unitPrice', item.unitPrice)}
+                        onBlur={() => handleDecimalBlur(item.id, 'unitPrice')}
+                        onChange={(event) => handleDecimalChange(item.id, 'unitPrice', event.target.value)}
                         placeholder="판매단가"
                       />
                     </td>
