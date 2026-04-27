@@ -79,8 +79,8 @@ export function buildReleasePreviewHtml(data: SharedPreviewData) {
       }
       ${data.deliveryAddr ? `<tr><td class="lbl">납품처 주소</td><td>${escapeHtml(data.deliveryAddr)}</td></tr>` : ''}
       ${data.remark ? `<tr><td class="lbl">비고</td><td>${escapeHtml(data.remark)}</td></tr>` : ''}
+      ${data.requestNote ? `<tr><td class="lbl">요청사항</td><td>${escapeHtml(data.requestNote).replace(/\n/g, '<br>')}</td></tr>` : ''}
     </table>
-    ${data.requestNote ? `<div class="request-box"><strong>요청사항</strong>${escapeHtml(data.requestNote).replace(/\n/g, '<br>')}</div>` : ''}
     <div class="release-signoff">${escapeHtml(formatKoreanDate(today))}<br><strong>(주)디케이앤에이치</strong></div>
   </div>`;
 }
