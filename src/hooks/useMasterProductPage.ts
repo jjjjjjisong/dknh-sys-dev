@@ -97,7 +97,7 @@ export function useMasterProductPage() {
       setClients(data.clients);
       setProductPriceDrafts(createProductPriceDraftMap(data.products));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '?덈ぉ 紐⑸줉 議고쉶???ㅽ뙣?덉뒿?덈떎.');
+      setError(err instanceof Error ? err.message : '품목 목록 조회에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -272,7 +272,7 @@ export function useMasterProductPage() {
       await loadPageData();
       setMasterModalOpen(false);
     } catch (err) {
-      setMasterFormError(err instanceof Error ? err.message : '怨듯넻 ?덈ぉ ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.');
+      setMasterFormError(err instanceof Error ? err.message : '공통 품목 저장에 실패했습니다.');
     } finally {
       setSaving(false);
     }
@@ -308,33 +308,33 @@ export function useMasterProductPage() {
       await loadPageData();
       setProductModalOpen(false);
     } catch (err) {
-      setProductFormError(err instanceof Error ? err.message : '?⑺뭹泥섎퀎 ?덈ぉ ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.');
+      setProductFormError(err instanceof Error ? err.message : '납품처별 품목 저장에 실패했습니다.');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDeleteMaster(master: ProductMaster) {
-    const confirmed = window.confirm(`"${master.name1}" 怨듯넻 ?덈ぉ????젣?섏떆寃좎뒿?덇퉴?`);
+    const confirmed = window.confirm(`"${master.name1}" 공통 품목을 삭제하시겠습니까?`);
     if (!confirmed) return;
 
     try {
       await removeProductMaster(master.id);
       setProductMasters((current) => current.filter((item) => item.id !== master.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '怨듯넻 ?덈ぉ ??젣???ㅽ뙣?덉뒿?덈떎.');
+      setError(err instanceof Error ? err.message : '공통 품목 삭제에 실패했습니다.');
     }
   }
 
   async function handleDeleteProduct(product: Product) {
-    const confirmed = window.confirm(`"${product.name1}" ?⑺뭹泥섎퀎 ?덈ぉ????젣?섏떆寃좎뒿?덇퉴?`);
+    const confirmed = window.confirm(`"${product.name1}" 납품처별 품목을 삭제하시겠습니까?`);
     if (!confirmed) return;
 
     try {
       await removeProduct(product.id);
       setProducts((current) => current.filter((item) => item.id !== product.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '?⑺뭹泥섎퀎 ?덈ぉ ??젣???ㅽ뙣?덉뒿?덈떎.');
+      setError(err instanceof Error ? err.message : '납품처별 품목 삭제에 실패했습니다.');
     }
   }
 
@@ -394,7 +394,7 @@ export function useMasterProductPage() {
         setPriceChangeLogs([]);
         return;
       }
-      setError(err instanceof Error ? err.message : '?④? 蹂寃??대젰 議고쉶???ㅽ뙣?덉뒿?덈떎.');
+        setError(err instanceof Error ? err.message : '단가 변경 이력 조회에 실패했습니다.');
     }
   }
 
@@ -437,7 +437,7 @@ export function useMasterProductPage() {
       setSelectedPriceChangeItemIds([]);
       setPriceChangeSearched(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '?④? ?섏젙 誘몃━蹂닿린 議고쉶???ㅽ뙣?덉뒿?덈떎.');
+      setError(err instanceof Error ? err.message : '단가 수정 미리보기 조회에 실패했습니다.');
     } finally {
       setPriceChangeLoadingPreview(false);
     }
@@ -541,7 +541,7 @@ export function useMasterProductPage() {
         },
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : '?④? ??μ뿉 ?ㅽ뙣?덉뒿?덈떎.');
+      setError(err instanceof Error ? err.message : '단가 저장에 실패했습니다.');
     } finally {
       setSavingPriceProductId(null);
     }
@@ -555,7 +555,7 @@ export function useMasterProductPage() {
   function handleDownloadExcel() {
     const rows = buildProductExcelRows(activeTab, filteredMasters, filteredProducts);
     if (rows.length === 0) {
-      window.alert('?ㅼ슫濡쒕뱶???곗씠?곌? ?놁뒿?덈떎.');
+      window.alert('다운로드할 데이터가 없습니다.');
       return;
     }
 
@@ -564,9 +564,9 @@ export function useMasterProductPage() {
     XLSX.utils.book_append_sheet(
       workbook,
       worksheet,
-      activeTab === 'masters' ? '怨듯넻?덈ぉ' : '?⑺뭹泥섎퀎?덈ぉ',
+      activeTab === 'masters' ? '공통품목' : '납품처별품목',
     );
-    XLSX.writeFile(workbook, `?덈ぉ愿由?${activeTab}_${formatFileStamp(new Date())}.xlsx`);
+    XLSX.writeFile(workbook, `품목관리_${activeTab}_${formatFileStamp(new Date())}.xlsx`);
   }
 
   return {
