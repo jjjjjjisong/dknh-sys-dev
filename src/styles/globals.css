@@ -3880,6 +3880,7 @@ a {
   .modal-card {
     width: 100%;
     max-height: calc(100dvh - 20px);
+    max-height: calc(100svh - 20px);
     padding: 16px;
     border-radius: 16px;
   }
@@ -3912,6 +3913,22 @@ a {
   .schedule-calendar-modal-card {
     width: calc(100vw - 20px);
     max-height: calc(100dvh - 20px);
+    max-height: calc(100svh - 20px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .schedule-calendar-modal-card .modal-head {
+    flex-shrink: 0;
+  }
+
+  .schedule-calendar-modal-card .modal-form {
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
   }
 
   .schedule-calendar-panel,
@@ -3989,11 +4006,13 @@ a {
   }
 
   .schedule-calendar-detail {
-    min-height: 220px;
+    min-height: 0;
   }
 
   .schedule-calendar-detail-list {
-    max-height: 34vh;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .schedule-calendar-detail-top {
