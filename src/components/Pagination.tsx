@@ -33,10 +33,20 @@ export default function Pagination({
         <button
           type="button"
           className="pagination-button"
+          aria-label="첫 페이지"
+          onClick={() => moveToPage(1)}
+          disabled={currentPage === 1}
+        >
+          «
+        </button>
+        <button
+          type="button"
+          className="pagination-button"
+          aria-label="이전 페이지"
           onClick={() => moveToPage(currentPage - 1)}
           disabled={currentPage === 1}
         >
-          이전
+          ‹
         </button>
 
         <div className="pagination-pages">
@@ -55,10 +65,20 @@ export default function Pagination({
         <button
           type="button"
           className="pagination-button"
+          aria-label="다음 페이지"
           onClick={() => moveToPage(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
-          다음
+          ›
+        </button>
+        <button
+          type="button"
+          className="pagination-button"
+          aria-label="마지막 페이지"
+          onClick={() => moveToPage(totalPages)}
+          disabled={currentPage === totalPages}
+        >
+          »
         </button>
       </div>
 
@@ -70,9 +90,9 @@ export default function Pagination({
 }
 
 function getVisiblePages(currentPage: number, totalPages: number) {
-  const start = Math.max(1, currentPage - 2);
-  const end = Math.min(totalPages, start + 4);
-  const adjustedStart = Math.max(1, end - 4);
+  const pageGroupSize = 5;
+  const groupStart = Math.floor((currentPage - 1) / pageGroupSize) * pageGroupSize + 1;
+  const groupEnd = Math.min(totalPages, groupStart + pageGroupSize - 1);
 
-  return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
+  return Array.from({ length: groupEnd - groupStart + 1 }, (_, index) => groupStart + index);
 }

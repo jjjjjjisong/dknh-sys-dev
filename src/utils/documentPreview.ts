@@ -114,7 +114,6 @@ export function buildInvoicePreviewHtml(
       })
       .join('');
 
-    const totalQty = group.items.reduce((sum, item) => sum + item.qty, 0);
     const totalSupplyDisplay =
       showPrice && group.totalSupply !== 0 ? escapeHtml(formatNumber(group.totalSupply)) : '';
     const totalVatDisplay =
@@ -156,7 +155,7 @@ export function buildInvoicePreviewHtml(
         </thead>
         <tbody>
           ${rows}
-          <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r">${escapeHtml(formatNumber(totalQty))}</td><td></td><td class="r">${totalSupplyDisplay}</td><td class="r">${totalVatDisplay}</td><td></td></tr>
+          <tr class="sum-row"><td colspan="2" class="c">합계</td><td class="r"></td><td></td><td class="r">${totalSupplyDisplay}</td><td class="r">${totalVatDisplay}</td><td></td></tr>
           <tr class="grand-row"><td colspan="4" class="c">총 금액</td><td class="r">${totalAmountDisplay}</td><td class="c">인수자</td><td></td></tr>
         </tbody>
       </table>

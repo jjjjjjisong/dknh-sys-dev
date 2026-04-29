@@ -279,7 +279,6 @@ function createInvoiceWorkbook(data: InvoiceData, options: InvoiceExcelExportOpt
     ws.getRow(startRow).height = 23;
     startRow += 1;
 
-    let totalQty = 0;
     const itemRowsCount = Math.max(invoiceData.items.length, 1);
 
     for (let i = 0; i < itemRowsCount; i += 1) {
@@ -287,8 +286,6 @@ function createInvoiceWorkbook(data: InvoiceData, options: InvoiceExcelExportOpt
 
       if (item) {
         const vatAmount = item.vat ? Math.round((item.supply || 0) * 0.1) : 0;
-        totalQty += item.qty || 0;
-
         ws.getCell(startRow, 1).value = formatMonthDay(item.arriveDate || invoiceData.arriveDate || invoiceData.orderDate || '');
         ws.mergeCells(startRow, 2, startRow, 4);
         ws.getCell(startRow, 2).value = item.name2 || item.name1;
@@ -330,7 +327,7 @@ function createInvoiceWorkbook(data: InvoiceData, options: InvoiceExcelExportOpt
     ws.getCell(startRow, 1).value = '합계';
     ws.getCell(startRow, 1).font = font10Bold;
     ws.getCell(startRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getCell(startRow, 5).value = totalQty;
+    ws.getCell(startRow, 5).value = '';
     ws.mergeCells(startRow, 6, startRow, 7);
     ws.getCell(startRow, 8).value =
       hidePriceFields || invoiceData.totalSupply === 0 ? '' : invoiceData.totalSupply;

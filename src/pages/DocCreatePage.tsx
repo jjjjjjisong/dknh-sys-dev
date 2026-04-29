@@ -116,7 +116,7 @@ export default function DocCreatePage() {
   const [importLoading, setImportLoading] = useState(false);
   const [importDocuments, setImportDocuments] = useState<DocumentHistory[]>([]);
   const [importKeyword, setImportKeyword] = useState('');
-  const [importPage, setImportPage] = useState(1);
+  const [importCurrentPage, setImportCurrentPage] = useState(1);
   const saveLockRef = useRef(false);
   const prevBaseOrderDateRef = useRef(form.orderDate);
   const prevBaseArriveDateRef = useRef(form.arriveDate);
@@ -408,7 +408,7 @@ export default function DocCreatePage() {
       setError(null);
       const rows = await fetchDocuments();
       setImportDocuments(rows);
-      setImportPage(1);
+      setImportCurrentPage(1);
       setImportModalOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : '불러올 발행이력 목록을 가져오지 못했습니다.');
@@ -468,7 +468,7 @@ export default function DocCreatePage() {
       setItems(mapImportedDocumentItems(document, productRows));
       setImportModalOpen(false);
       setImportKeyword('');
-      setImportPage(1);
+      setImportCurrentPage(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : '선택한 문서를 불러오지 못했습니다.');
     } finally {
@@ -495,20 +495,20 @@ export default function DocCreatePage() {
   }, [importDocuments, importKeyword]);
 
   useEffect(() => {
-    setImportPage(1);
+    setImportCurrentPage(1);
   }, [importKeyword]);
 
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(filteredImportDocuments.length / IMPORT_PAGE_SIZE));
-    if (importPage > totalPages) {
-      setImportPage(totalPages);
+    if (importCurrentPage > totalPages) {
+      setImportCurrentPage(totalPages);
     }
-  }, [filteredImportDocuments.length, importPage]);
+  }, [filteredImportDocuments.length, importCurrentPage]);
 
   const pagedImportDocuments = useMemo(() => {
-    const start = (importPage - 1) * IMPORT_PAGE_SIZE;
+    const start = (importCurrentPage - 1) * IMPORT_PAGE_SIZE;
     return filteredImportDocuments.slice(start, start + IMPORT_PAGE_SIZE);
-  }, [filteredImportDocuments, importPage]);
+  }, [filteredImportDocuments, importCurrentPage]);
 
   const filteredSuppliers = useMemo(() => {
     const keyword = supplierKeyword.trim().toLowerCase();
@@ -778,7 +778,7 @@ export default function DocCreatePage() {
           if (!importLoading) {
             setImportModalOpen(false);
             setImportKeyword('');
-            setImportPage(1);
+            setImportCurrentPage(1);
           }
         }}
         cardClassName="doc-import-modal-card"
@@ -790,7 +790,7 @@ export default function DocCreatePage() {
             onClick={() => {
               setImportModalOpen(false);
               setImportKeyword('');
-              setImportPage(1);
+              setImportCurrentPage(1);
             }}
             disabled={importLoading}
           >
@@ -814,6 +814,7 @@ export default function DocCreatePage() {
                 <th style={{ width: 110 }}>발급번호</th>
                 <th style={{ width: 120, textAlign: 'center' }}>발주일자</th>
                 <th style={{ width: 120, textAlign: 'center' }}>입고일자</th>
+                <th style={{ minWidth: 220 }}>품목명</th>
                 <th style={{ minWidth: 160 }}>납품처</th>
                 <th style={{ minWidth: 140 }}>수신처</th>
                 <th style={{ width: 90, textAlign: 'center' }}>작성자</th>
@@ -822,11 +823,11 @@ export default function DocCreatePage() {
             <tbody>
               {importLoading ? (
                 <tr>
-                  <td colSpan={6} className="table-empty">발행이력 목록을 불러오는 중입니다...</td>
+                  <td colSpan={7} className="table-empty">발행이력 목록을 불러오는 중입니다...</td>
                 </tr>
               ) : filteredImportDocuments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="table-empty">검색 결과가 없습니다.</td>
+                  <td colSpan={7} className="table-empty">검색 결과가 없습니다.</td>
                 </tr>
               ) : (
                 pagedImportDocuments.map((document) => (
@@ -838,6 +839,11 @@ export default function DocCreatePage() {
                     <td>{document.issueNo || '-'}</td>
                     <td style={{ textAlign: 'center' }}>{document.orderDate || '-'}</td>
                     <td style={{ textAlign: 'center' }}>{document.arriveDate || '-'}</td>
+                    <td>
+                      <div className="table-clamp-2" title={getImportDocumentProductTitle(document)}>
+                        {getImportDocumentProductSummary(document)}
+                      </div>
+                    </td>
                     <td><div className="table-clamp-2" title={document.client || '-'}>{document.client || '-'}</div></td>
                     <td><div className="table-clamp-2" title={document.receiver || '-'}>{document.receiver || '-'}</div></td>
                     <td style={{ textAlign: 'center' }}>{document.author || '-'}</td>
@@ -850,16 +856,34 @@ export default function DocCreatePage() {
 
         {!importLoading && filteredImportDocuments.length > IMPORT_PAGE_SIZE ? (
           <Pagination
-            currentPage={importPage}
+            currentPage={importCurrentPage}
             totalItems={filteredImportDocuments.length}
             pageSize={IMPORT_PAGE_SIZE}
-            onPageChange={setImportPage}
+            onPageChange={setImportCurrentPage}
             scrollOnChange={false}
           />
         ) : null}
       </Modal>
     </div>
   );
+}
+
+function getImportDocumentProductSummary(document: DocumentHistory) {
+  const productNames = getImportDocumentProductNames(document);
+  if (productNames.length === 0) return '-';
+  if (productNames.length === 1) return productNames[0];
+  return `${productNames[0]} 외 ${productNames.length - 1}건`;
+}
+
+function getImportDocumentProductTitle(document: DocumentHistory) {
+  const productNames = getImportDocumentProductNames(document);
+  return productNames.length > 0 ? productNames.join(', ') : '-';
+}
+
+function getImportDocumentProductNames(document: DocumentHistory) {
+  return document.items
+    .map((item) => (item.name1 || item.name2 || '').trim())
+    .filter(Boolean);
 }
 
 function mapImportedDocumentItems(document: DocumentHistory, products: Product[]): DocItem[] {
