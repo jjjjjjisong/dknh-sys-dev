@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { PriceChangeLog, PriceChangePreviewRow } from '../../api/priceChanges';
 import { MANUAL_PRICE_CHANGE_PRODUCT_ID } from '../../api/priceChanges';
+import type { Client } from '../../types/client';
 import type { Product } from '../../types/product';
 import Button from '../ui/Button';
 
@@ -8,6 +9,7 @@ export type PriceChangeForm = {
   dateFrom: string;
   dateTo: string;
   clientId: string;
+  clientName: string;
   receiver: string;
   productId: string;
   productName: string;
@@ -16,6 +18,7 @@ export type PriceChangeForm = {
 };
 
 type PriceChangePanelProps = {
+  clients: Client[];
   products: Product[];
   form: PriceChangeForm;
   previewRows: PriceChangePreviewRow[];
@@ -63,6 +66,7 @@ function getProductLabel(product: Product) {
 }
 
 export default function PriceChangePanel({
+  clients,
   products,
   form,
   previewRows,
@@ -90,19 +94,23 @@ export default function PriceChangePanel({
   const selectedProduct = manualOnlySelected
     ? undefined
     : products.find((product) => product.id === form.productId);
+  const selectedClient = clients.find((client) => client.id === form.clientId);
   const keyword = form.productName.trim().toLowerCase();
 
   const productSuggestions = useMemo(() => {
+    const clientFilteredProducts = form.clientId
+      ? products.filter((product) => product.clientId === form.clientId)
+      : products;
     const source = keyword
-      ? products.filter((product) =>
+      ? clientFilteredProducts.filter((product) =>
           [product.client, product.receiver, product.name1, product.name2]
             .filter(Boolean)
             .some((value) => value.toLowerCase().includes(keyword)),
         )
-      : products;
+      : clientFilteredProducts;
 
     return source.slice(0, 30);
-  }, [keyword, products]);
+  }, [form.clientId, keyword, products]);
 
   const filteredLogs = useMemo(() => {
     const logKeyword = historyKeyword.trim().toLowerCase();
@@ -159,6 +167,17 @@ export default function PriceChangePanel({
               onChange={(event) => onUpdateForm('dateTo', event.target.value)}
             />
           </label>
+          <label className="field">
+            <span>납품처</span>
+            <select value={form.clientId} onChange={(event) => onUpdateForm('clientId', event.target.value)}>
+              <option value="">전체 납품처</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="field price-change-product-search">
             <span>품목 선택 *</span>
             <input
@@ -208,6 +227,7 @@ export default function PriceChangePanel({
         {manualOnlySelected ? (
           <div className="price-change-count-row">
             <span>선택된 품목: 직접입력</span>
+            {selectedClient ? <span>납품처: {selectedClient.name}</span> : null}
           </div>
         ) : null}
         {manualOnlySelected ? (

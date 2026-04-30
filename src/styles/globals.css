@@ -2463,7 +2463,7 @@ a {
 
 .price-change-search-grid {
   display: grid;
-  grid-template-columns: minmax(160px, 0.7fr) minmax(160px, 0.7fr) minmax(320px, 1.8fr) 130px;
+  grid-template-columns: minmax(150px, 0.7fr) minmax(150px, 0.7fr) minmax(180px, 0.9fr) minmax(320px, 1.7fr) 130px;
   gap: 14px;
   align-items: end;
 }

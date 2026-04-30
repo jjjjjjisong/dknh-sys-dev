@@ -43,6 +43,7 @@ function createDefaultPriceChangeForm(): PriceChangeForm {
     dateFrom: defaultDateFrom,
     dateTo: defaultDateTo,
     clientId: '',
+    clientName: '',
     receiver: '',
     productId: '',
     productName: '',
@@ -363,6 +364,13 @@ export function useMasterProductPage() {
         }
       }
 
+      if (key === 'clientId') {
+        const selectedClient = clients.find((client) => client.id === value);
+        next.clientName = selectedClient?.name ?? '';
+        next.productId = '';
+        next.productName = '';
+      }
+
       if (key === 'productId') {
         const selectedProduct = products.find((product) => product.id === value);
         next.productId = String(value);
@@ -402,8 +410,8 @@ export function useMasterProductPage() {
     return {
       dateFrom: priceChangeForm.dateFrom,
       dateTo: priceChangeForm.dateTo,
-      clientId: '',
-      clientName: '',
+      clientId: priceChangeForm.clientId,
+      clientName: priceChangeForm.clientName,
       receiver: '',
       productId: priceChangeForm.productId,
       productName: priceChangeForm.productName,

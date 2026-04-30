@@ -206,6 +206,7 @@ export default function MasterProductPage() {
           />
         ) : (
           <PriceChangePanel
+            clients={clients}
             products={products}
             form={priceChangeForm}
             previewRows={priceChangePreviewRows}
