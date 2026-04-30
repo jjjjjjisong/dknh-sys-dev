@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { fetchMceePressReleasePage, updateMceePressReleaseEffectiveDate } from '../api/mceePressReleases';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
@@ -9,12 +9,13 @@ import type { MceePressRelease } from '../types/mceePressRelease';
 const PAGE_SIZE = 20;
 
 export default function MceePressReleasePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<MceePressRelease[]>([]);
   const [totalItems, setTotalItems] = useState(0);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [keyword, setKeyword] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [dateFrom, setDateFrom] = useState(() => searchParams.get('from') ?? '');
+  const [dateTo, setDateTo] = useState(() => searchParams.get('to') ?? '');
+  const [keyword, setKeyword] = useState(() => searchParams.get('keyword') ?? '');
+  const [currentPage, setCurrentPage] = useState(() => getPageParam(searchParams));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [effectiveDateDrafts, setEffectiveDateDrafts] = useState<Record<string, string>>({});
@@ -26,8 +27,28 @@ export default function MceePressReleasePage() {
   }, [currentPage, dateFrom, dateTo, keyword]);
 
   useEffect(() => {
+    const nextParams = new URLSearchParams();
+    if (currentPage > 1) nextParams.set('page', String(currentPage));
+    if (dateFrom) nextParams.set('from', dateFrom);
+    if (dateTo) nextParams.set('to', dateTo);
+    if (keyword) nextParams.set('keyword', keyword);
+    setSearchParams(nextParams, { replace: true });
+  }, [currentPage, dateFrom, dateTo, keyword, setSearchParams]);
+
+  function updateDateFrom(value: string) {
+    setDateFrom(value);
     setCurrentPage(1);
-  }, [dateFrom, dateTo, keyword]);
+  }
+
+  function updateDateTo(value: string) {
+    setDateTo(value);
+    setCurrentPage(1);
+  }
+
+  function updateKeyword(value: string) {
+    setKeyword(value);
+    setCurrentPage(1);
+  }
 
   async function loadPage() {
     const requestId = loadRequestIdRef.current + 1;
@@ -104,7 +125,7 @@ export default function MceePressReleasePage() {
               className="history-date-input"
               type="date"
               value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
+              onChange={(event) => updateDateFrom(event.target.value)}
             />
           </label>
 
@@ -114,7 +135,7 @@ export default function MceePressReleasePage() {
               className="history-date-input"
               type="date"
               value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
+              onChange={(event) => updateDateTo(event.target.value)}
             />
           </label>
 
@@ -122,7 +143,7 @@ export default function MceePressReleasePage() {
             <span>키워드 검색</span>
             <input
               value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
+              onChange={(event) => updateKeyword(event.target.value)}
               placeholder="제목, 본문, 부서명, 키워드로 검색"
             />
           </label>
@@ -237,6 +258,11 @@ export default function MceePressReleasePage() {
       </section>
     </div>
   );
+}
+
+function getPageParam(searchParams: URLSearchParams) {
+  const page = Number(searchParams.get('page') ?? '1');
+  return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 }
 
 function getKeywordSummary(item: MceePressRelease) {
