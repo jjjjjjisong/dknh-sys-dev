@@ -13,7 +13,7 @@ type DocumentHistoryQueryParams = {
   pageSize: number;
   dateFrom?: string;
   dateTo?: string;
-  filterType?: 'all' | 'client' | 'author';
+  filterType?: 'all' | 'client' | 'receiver' | 'author';
   keyword?: string;
 };
 
@@ -198,6 +198,8 @@ export async function fetchDocumentHistoryPage(
 
     if (params.filterType === 'client') {
       query = query.ilike('client', pattern);
+    } else if (params.filterType === 'receiver') {
+      query = query.ilike('receiver', pattern);
     } else if (params.filterType === 'author') {
       query = query.ilike('author', pattern);
     } else {

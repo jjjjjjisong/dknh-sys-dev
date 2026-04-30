@@ -31,6 +31,7 @@ const PAGE_SIZE = 20;
 const today = getLocalDateInputValue();
 const oneYearAgo = getDateOneYearAgo(today);
 const oneYearLater = getDateOneYearLater(today);
+type HistoryFilterType = 'all' | 'client' | 'receiver' | 'author';
 
 function buildClientRemark(client: Client | null) {
   if (!client) return '';
@@ -59,7 +60,7 @@ export default function DocHistoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'client' | 'author'>('all');
+  const [filterType, setFilterType] = useState<HistoryFilterType>('all');
   const [dateFrom, setDateFrom] = useState(oneYearAgo);
   const [dateTo, setDateTo] = useState(oneYearLater);
   const [previewType, setPreviewType] = useState<PreviewType | null>(null);
@@ -550,9 +551,10 @@ export default function DocHistoryPage() {
               </label>
               <label className="field">
                 <span>검색 필터</span>
-                <select className="history-filter-select" value={filterType} onChange={(event) => setFilterType(event.target.value as 'all' | 'client' | 'author')}>
+                <select className="history-filter-select" value={filterType} onChange={(event) => setFilterType(event.target.value as HistoryFilterType)}>
                   <option value="all">전체</option>
                   <option value="client">거래처</option>
+                  <option value="receiver">수신처</option>
                   <option value="author">작성자</option>
                 </select>
               </label>

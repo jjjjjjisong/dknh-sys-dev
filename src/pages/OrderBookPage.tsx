@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import * as XLSX from 'xlsx';
 import {
   fetchOrderBookPage,
@@ -18,7 +18,7 @@ import { exportOrderBookToExcel } from '../utils/orderBookExcel';
 
 const today = new Date();
 
-type FilterType = 'all' | 'client' | 'product' | 'issueNo' | 'receipt';
+type FilterType = 'all' | 'client' | 'receiver' | 'product' | 'issueNo' | 'receipt';
 type ShippingFilter = 'all' | '미출고' | '출고';
 const PAGE_SIZE = 20;
 
@@ -51,6 +51,7 @@ export default function OrderBookPage() {
   const [saving, setSaving] = useState(false);
   const [batchUpdating, setBatchUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const loadRequestIdRef = useRef(0);
   const [form, setForm] = useState<OrderBookInput>({
     issueNo: '',
     date: today.toISOString().slice(0, 10),
@@ -69,6 +70,9 @@ export default function OrderBookPage() {
   }, [currentPage, dateFrom, dateTo, filterType, keyword, shippingFilter]);
 
   async function loadEntries() {
+    const requestId = loadRequestIdRef.current + 1;
+    loadRequestIdRef.current = requestId;
+
     try {
       setLoading(true);
       setError(null);
@@ -81,11 +85,14 @@ export default function OrderBookPage() {
         keyword,
         shippingFilter,
       });
+      if (requestId !== loadRequestIdRef.current) return;
       setEntries(result.items);
       setTotalItems(result.totalCount);
     } catch (err) {
+      if (requestId !== loadRequestIdRef.current) return;
       setError(err instanceof Error ? err.message : '수주대장 목록을 불러오지 못했습니다.');
     } finally {
+      if (requestId !== loadRequestIdRef.current) return;
       setLoading(false);
     }
   }
@@ -212,7 +219,18 @@ export default function OrderBookPage() {
   async function handleShippedStatusChange(entry: OrderBookEntry, shippedStatus: OrderBookShippingStatus) {
     try {
       const updated = await updateOrderBookShippedStatus(entry.id, shippedStatus);
-      setEntries((current) => current.map((item) => (item.id === entry.id ? { ...item, ...updated } : item)));
+      setEntries((current) =>
+        current.map((item) =>
+          item.id === entry.id
+            ? {
+                ...item,
+                shippedStatus: updated.shippedStatus,
+                updatedAt: updated.updatedAt,
+                updatedBy: updated.updatedBy,
+              }
+            : item,
+        ),
+      );
       window.alert(
         shippedStatus === '출고'
           ? '출고상태로 변경되었습니다.'
@@ -305,6 +323,7 @@ export default function OrderBookPage() {
             >
               <option value="all">전체</option>
               <option value="client">납품처</option>
+              <option value="receiver">수신처</option>
               <option value="product">품목명</option>
               <option value="issueNo">발급번호</option>
               <option value="receipt">상태</option>
@@ -579,6 +598,7 @@ function formatFileStamp(date: Date) {
 
 function getFilterTypeLabel(filterType: FilterType) {
   if (filterType === 'client') return '납품처';
+  if (filterType === 'receiver') return '수신처';
   if (filterType === 'product') return '품목명';
   if (filterType === 'issueNo') return '발행번호';
   if (filterType === 'receipt') return '상태';

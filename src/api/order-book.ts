@@ -62,7 +62,7 @@ type OrderBookQueryParams = {
   pageSize: number;
   dateFrom?: string;
   dateTo?: string;
-  filterType?: 'all' | 'client' | 'product' | 'issueNo' | 'receipt';
+  filterType?: 'all' | 'client' | 'receiver' | 'product' | 'issueNo' | 'receipt';
   shippingFilter?: string;
   keyword?: string;
 };
@@ -125,9 +125,21 @@ export async function fetchOrderBookPage(
   if (keyword) {
     const escapedKeyword = escapeForIlike(keyword);
     const pattern = `%${escapedKeyword}%`;
+    const receiverDocumentIds =
+      params.filterType === 'receiver' || !params.filterType || params.filterType === 'all'
+        ? await fetchDocumentIdsByReceiverKeyword(pattern)
+        : [];
 
     if (params.filterType === 'client') {
       query = query.ilike('client', pattern);
+    } else if (params.filterType === 'receiver') {
+      if (receiverDocumentIds.length === 0) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+      query = query.in('doc_id', receiverDocumentIds);
     } else if (params.filterType === 'product') {
       query = query.ilike('product', pattern);
     } else if (params.filterType === 'issueNo') {
@@ -135,8 +147,10 @@ export async function fetchOrderBookPage(
     } else if (params.filterType === 'receipt') {
       query = query.or(`receipt.ilike.${pattern},status.ilike.${pattern}`);
     } else {
+      const receiverFilter =
+        receiverDocumentIds.length > 0 ? `,doc_id.in.(${receiverDocumentIds.join(',')})` : '';
       query = query.or(
-        `issue_no.ilike.${pattern},client.ilike.${pattern},receipt.ilike.${pattern},product.ilike.${pattern},note.ilike.${pattern}`,
+        `issue_no.ilike.${pattern},client.ilike.${pattern},receipt.ilike.${pattern},product.ilike.${pattern},note.ilike.${pattern}${receiverFilter}`,
       );
     }
   }
@@ -271,6 +285,19 @@ async function fetchDocumentsByIds(ids: string[]) {
   }
 
   return lookup;
+}
+
+async function fetchDocumentIdsByReceiverKeyword(pattern: string) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('documents')
+    .select('id')
+    .ilike('receiver', pattern)
+    .eq('del_yn', 'N');
+
+  if (error) throw error;
+
+  return ((data ?? []) as Array<{ id: string }>).map((row) => String(row.id));
 }
 
 async function fetchDocumentItemsByDocIds(ids: string[]) {
