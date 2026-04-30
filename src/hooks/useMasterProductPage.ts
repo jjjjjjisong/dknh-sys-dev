@@ -371,6 +371,15 @@ export function useMasterProductPage() {
         next.productName = '';
       }
 
+      if (key === 'clientName') {
+        const nextClientName = String(value);
+        const selectedClient = clients.find((client) => client.name === nextClientName);
+        next.clientName = nextClientName;
+        next.clientId = selectedClient?.id ?? '';
+        next.productId = '';
+        next.productName = '';
+      }
+
       if (key === 'productId') {
         const selectedProduct = products.find((product) => product.id === value);
         next.productId = String(value);

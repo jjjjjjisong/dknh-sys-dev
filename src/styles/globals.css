@@ -2478,7 +2478,8 @@ a {
   justify-content: center;
 }
 
-.price-change-product-search {
+.price-change-product-search,
+.price-change-client-search {
   position: relative;
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PriceChangeLog, PriceChangePreviewRow } from '../../api/priceChanges';
 import { MANUAL_PRICE_CHANGE_PRODUCT_ID } from '../../api/priceChanges';
 import type { Client } from '../../types/client';
@@ -83,8 +83,11 @@ export default function PriceChangePanel({
   onApply,
 }: PriceChangePanelProps) {
   const [productSearchOpen, setProductSearchOpen] = useState(false);
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyKeyword, setHistoryKeyword] = useState('');
+  const clientSearchRef = useRef<HTMLDivElement>(null);
+  const productSearchRef = useRef<HTMLDivElement>(null);
   const selectedIdSet = useMemo(() => new Set(selectedItemIds), [selectedItemIds]);
   const selectedRows = previewRows.filter((row) => selectedIdSet.has(row.itemId));
   const selectedDocumentCount = new Set(selectedRows.map((row) => row.documentId)).size;
@@ -96,10 +99,21 @@ export default function PriceChangePanel({
     : products.find((product) => product.id === form.productId);
   const selectedClient = clients.find((client) => client.id === form.clientId);
   const keyword = form.productName.trim().toLowerCase();
+  const clientKeyword = form.clientName.trim().toLowerCase();
+
+  const clientSuggestions = useMemo(() => {
+    const source = clientKeyword
+      ? clients.filter((client) => client.name.toLowerCase().includes(clientKeyword))
+      : clients;
+
+    return source.slice(0, 30);
+  }, [clientKeyword, clients]);
 
   const productSuggestions = useMemo(() => {
     const clientFilteredProducts = form.clientId
       ? products.filter((product) => product.clientId === form.clientId)
+      : clientKeyword
+        ? products.filter((product) => product.client.toLowerCase().includes(clientKeyword))
       : products;
     const source = keyword
       ? clientFilteredProducts.filter((product) =>
@@ -110,7 +124,7 @@ export default function PriceChangePanel({
       : clientFilteredProducts;
 
     return source.slice(0, 30);
-  }, [form.clientId, keyword, products]);
+  }, [clientKeyword, form.clientId, keyword, products]);
 
   const filteredLogs = useMemo(() => {
     const logKeyword = historyKeyword.trim().toLowerCase();
@@ -120,9 +134,47 @@ export default function PriceChangePanel({
 
   const showManualOption = keyword.length === 0;
 
+  useEffect(() => {
+    if (!clientSearchOpen && !productSearchOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (clientSearchOpen && clientSearchRef.current && !clientSearchRef.current.contains(target)) {
+        setClientSearchOpen(false);
+      }
+      if (productSearchOpen && productSearchRef.current && !productSearchRef.current.contains(target)) {
+        setProductSearchOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      setClientSearchOpen(false);
+      setProductSearchOpen(false);
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [clientSearchOpen, productSearchOpen]);
+
   function handleProductKeywordChange(value: string) {
     onUpdateForm('productName', value);
     setProductSearchOpen(true);
+  }
+
+  function handleClientKeywordChange(value: string) {
+    onUpdateForm('clientName', value);
+    setClientSearchOpen(true);
+  }
+
+  function handleClientSelect(client: Client) {
+    onUpdateForm('clientName', client.name);
+    onUpdateForm('clientId', client.id);
+    setClientSearchOpen(false);
   }
 
   function handleManualSelect() {
@@ -167,18 +219,49 @@ export default function PriceChangePanel({
               onChange={(event) => onUpdateForm('dateTo', event.target.value)}
             />
           </label>
-          <label className="field">
+          <div className="field price-change-client-search" ref={clientSearchRef}>
             <span>납품처</span>
-            <select value={form.clientId} onChange={(event) => onUpdateForm('clientId', event.target.value)}>
-              <option value="">전체 납품처</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="field price-change-product-search">
+            <input
+              value={form.clientName}
+              onChange={(event) => handleClientKeywordChange(event.target.value)}
+              onFocus={() => setClientSearchOpen(true)}
+              placeholder="납품처 검색 또는 선택"
+            />
+            {clientSearchOpen ? (
+              <div className="price-change-product-menu">
+                <button
+                  type="button"
+                  className="price-change-product-option"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onUpdateForm('clientName', '');
+                    onUpdateForm('clientId', '');
+                    setClientSearchOpen(false);
+                  }}
+                >
+                  <strong>전체 납품처</strong>
+                </button>
+                {clientSuggestions.length === 0 ? (
+                  <button type="button" className="price-change-product-option" disabled>
+                    검색 결과가 없습니다.
+                  </button>
+                ) : (
+                  clientSuggestions.map((client) => (
+                    <button
+                      type="button"
+                      key={client.id}
+                      className="price-change-product-option"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handleClientSelect(client)}
+                    >
+                      <strong>{client.name}</strong>
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </div>
+          <div className="field price-change-product-search" ref={productSearchRef}>
             <span>품목 선택 *</span>
             <input
               value={form.productName}
