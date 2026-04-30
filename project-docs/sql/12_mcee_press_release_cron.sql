@@ -16,10 +16,10 @@ select cron.schedule(
   '0 18 * * *',
   $$
   select net.http_post(
-    url := '<PROJECT_URL>/functions/v1/crawl-mcee-press-releases',
+    url := 'https://unsjsnckzudigffpdcgf.supabase.co/functions/v1/crawl-mcee-press-releases',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-crawl-secret', '<MCEE_CRAWL_SECRET>'
+      'x-crawl-secret', '<chemical!2>'
     ),
     body := jsonb_build_object('mode', 'scheduled')
   );
