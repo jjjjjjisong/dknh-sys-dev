@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
   { group: '문서', label: '문서 작성', to: '/doc-create', icon: <SidebarIconPen /> },
   { group: '문서', label: '발행 이력', to: '/doc-history', icon: <SidebarIconHistory /> },
   { group: '문서', label: '수주대장', to: '/order-book', icon: <SidebarIconList /> },
+  { group: '문서', label: '출고 일정', to: '/shipping-schedule', icon: <SidebarIconCalendar /> },
   { group: '관리', label: '납품처 관리', to: '/master-client', icon: <SidebarIconUsers /> },
   { group: '관리', label: '수신처 관리', to: '/master-receiver', icon: <SidebarIconList /> },
   { group: '관리', label: '품목 관리', to: '/master-product', icon: <SidebarIconBox /> },
@@ -128,6 +129,24 @@ function SidebarIconHistory() {
       <path d="M3.5 12a8.5 8.5 0 1 0 2.49-6.01" />
       <path d="M3.5 4.5v4h4" />
       <path d="M12 7.5V12l3 1.75" />
+    </svg>
+  );
+}
+
+function SidebarIconCalendar() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="sidebar-svg-icon"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4" y="5.5" width="16" height="14.5" rx="2" />
+      <path d="M8 3.5v4M16 3.5v4M4 9.5h16" />
+      <path d="M8 13h2M14 13h2M8 16.5h2M14 16.5h2" />
     </svg>
   );
 }
