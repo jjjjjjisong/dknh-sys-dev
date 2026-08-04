@@ -4817,11 +4817,6 @@ a {
   background: #f5f8fc;
 }
 
-.shipping-schedule-table tbody tr.is-shipped td {
-  color: #7b8797;
-  background: #f8fafc;
-}
-
 .shipping-schedule-table tfoot td {
   background: #f0f3f7;
   font-weight: 700;
@@ -5059,6 +5054,301 @@ a {
   }
 }
 
+/* Shipping schedule period search and receiver tabs */
+.shipping-schedule-period-grid {
+  display: grid;
+  grid-template-columns: 170px 170px 130px 230px minmax(260px, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.shipping-schedule-period-grid .field {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.shipping-schedule-period-grid .field input,
+.shipping-schedule-period-grid .field select,
+.shipping-receiver-multi-trigger {
+  height: 38px;
+}
+
+.shipping-receiver-multi-field {
+  position: relative;
+}
+
+.shipping-receiver-multi-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 0 11px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text-1);
+  cursor: pointer;
+  text-align: left;
+}
+
+.shipping-receiver-multi-trigger {
+  min-height: 38px;
+  height: auto;
+  padding: 4px 6px 4px 8px;
+}
+
+.shipping-receiver-selected-values {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.shipping-receiver-placeholder {
+  align-self: center;
+  color: var(--text-3);
+}
+
+.shipping-receiver-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px 5px 3px 8px;
+  border: 1px solid #bfd7ff;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-s);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.shipping-receiver-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shipping-receiver-chip button,
+.shipping-receiver-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+}
+
+.shipping-receiver-chip button {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.shipping-receiver-chip button:hover {
+  background: #dbeafe;
+}
+
+.shipping-receiver-menu-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--text-3);
+}
+
+.shipping-receiver-multi-caret {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-right: 2px solid var(--text-3);
+  border-bottom: 2px solid var(--text-3);
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.shipping-receiver-multi-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  width: max(100%, 280px);
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.shipping-receiver-multi-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 36px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  color: var(--text-1);
+  cursor: pointer;
+  font-size: 13.5px;
+}
+
+.shipping-receiver-multi-option:hover {
+  background: var(--surface-2);
+}
+
+.shipping-receiver-multi-option input {
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0;
+}
+
+.shipping-receiver-multi-empty {
+  padding: 14px 10px;
+  color: var(--text-3);
+  text-align: center;
+  font-size: 13px;
+}
+
+.shipping-receiver-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: 0 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shipping-receiver-tabs button {
+  position: relative;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shipping-receiver-tabs button:hover {
+  color: var(--text-1);
+}
+
+.shipping-receiver-tabs button.active {
+  color: var(--accent-s);
+  font-weight: 700;
+}
+
+.shipping-receiver-tabs button.active::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  bottom: -1px;
+  left: 10px;
+  height: 2px;
+  background: var(--accent);
+}
+
+.shipping-receiver-print-title {
+  display: none;
+}
+
+.shipping-date-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.shipping-date-group h3 {
+  margin: 0;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.shipping-date-group .table-wrap {
+  border: 1px solid var(--border);
+}
+
+.table.shipping-schedule-period-table th:nth-child(1) { width: 115px; }
+.table.shipping-schedule-period-table th:nth-child(2) { width: 210px; }
+.table.shipping-schedule-period-table th:nth-child(3) { width: 300px; }
+.table.shipping-schedule-period-table th:nth-child(4) { width: 76px; }
+.table.shipping-schedule-period-table th:nth-child(5) { width: 80px; }
+.table.shipping-schedule-period-table th:nth-child(6) { width: 105px; }
+.table.shipping-schedule-period-table th:nth-child(7) { width: 150px; }
+.table.shipping-schedule-period-table th:nth-child(8) { width: 190px; }
+.table.shipping-schedule-period-table th:nth-child(9) { width: 88px; }
+
+@media (max-width: 1280px) {
+  .shipping-schedule-period-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shipping-schedule-keyword-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .shipping-schedule-period-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shipping-schedule-keyword-field {
+    grid-column: auto;
+  }
+
+  .shipping-receiver-multi-menu {
+    width: 100%;
+  }
+}
+
+@media print {
+  .shipping-receiver-print-title {
+    display: block;
+    padding: 4px 6px;
+    border: 1px solid #111;
+    border-bottom: 0;
+    background: #fff;
+    color: #111;
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .shipping-date-groups {
+    gap: 7mm;
+  }
+
+  .shipping-date-group h3 {
+    padding: 4px 6px;
+    border-color: #111;
+    border-radius: 0;
+    background: #fff !important;
+    color: #111;
+    font-size: 10pt;
+    print-color-adjust: exact;
+  }
+
+  .shipping-date-group .table-wrap {
+    overflow: visible;
+    border-color: #111;
+  }
+
+}
+
 /* Keep the shipping page aligned with the shared document screens. */
 .shipping-schedule-page {
   gap: 16px;
@@ -5166,12 +5456,6 @@ a {
   min-width: 0;
 }
 
-.shipping-receiver-title span {
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 700;
-}
-
 .shipping-receiver-title h3 {
   margin: 0;
   overflow: hidden;
@@ -5236,11 +5520,6 @@ a {
 
 .table.shipping-schedule-table tbody tr:hover td {
   background: #f4f7ff;
-}
-
-.table.shipping-schedule-table tbody tr.is-shipped td {
-  color: var(--text-3);
-  background: #f8fafc;
 }
 
 .table.shipping-schedule-table tfoot td {
