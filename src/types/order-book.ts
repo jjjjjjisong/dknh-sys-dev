@@ -15,6 +15,7 @@ export type OrderBookEntry = {
   qty: number;
   pallet: number | null;
   box: number | null;
+  releaseNote: string;
   note: string;
   receipt: string;
   status: OrderBookStatus;

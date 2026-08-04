@@ -20,6 +20,7 @@ begin
     'mcee_crawl_keywords',
     'daily_sales_notes',
     'monthly_summary_notes',
+    'shipping_schedule_drafts',
     'price_change_logs'
   ]
   loop
