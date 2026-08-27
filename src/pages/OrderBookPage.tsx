@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import * as XLSX from 'xlsx';
 import {
+  fetchAllOrderBookEntries,
   fetchOrderBookPage,
   removeOrderBookEntry,
   updateManyOrderBookShippedStatus,
@@ -173,16 +173,14 @@ export default function OrderBookPage() {
     }
 
     try {
-      const exportResult = await fetchOrderBookPage({
-        page: 1,
-        pageSize: Math.max(totalItems, PAGE_SIZE),
+      const exportItems = await fetchAllOrderBookEntries({
         dateFrom,
         dateTo,
         filterType,
         keyword,
         shippingFilter,
       });
-      await exportOrderBookToExcel(exportResult.items, {
+      await exportOrderBookToExcel(exportItems, {
         fileStamp: formatFileStamp(new Date()),
         dateFrom,
         dateTo,
@@ -190,30 +188,9 @@ export default function OrderBookPage() {
         keyword,
         filterTypeLabel: getFilterTypeLabel(filterType),
       });
-      return;
     } catch (err) {
       window.alert(err instanceof Error ? err.message : '엑셀 다운로드 중 오류가 발생했습니다.');
-      return;
     }
-
-    const rows = entries.map((entry) => ({
-      발급번호: entry.issueNo || '',
-      발주일자: entry.date || '',
-      입고일자: entry.deadline || '',
-      납품처: entry.client || '',
-      수신처: entry.receiver || '',
-      품목명: entry.product || '',
-      수량: entry.qty ?? '',
-      파레트: entry.pallet ?? '',
-      박스: entry.box ?? '',
-      상태: entry.status === 'ST01' ? '거래취소' : '진행중',
-      출고상태: entry.shippedStatus,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, '수주대장');
-    XLSX.writeFile(workbook, `수주대장_${formatFileStamp(new Date())}.xlsx`);
   }
 
   async function handleShippedStatusChange(entry: OrderBookEntry, shippedStatus: OrderBookShippingStatus) {

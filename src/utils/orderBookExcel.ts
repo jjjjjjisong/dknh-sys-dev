@@ -74,9 +74,10 @@ export async function exportOrderBookToExcel(
     { header: '파렛트', key: 'pallet', width: 10 },
     { header: '박스', key: 'box', width: 10 },
     { header: '상태', key: 'status', width: 12 },
+    { header: '출고상태', key: 'shippedStatus', width: 12 },
   ];
 
-  worksheet.mergeCells('A1:J1');
+  worksheet.mergeCells('A1:K1');
   worksheet.getCell('A1').value = '수주대장';
   worksheet.getCell('A1').font = { name: 'Malgun Gothic', size: 18, bold: true, color: { argb: 'FF20304A' } };
   worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -105,6 +106,7 @@ export async function exportOrderBookToExcel(
       pallet: entry.pallet ?? '',
       box: entry.box ?? '',
       status: getStatusLabel(entry.status),
+      shippedStatus: entry.shippedStatus,
     });
 
     row.height = 22;
@@ -128,6 +130,7 @@ export async function exportOrderBookToExcel(
     row.getCell(8).numFmt = '#,##0';
     row.getCell(9).numFmt = '#,##0';
     row.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+    row.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
     if (entry.status === 'ST01') {
       row.getCell(10).fill = createSolidFill('FFFDE8E8');
@@ -146,7 +149,7 @@ export async function exportOrderBookToExcel(
 
   worksheet.autoFilter = {
     from: { row: 3, column: 1 },
-    to: { row: 3, column: 10 },
+    to: { row: 3, column: 11 },
   };
 
   const buffer = await workbook.xlsx.writeBuffer();

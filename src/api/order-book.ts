@@ -63,6 +63,7 @@ type DocumentItemLookupRow = {
 type OrderBookQueryParams = {
   page: number;
   pageSize: number;
+  includeCount?: boolean;
   dateFrom?: string;
   dateTo?: string;
   filterType?: 'all' | 'client' | 'receiver' | 'product' | 'issueNo' | 'receipt';
@@ -74,6 +75,12 @@ type OrderBookPageResult = {
   items: OrderBookEntry[];
   totalCount: number;
 };
+
+type OrderBookFilterParams = Omit<OrderBookQueryParams, 'page' | 'pageSize' | 'includeCount'>;
+
+const ORDER_BOOK_EXPORT_PAGE_SIZE = 1000;
+const ORDER_BOOK_EXPORT_CONCURRENCY = 4;
+const LOOKUP_CHUNK_SIZE = 500;
 
 const ORDER_BOOK_SELECT =
   'id, doc_id, document_item_id, product_id, issue_no, date, deadline, client, product, qty, note, receipt, status, shipped_status, from_doc, created_at, del_yn, updated_at, updated_by';
@@ -92,7 +99,7 @@ export async function fetchOrderBook(): Promise<OrderBookEntry[]> {
   const docIds = Array.from(new Set(rows.map((row) => row.doc_id).filter((value): value is string => Boolean(value))));
   const [documentsById, itemsByDocId] = await Promise.all([
     fetchDocumentsByIds(docIds),
-    fetchDocumentItemsByDocIds(docIds),
+    fetchDocumentItemsForOrderBookRows(rows),
   ]);
 
   return rows.map((row) => mapOrderBookRow(row, documentsById, itemsByDocId));
@@ -109,7 +116,7 @@ export async function fetchOrderBookPage(
 
   let query = supabase
     .from('order_book')
-    .select(ORDER_BOOK_SELECT, { count: 'exact' })
+    .select(ORDER_BOOK_SELECT, { count: params.includeCount === false ? undefined : 'exact' })
     .eq('del_yn', 'N');
 
   if (params.dateFrom) {
@@ -160,6 +167,7 @@ export async function fetchOrderBookPage(
 
   const { data, error, count } = await query
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .range(from, to);
 
   if (error) throw error;
@@ -168,13 +176,46 @@ export async function fetchOrderBookPage(
   const docIds = Array.from(new Set(rows.map((row) => row.doc_id).filter((value): value is string => Boolean(value))));
   const [documentsById, itemsByDocId] = await Promise.all([
     fetchDocumentsByIds(docIds),
-    fetchDocumentItemsByDocIds(docIds),
+    fetchDocumentItemsForOrderBookRows(rows),
   ]);
 
   return {
     items: rows.map((row) => mapOrderBookRow(row, documentsById, itemsByDocId)),
     totalCount: count ?? 0,
   };
+}
+
+export async function fetchAllOrderBookEntries(
+  params: OrderBookFilterParams,
+): Promise<OrderBookEntry[]> {
+  const firstPage = await fetchOrderBookPage({
+    ...params,
+    page: 1,
+    pageSize: ORDER_BOOK_EXPORT_PAGE_SIZE,
+  });
+
+  const allItems = [...firstPage.items];
+  const totalPages = Math.ceil(firstPage.totalCount / ORDER_BOOK_EXPORT_PAGE_SIZE);
+
+  const remainingPages = Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) => index + 2);
+
+  for (const pageBatch of chunkValues(remainingPages, ORDER_BOOK_EXPORT_CONCURRENCY)) {
+    const results = await Promise.all(
+      pageBatch.map((page) =>
+        fetchOrderBookPage({
+          ...params,
+          page,
+          pageSize: ORDER_BOOK_EXPORT_PAGE_SIZE,
+          includeCount: false,
+        }),
+      ),
+    );
+    for (const result of results) {
+      allItems.push(...result.items);
+    }
+  }
+
+  return allItems;
 }
 
 export async function createOrderBookEntry(payload: OrderBookInput) {
@@ -275,16 +316,18 @@ async function fetchDocumentsByIds(ids: string[]) {
   if (ids.length === 0) return lookup;
 
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('documents')
-    .select('id, issue_no, order_date, arrive_date, receiver, author, status, updated_at, created_at')
-    .in('id', ids)
-    .eq('del_yn', 'N');
+  for (const idChunk of chunkValues(ids, LOOKUP_CHUNK_SIZE)) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('id, issue_no, order_date, arrive_date, receiver, author, status, updated_at, created_at')
+      .in('id', idChunk)
+      .eq('del_yn', 'N');
 
-  if (error) throw error;
+    if (error) throw error;
 
-  for (const row of (data ?? []) as DocumentLookupRow[]) {
-    lookup.set(row.id, row);
+    for (const row of (data ?? []) as DocumentLookupRow[]) {
+      lookup.set(row.id, row);
+    }
   }
 
   return lookup;
@@ -292,34 +335,83 @@ async function fetchDocumentsByIds(ids: string[]) {
 
 async function fetchDocumentIdsByReceiverKeyword(pattern: string) {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('documents')
-    .select('id')
-    .ilike('receiver', pattern)
-    .eq('del_yn', 'N');
+  const ids: string[] = [];
 
-  if (error) throw error;
+  for (let from = 0; ; from += ORDER_BOOK_EXPORT_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('id')
+      .ilike('receiver', pattern)
+      .eq('del_yn', 'N')
+      .order('id', { ascending: true })
+      .range(from, from + ORDER_BOOK_EXPORT_PAGE_SIZE - 1);
 
-  return ((data ?? []) as Array<{ id: string }>).map((row) => String(row.id));
+    if (error) throw error;
+
+    const rows = (data ?? []) as Array<{ id: string }>;
+    ids.push(...rows.map((row) => String(row.id)));
+    if (rows.length < ORDER_BOOK_EXPORT_PAGE_SIZE) break;
+  }
+
+  return ids;
 }
 
-async function fetchDocumentItemsByDocIds(ids: string[]) {
+async function fetchDocumentItemsForOrderBookRows(rows: OrderBookRow[]) {
   const lookup = new Map<string, DocumentItemLookupRow[]>();
-  if (ids.length === 0) return lookup;
+  if (rows.length === 0) return lookup;
 
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('document_items')
-    .select('id, document_id, product_id, seq, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, release_note, status, del_yn')
-    .in('document_id', ids)
-    .eq('del_yn', 'N');
+  const linkedItemIds = Array.from(
+    new Set(rows.map((row) => row.document_item_id).filter((value): value is string => Boolean(value))),
+  );
+  const legacyDocIds = Array.from(
+    new Set(
+      rows
+        .filter((row) => !row.document_item_id)
+        .map((row) => row.doc_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+  const seenItemIds = new Set<string>();
 
-  if (error) throw error;
+  const addRows = (itemRows: DocumentItemLookupRow[]) => {
+    for (const itemRow of itemRows) {
+      if (seenItemIds.has(itemRow.id)) continue;
+      seenItemIds.add(itemRow.id);
+      const current = lookup.get(itemRow.document_id) ?? [];
+      current.push(itemRow);
+      lookup.set(itemRow.document_id, current);
+    }
+  };
 
-  for (const row of (data ?? []) as DocumentItemLookupRow[]) {
-    const current = lookup.get(row.document_id) ?? [];
-    current.push(row);
-    lookup.set(row.document_id, current);
+  for (const itemIdChunk of chunkValues(linkedItemIds, LOOKUP_CHUNK_SIZE)) {
+    const { data, error } = await supabase
+      .from('document_items')
+      .select('id, document_id, product_id, seq, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, release_note, status, del_yn')
+      .in('id', itemIdChunk)
+      .eq('del_yn', 'N');
+
+    if (error) throw error;
+    addRows((data ?? []) as DocumentItemLookupRow[]);
+  }
+
+  // 과거 수주대장 행은 document_item_id가 없을 수 있어 문서 단위로 보완 조회한다.
+  for (const docIdChunk of chunkValues(legacyDocIds, LOOKUP_CHUNK_SIZE)) {
+    for (let from = 0; ; from += ORDER_BOOK_EXPORT_PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from('document_items')
+        .select('id, document_id, product_id, seq, name1, name2, arrive_date, qty, ea_per_b, box_per_p, custom_pallet, custom_box, release_note, status, del_yn')
+        .in('document_id', docIdChunk)
+        .eq('del_yn', 'N')
+        .order('id', { ascending: true })
+        .range(from, from + ORDER_BOOK_EXPORT_PAGE_SIZE - 1);
+
+      if (error) throw error;
+
+      const itemRows = (data ?? []) as DocumentItemLookupRow[];
+      addRows(itemRows);
+      if (itemRows.length < ORDER_BOOK_EXPORT_PAGE_SIZE) break;
+    }
   }
 
   return lookup;
@@ -348,7 +440,7 @@ function mapOrderBookRow(
     productId: row.product_id ? String(row.product_id) : matchedItem?.product_id ? String(matchedItem.product_id) : null,
     issueNo: row.issue_no ?? document?.issue_no ?? '',
     date: document?.order_date ?? row.date ?? null,
-    deadline: matchedItem?.arrive_date ?? document?.arrive_date ?? row.deadline ?? null,
+    deadline: matchedItem?.arrive_date ?? row.deadline ?? document?.arrive_date ?? null,
     client: row.client ?? '',
     receiver: document?.receiver ?? '',
     product: matchedItem?.name2 || matchedItem?.name1 || row.product || '',
@@ -432,4 +524,12 @@ function mapOrderBookStatus(status: string | null | undefined): OrderBookStatus 
 
 function escapeForIlike(value: string) {
   return value.replace(/[%*,()]/g, ' ').trim();
+}
+
+function chunkValues<T>(values: T[], size: number) {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
 }
